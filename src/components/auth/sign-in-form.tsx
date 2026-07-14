@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Alert, Button, Pressable, StyleSheet, Text, TextInput } from "react-native";
+import { Alert, Button, StyleSheet, Text, TextInput } from "react-native";
 import { useAuth } from "@/features/auth/auth-context";
-import { AuthServiceError, type AuthMode } from "@/features/auth/auth-service";
+import { AuthServiceError } from "@/features/auth/auth-service";
 import { AuthCard, authCardStyles } from "./auth-card";
 
 type SignInFormProps = {
@@ -11,7 +11,6 @@ type SignInFormProps = {
 
 export function SignInForm({ disabled = false, onSubmittingChange }: SignInFormProps) {
   const { signInWithEmail } = useAuth();
-  const [mode, setMode] = useState<AuthMode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -21,7 +20,7 @@ export function SignInForm({ disabled = false, onSubmittingChange }: SignInFormP
     onSubmittingChange?.(true);
 
     try {
-      await signInWithEmail(email, password, mode);
+      await signInWithEmail(email, password, "signin");
     } catch (error) {
       const message =
         error instanceof AuthServiceError ? error.message : "Authentication failed.";
@@ -37,13 +36,15 @@ export function SignInForm({ disabled = false, onSubmittingChange }: SignInFormP
 
   return (
     <AuthCard>
-      <Text style={authCardStyles.title}>{mode === "signin" ? "Sign in" : "Create account"}</Text>
+      <Text style={authCardStyles.title}>Log In</Text>
 
       <TextInput
         style={styles.input}
         placeholder="Email"
         autoCapitalize="none"
         keyboardType="email-address"
+        autoComplete="email"
+        textContentType="emailAddress"
         value={email}
         onChangeText={setEmail}
         editable={!isDisabled}
@@ -52,27 +53,20 @@ export function SignInForm({ disabled = false, onSubmittingChange }: SignInFormP
         style={styles.input}
         placeholder="Password"
         secureTextEntry
+        autoComplete="password"
+        textContentType="password"
         value={password}
         onChangeText={setPassword}
         editable={!isDisabled}
       />
 
       <Button
-        title={submitting ? "Working..." : mode === "signin" ? "Sign in" : "Register"}
+        title={submitting ? "Working..." : "Log In"}
         onPress={() => {
           void handleSubmit();
         }}
         disabled={isDisabled}
       />
-
-      <Pressable
-        disabled={isDisabled}
-        onPress={() => setMode(mode === "signin" ? "register" : "signin")}
-      >
-        <Text style={styles.switchText}>
-          {mode === "signin" ? "Need an account? Register" : "Already have an account? Sign in"}
-        </Text>
-      </Pressable>
     </AuthCard>
   );
 }
@@ -84,9 +78,5 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-  },
-  switchText: {
-    color: "#2563eb",
-    textAlign: "center",
   },
 });

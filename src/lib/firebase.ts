@@ -1,5 +1,6 @@
-import { getApp, getApps, initializeApp } from "firebase/app";
+import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
 import { Auth, getAuth, GoogleAuthProvider } from "firebase/auth";
+import { Firestore, getFirestore } from "firebase/firestore";
 
 export type FirebaseClientConfig = {
   apiKey?: string;
@@ -30,18 +31,42 @@ export const isFirebaseConfigured =
   Boolean(firebaseConfig.appId?.trim());
 
 let authInstance: Auth | null = null;
+let firestoreInstance: Firestore | null = null;
 
-export function getFirebaseAuth(): Auth | null {
+function getFirebaseApp(): FirebaseApp | null {
   if (!isFirebaseConfigured) {
     return null;
   }
 
+  return getApps().length ? getApp() : initializeApp(firebaseConfig);
+}
+
+export function getFirebaseAuth(): Auth | null {
+  const app = getFirebaseApp();
+
+  if (!app) {
+    return null;
+  }
+
   if (!authInstance) {
-    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     authInstance = getAuth(app);
   }
 
   return authInstance;
+}
+
+export function getFirebaseFirestore(): Firestore | null {
+  const app = getFirebaseApp();
+
+  if (!app) {
+    return null;
+  }
+
+  if (!firestoreInstance) {
+    firestoreInstance = getFirestore(app);
+  }
+
+  return firestoreInstance;
 }
 
 export function getFirebaseSetupMessage(): string {

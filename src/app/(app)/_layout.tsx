@@ -9,7 +9,7 @@ export default function AppLayout() {
   }
 
   if (!isConfigured || !user) {
-    return <Redirect href="/sign-in" />;
+    return <Redirect href="/start" />;
   }
 
   return (

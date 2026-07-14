@@ -16,6 +16,7 @@ import {
   signInWithGoogle,
   signOut,
   type AuthMode,
+  type SignInWithEmailOptions,
 } from "./auth-service";
 
 type AuthContextValue = {
@@ -23,7 +24,12 @@ type AuthContextValue = {
   isLoading: boolean;
   isConfigured: boolean;
   isAppleSignInAvailable: boolean;
-  signInWithEmail: (email: string, password: string, mode: AuthMode) => Promise<void>;
+  signInWithEmail: (
+    email: string,
+    password: string,
+    mode: AuthMode,
+    options?: SignInWithEmailOptions,
+  ) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;

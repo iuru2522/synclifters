@@ -8,10 +8,23 @@ import {
   OAuthProvider,
   signInWithCredential,
   signInWithEmailAndPassword,
+  updateProfile,
 } from "firebase/auth";
 import { getFirebaseAuth, getFirebaseSetupMessage } from "@/lib/firebase";
+import {
+  createUserProfile,
+  isUserRole,
+  type UserRole,
+} from "@/features/users/user-profile";
 
 export type AuthMode = "signin" | "register";
+
+export type SignInWithEmailOptions = {
+  displayName?: string;
+  role?: UserRole;
+  firstName?: string;
+  lastName?: string;
+};
 
 export class AuthServiceError extends Error {
   constructor(
@@ -55,6 +68,7 @@ export async function signInWithEmail(
   email: string,
   password: string,
   mode: AuthMode,
+  options?: SignInWithEmailOptions,
 ): Promise<void> {
   const auth = requireAuth();
 
@@ -63,7 +77,33 @@ export async function signInWithEmail(
     return;
   }
 
-  await createUserWithEmailAndPassword(auth, email, password);
+  if (!options?.role || !isUserRole(options.role)) {
+    throw new AuthServiceError("Choose Athlete or Coach before signing up.", "ROLE_REQUIRED");
+  }
+
+  const firstName = options.firstName?.trim() ?? "";
+  const lastName = options.lastName?.trim() ?? "";
+  const displayName =
+    options.displayName?.trim() || [firstName, lastName].filter(Boolean).join(" ").trim();
+
+  const credential = await createUserWithEmailAndPassword(auth, email, password);
+
+  if (displayName) {
+    await updateProfile(credential.user, { displayName });
+  }
+
+  try {
+    await createUserProfile(credential.user.uid, {
+      role: options.role,
+      firstName,
+      lastName,
+      email,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to create user profile.";
+    throw new AuthServiceError(message, "PROFILE_CREATE_FAILED");
+  }
 }
 
 export async function signInWithGoogle(): Promise<void> {
