@@ -34,6 +34,7 @@ export function AuthScreenLayout({ children }: { children: ReactNode }) {
           style={styles.scroll}
           contentContainerStyle={[
             globalStyles.screenContent,
+            styles.scrollContent,
             {
               paddingTop: Math.max(insets.top, 12) + 4,
               paddingBottom: Math.max(insets.bottom, 16) + 12,
@@ -41,6 +42,7 @@ export function AuthScreenLayout({ children }: { children: ReactNode }) {
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          bounces={false}
         >
           <View style={globalStyles.screenBody}>{children}</View>
         </ScrollView>
@@ -62,5 +64,8 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
     backgroundColor: "transparent",
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
 });

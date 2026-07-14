@@ -7,26 +7,28 @@ import { globalStyles } from "@/styles/global";
 export default function StartScreen() {
   return (
     <AuthScreenLayout>
-      <View style={globalStyles.card}>
+      <View style={globalStyles.startCard}>
         <SyncLiftersLogo />
 
-        <Link href="/sign-up-role" asChild>
-          <Pressable
-            style={globalStyles.primaryButtonFilled}
-            accessibilityRole="button"
-            accessibilityLabel="Sign up"
-          >
-            <Text style={globalStyles.primaryButtonFilledText}>Sign up</Text>
-          </Pressable>
-        </Link>
-
-        <View style={globalStyles.promptRow}>
-          <Text style={globalStyles.promptText}>Already Have an Account? </Text>
-          <Link href="/sign-in" asChild>
-            <Pressable accessibilityRole="link" accessibilityLabel="Log In">
-              <Text style={globalStyles.promptLink}>Log In</Text>
+        <View>
+          <Link href="/sign-up-role" asChild>
+            <Pressable
+              style={globalStyles.startSignUpButton}
+              accessibilityRole="button"
+              accessibilityLabel="Sign Up"
+            >
+              <Text style={globalStyles.startSignUpButtonText}>Sign Up</Text>
             </Pressable>
           </Link>
+
+          <View style={globalStyles.startPromptRow}>
+            <Text style={globalStyles.promptText}>Already Have an Account? </Text>
+            <Link href="/sign-in" asChild>
+              <Pressable accessibilityRole="link" accessibilityLabel="Log In">
+                <Text style={globalStyles.promptLink}>Log In</Text>
+              </Pressable>
+            </Link>
+          </View>
         </View>
       </View>
     </AuthScreenLayout>
