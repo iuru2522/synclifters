@@ -3,9 +3,11 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
 import {
   Auth,
+  confirmPasswordReset,
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   OAuthProvider,
+  sendPasswordResetEmail,
   signInWithCredential,
   signInWithEmailAndPassword,
   updateProfile,
@@ -176,6 +178,51 @@ export async function signInWithApple(): Promise<void> {
     }
 
     throw new AuthServiceError(authError.message ?? "Apple sign-in failed.", authError.code);
+  }
+}
+
+export async function sendPasswordReset(email: string): Promise<void> {
+  const auth = requireAuth();
+  const trimmedEmail = email.trim();
+
+  if (!trimmedEmail) {
+    throw new AuthServiceError("Enter your email address.", "EMAIL_REQUIRED");
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, trimmedEmail);
+  } catch (error: unknown) {
+    const authError = error as { code?: string; message?: string };
+    throw new AuthServiceError(
+      authError.message ?? "Failed to send password reset email.",
+      authError.code,
+    );
+  }
+}
+
+export async function setNewPassword(oobCode: string, newPassword: string): Promise<void> {
+  const auth = requireAuth();
+  const code = oobCode.trim();
+
+  if (!code) {
+    throw new AuthServiceError(
+      "This reset link is missing or invalid. Request a new one.",
+      "OOB_CODE_REQUIRED",
+    );
+  }
+
+  if (!newPassword) {
+    throw new AuthServiceError("Enter a new password.", "PASSWORD_REQUIRED");
+  }
+
+  try {
+    await confirmPasswordReset(auth, code, newPassword);
+  } catch (error: unknown) {
+    const authError = error as { code?: string; message?: string };
+    throw new AuthServiceError(
+      authError.message ?? "Failed to set a new password.",
+      authError.code,
+    );
   }
 }
 

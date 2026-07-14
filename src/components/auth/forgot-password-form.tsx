@@ -1,19 +1,21 @@
 import { useState } from "react";
-import { Alert, Button, Pressable, StyleSheet, Text, TextInput } from "react-native";
+import { Alert, Button, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Link } from "expo-router";
 import { useAuth } from "@/features/auth/auth-context";
 import { AuthServiceError } from "@/features/auth/auth-service";
 import { AuthCard, authCardStyles } from "./auth-card";
 
-type SignInFormProps = {
+type ForgotPasswordFormProps = {
   disabled?: boolean;
   onSubmittingChange?: (submitting: boolean) => void;
 };
 
-export function SignInForm({ disabled = false, onSubmittingChange }: SignInFormProps) {
-  const { signInWithEmail } = useAuth();
+export function ForgotPasswordForm({
+  disabled = false,
+  onSubmittingChange,
+}: ForgotPasswordFormProps) {
+  const { sendPasswordReset } = useAuth();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit() {
@@ -21,12 +23,18 @@ export function SignInForm({ disabled = false, onSubmittingChange }: SignInFormP
     onSubmittingChange?.(true);
 
     try {
-      await signInWithEmail(email, password, "signin");
+      await sendPasswordReset(email);
+      Alert.alert(
+        "Check your email",
+        "If an account exists for that address, a password reset link has been sent.",
+      );
     } catch (error) {
       const message =
-        error instanceof AuthServiceError ? error.message : "Authentication failed.";
+        error instanceof AuthServiceError
+          ? error.message
+          : "Failed to send password reset email.";
 
-      Alert.alert("Auth failed", message);
+      Alert.alert("Reset failed", message);
     } finally {
       setSubmitting(false);
       onSubmittingChange?.(false);
@@ -37,7 +45,7 @@ export function SignInForm({ disabled = false, onSubmittingChange }: SignInFormP
 
   return (
     <AuthCard>
-      <Text style={authCardStyles.title}>Log In</Text>
+      <Text style={authCardStyles.title}>Forgot Password</Text>
 
       <TextInput
         style={styles.input}
@@ -50,30 +58,23 @@ export function SignInForm({ disabled = false, onSubmittingChange }: SignInFormP
         onChangeText={setEmail}
         editable={!isDisabled}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        autoComplete="password"
-        textContentType="password"
-        value={password}
-        onChangeText={setPassword}
-        editable={!isDisabled}
-      />
 
       <Button
-        title={submitting ? "Working..." : "Log In"}
+        title={submitting ? "Sending..." : "Send Reset Link"}
         onPress={() => {
           void handleSubmit();
         }}
         disabled={isDisabled}
       />
 
-      <Link href="/forgot-password" asChild>
-        <Pressable disabled={isDisabled}>
-          <Text style={styles.forgotPassword}>Forgot Password</Text>
-        </Pressable>
-      </Link>
+      <View style={styles.signupRow}>
+        <Text style={styles.signupPrompt}>Don't Have an Account? </Text>
+        <Link href="/sign-up-role" asChild>
+          <Pressable disabled={isDisabled} accessibilityRole="link" accessibilityLabel="Get Started">
+            <Text style={styles.signupLink}>Get Started</Text>
+          </Pressable>
+        </Link>
+      </View>
     </AuthCard>
   );
 }
@@ -86,8 +87,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  forgotPassword: {
+  signupRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  signupPrompt: {
+    color: "#4b5563",
+    fontSize: 14,
+  },
+  signupLink: {
     color: "#2563eb",
-    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

@@ -11,6 +11,8 @@ import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 import {
   configureAuthProviders,
   isAppleSignInAvailable,
+  sendPasswordReset,
+  setNewPassword,
   signInWithApple,
   signInWithEmail,
   signInWithGoogle,
@@ -30,6 +32,8 @@ type AuthContextValue = {
     mode: AuthMode,
     options?: SignInWithEmailOptions,
   ) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
+  setNewPassword: (oobCode: string, newPassword: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -68,6 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isConfigured: isFirebaseConfigured,
       isAppleSignInAvailable: appleSignInAvailable,
       signInWithEmail,
+      sendPasswordReset,
+      setNewPassword,
       signInWithGoogle,
       signInWithApple,
       signOut,
