@@ -1,12 +1,13 @@
 import { Text } from "react-native";
 import { getFirebaseSetupMessage } from "@/lib/firebase";
-import { AuthCard, authCardStyles } from "./auth-card";
+import { globalStyles } from "@/styles/global";
+import { AuthCard } from "./auth-card";
 
 export function FirebaseSetupCard() {
   return (
     <AuthCard>
-      <Text style={authCardStyles.title}>Firebase auth setup</Text>
-      <Text style={authCardStyles.description}>{getFirebaseSetupMessage()}</Text>
+      <Text style={globalStyles.title}>Firebase auth setup</Text>
+      <Text style={globalStyles.description}>{getFirebaseSetupMessage()}</Text>
     </AuthCard>
   );
 }

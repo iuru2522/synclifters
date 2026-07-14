@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Alert, Button, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { AuthCard, authCardStyles } from "@/components/auth/auth-card";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { colors, globalStyles } from "@/styles/global";
 import { SuccessPopup } from "./success-popup";
 
 export function ContactUsForm() {
@@ -25,63 +25,89 @@ export function ContactUsForm() {
 
   return (
     <>
-      <AuthCard>
-        <Text style={authCardStyles.title}>Contact us</Text>
+      <View style={globalStyles.card}>
+        <Text style={globalStyles.heroTitle}>Contact us</Text>
+        <Text style={globalStyles.heroSubtitle}>
+          Reach the <Text style={globalStyles.brandAccent}>SL</Text> team
+        </Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="First Name"
-          autoCapitalize="words"
-          autoComplete="given-name"
-          textContentType="givenName"
-          value={firstName}
-          onChangeText={setFirstName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Last Name"
-          autoCapitalize="words"
-          autoComplete="family-name"
-          textContentType="familyName"
-          value={lastName}
-          onChangeText={setLastName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          autoComplete="email"
-          textContentType="emailAddress"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          placeholder="Your question"
-          multiline
-          textAlignVertical="top"
-          value={description}
-          onChangeText={setDescription}
-        />
+        <View style={globalStyles.field}>
+          <Text style={globalStyles.label}>First Name</Text>
+          <TextInput
+            style={globalStyles.input}
+            placeholder="First Name"
+            placeholderTextColor={colors.placeholder}
+            autoCapitalize="words"
+            autoComplete="given-name"
+            textContentType="givenName"
+            value={firstName}
+            onChangeText={setFirstName}
+          />
+        </View>
+        <View style={globalStyles.field}>
+          <Text style={globalStyles.label}>Last Name</Text>
+          <TextInput
+            style={globalStyles.input}
+            placeholder="Last Name"
+            placeholderTextColor={colors.placeholder}
+            autoCapitalize="words"
+            autoComplete="family-name"
+            textContentType="familyName"
+            value={lastName}
+            onChangeText={setLastName}
+          />
+        </View>
+        <View style={globalStyles.field}>
+          <Text style={globalStyles.label}>Email</Text>
+          <TextInput
+            style={globalStyles.input}
+            placeholder="Enter Email"
+            placeholderTextColor={colors.placeholder}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+            textContentType="emailAddress"
+            value={email}
+            onChangeText={setEmail}
+          />
+        </View>
+        <View style={globalStyles.field}>
+          <Text style={globalStyles.label}>Your question</Text>
+          <TextInput
+            style={[globalStyles.input, globalStyles.textArea]}
+            placeholder="Your question"
+            placeholderTextColor={colors.placeholder}
+            multiline
+            textAlignVertical="top"
+            value={description}
+            onChangeText={setDescription}
+          />
+        </View>
 
         <Pressable
-          style={styles.checkboxRow}
+          style={globalStyles.checkboxRow}
           onPress={() => setAgreedToTerms((current) => !current)}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: agreedToTerms }}
           accessibilityLabel="Agree to the Synclifters Terms and Conditions"
         >
-          <View style={[styles.checkbox, agreedToTerms ? styles.checkboxChecked : null]}>
-            {agreedToTerms ? <Text style={styles.checkmark}>✓</Text> : null}
+          <View style={[globalStyles.checkbox, agreedToTerms ? globalStyles.checkboxChecked : null]}>
+            {agreedToTerms ? <Text style={globalStyles.checkmark}>✓</Text> : null}
           </View>
-          <Text style={styles.checkboxLabel}>
-            Agree to the Synclifters <Text style={styles.termsLink}>Terms and Conditions</Text>
+          <Text style={globalStyles.checkboxLabel}>
+            Agree to the Synclifters <Text style={globalStyles.termsLink}>Terms and Conditions</Text>
           </Text>
         </Pressable>
 
-        <Button title="Submit" onPress={handleSubmit} />
-      </AuthCard>
+        <Pressable
+          style={globalStyles.primaryButton}
+          onPress={handleSubmit}
+          accessibilityRole="button"
+          accessibilityLabel="Submit"
+        >
+          <Text style={globalStyles.primaryButtonText}>Submit</Text>
+        </Pressable>
+      </View>
 
       <SuccessPopup
         visible={showSuccessPopup}
@@ -91,53 +117,3 @@ export function ContactUsForm() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  input: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  textArea: {
-    minHeight: 120,
-    paddingTop: 10,
-  },
-  checkboxRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 4,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 1,
-    backgroundColor: "#fff",
-  },
-  checkboxChecked: {
-    borderColor: "#2563eb",
-    backgroundColor: "#2563eb",
-  },
-  checkmark: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "700",
-    lineHeight: 16,
-  },
-  checkboxLabel: {
-    flex: 1,
-    color: "#374151",
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  termsLink: {
-    textDecorationLine: "underline",
-    fontWeight: "600",
-  },
-});

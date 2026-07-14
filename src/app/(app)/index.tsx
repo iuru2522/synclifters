@@ -1,23 +1,23 @@
-import { Button, Text } from "react-native";
-import { AuthCard, authCardStyles } from "@/components/auth/auth-card";
+import { Button, Text, View } from "react-native";
 import { AuthScreenLayout } from "@/components/auth/auth-screen-layout";
 import { useAuth } from "@/features/auth/auth-context";
+import { globalStyles } from "@/styles/global";
 
 export default function HomeScreen() {
   const { user, signOut } = useAuth();
 
   return (
     <AuthScreenLayout>
-      <AuthCard>
-        <Text style={authCardStyles.title}>You are signed in</Text>
-        <Text style={authCardStyles.description}>{user?.email ?? user?.uid}</Text>
+      <View style={globalStyles.card}>
+        <Text style={globalStyles.title}>You are signed in</Text>
+        <Text style={globalStyles.description}>{user?.email ?? user?.uid}</Text>
         <Button
           title="Sign out"
           onPress={() => {
             void signOut();
           }}
         />
-      </AuthCard>
+      </View>
     </AuthScreenLayout>
   );
 }

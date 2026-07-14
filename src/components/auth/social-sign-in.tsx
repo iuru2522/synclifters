@@ -1,8 +1,9 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useState } from "react";
-import { Alert, Button, StyleSheet, View } from "react-native";
+import { Alert, Button, View } from "react-native";
 import { useAuth } from "@/features/auth/auth-context";
 import { AuthServiceError } from "@/features/auth/auth-service";
+import { globalStyles } from "@/styles/global";
 import { AuthCard } from "./auth-card";
 
 type SocialSignInProps = {
@@ -74,7 +75,7 @@ export function SocialSignIn({ disabled = false, onSubmittingChange }: SocialSig
           buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
           buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
           cornerRadius={10}
-          style={[styles.appleButton, isDisabled ? styles.appleButtonDisabled : null]}
+          style={[globalStyles.appleButton, isDisabled ? globalStyles.appleButtonDisabled : null]}
           onPress={() => {
             if (isDisabled) {
               return;
@@ -89,22 +90,5 @@ export function SocialSignIn({ disabled = false, onSubmittingChange }: SocialSig
 }
 
 export function SocialSignInDivider() {
-  return <View style={styles.divider} />;
+  return <View style={globalStyles.divider} />;
 }
-
-const styles = StyleSheet.create({
-  divider: {
-    height: 1,
-    backgroundColor: "#e5e7eb",
-    marginVertical: 4,
-    width: "100%",
-    maxWidth: 360,
-  },
-  appleButton: {
-    width: "100%",
-    height: 44,
-  },
-  appleButtonDisabled: {
-    opacity: 0.5,
-  },
-});

@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Alert, Button, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import { Link } from "expo-router";
 import { useAuth } from "@/features/auth/auth-context";
 import { AuthServiceError } from "@/features/auth/auth-service";
-import { AuthCard, authCardStyles } from "./auth-card";
+import { colors, globalStyles } from "@/styles/global";
+import { AuthBackButton } from "./auth-back-button";
 
 type ForgotPasswordFormProps = {
   disabled?: boolean;
@@ -44,62 +45,55 @@ export function ForgotPasswordForm({
   const isDisabled = disabled || submitting;
 
   return (
-    <AuthCard>
-      <Text style={authCardStyles.title}>Forgot Password</Text>
+    <View style={globalStyles.card}>
+      <AuthBackButton href="/sign-in" />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        autoComplete="email"
-        textContentType="emailAddress"
-        value={email}
-        onChangeText={setEmail}
-        editable={!isDisabled}
-      />
+      <View>
+        <Text style={globalStyles.heroTitle}>Forgot Password</Text>
+        <Text style={globalStyles.heroSubtitle}>
+          Reset your <Text style={globalStyles.brandAccent}>SL</Text> password
+        </Text>
+      </View>
 
-      <Button
-        title={submitting ? "Sending..." : "Send Reset Link"}
+
+      <View style={globalStyles.field}>
+        <Text style={globalStyles.label}>Email</Text>
+        <TextInput
+          style={globalStyles.input}
+          placeholder="Enter Email"
+          placeholderTextColor={colors.placeholder}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          autoComplete="email"
+          textContentType="emailAddress"
+          value={email}
+          onChangeText={setEmail}
+          editable={!isDisabled}
+        />
+      </View>
+
+      <Pressable
+        style={[globalStyles.primaryButton, isDisabled ? globalStyles.primaryButtonDisabled : null]}
         onPress={() => {
           void handleSubmit();
         }}
         disabled={isDisabled}
-      />
+        accessibilityRole="button"
+        accessibilityLabel="Send Reset Link"
+      >
+        <Text style={globalStyles.primaryButtonText}>
+          {submitting ? "Sending..." : "Send Reset Link"}
+        </Text>
+      </Pressable>
 
-      <View style={styles.signupRow}>
-        <Text style={styles.signupPrompt}>Don't Have an Account? </Text>
+      <View style={globalStyles.promptRow}>
+        <Text style={globalStyles.promptText}>Don't Have an Account? </Text>
         <Link href="/sign-up-role" asChild>
           <Pressable disabled={isDisabled} accessibilityRole="link" accessibilityLabel="Get Started">
-            <Text style={styles.signupLink}>Get Started</Text>
+            <Text style={globalStyles.promptLink}>Get Started</Text>
           </Pressable>
         </Link>
       </View>
-    </AuthCard>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  input: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  signupRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  signupPrompt: {
-    color: "#4b5563",
-    fontSize: 14,
-  },
-  signupLink: {
-    color: "#2563eb",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-});
