@@ -7,10 +7,16 @@ import {
   Montserrat_500Medium,
   Montserrat_700Bold,
 } from "@expo-google-fonts/montserrat";
+import { Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
+import {
+  LeagueSpartan_300Light,
+  LeagueSpartan_500Medium,
+  LeagueSpartan_700Bold,
+} from "@expo-google-fonts/league-spartan";
 import * as SplashScreen from "expo-splash-screen";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider } from "@/features/auth/auth-context";
-import { fonts } from "@/styles/global";
+import { colors, fonts, globalStyles } from "@/styles/global";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -20,6 +26,11 @@ export default function RootLayout() {
     [fonts.montserratRegular]: Montserrat_400Regular,
     [fonts.montserratMedium]: Montserrat_500Medium,
     [fonts.montserratBold]: Montserrat_700Bold,
+    [fonts.poppinsRegular]: Poppins_400Regular,
+    [fonts.poppinsBold]: Poppins_700Bold,
+    [fonts.leagueSpartanLight]: LeagueSpartan_300Light,
+    [fonts.leagueSpartanMedium]: LeagueSpartan_500Medium,
+    [fonts.leagueSpartanBold]: LeagueSpartan_700Bold,
   });
 
   useEffect(() => {
@@ -33,9 +44,14 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={globalStyles.screen}>
       <AuthProvider>
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+          }}
+        >
           <Stack.Screen name="(app)" />
           <Stack.Screen name="(auth)" />
         </Stack>

@@ -1,42 +1,45 @@
-import { Pressable, Text } from "react-native";
-import { router, useNavigation } from "expo-router";
-import { globalStyles } from "@/styles/global";
-
-type AuthHref = "/start" | "/sign-in" | "/sign-up-role";
+import { Pressable, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import { colors, globalStyles, sizes, spacing } from "@/styles/global";
+import { useAuthBack, type AuthHref } from "./use-auth-back";
 
 type AuthBackButtonProps = {
-  /** Always navigate here (skips history). */
   href?: AuthHref;
-  /** Used only when there is no navigation history. */
   fallbackHref?: AuthHref;
+  title?: string;
+  color?: string;
+  /** Exact px space from the arrow's right edge to the title (Figma). */
+  gap?: number;
+  style?: StyleProp<ViewStyle>;
 };
 
-export function AuthBackButton({ href, fallbackHref = "/start" }: AuthBackButtonProps) {
-  const navigation = useNavigation();
-
-  function handleBack() {
-    if (href) {
-      router.replace(href);
-      return;
-    }
-
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-      return;
-    }
-
-    router.replace(fallbackHref);
-  }
+export function AuthBackButton({
+  href,
+  fallbackHref = "/sign-in",
+  title = "Create Account",
+  color = colors.backArrow,
+  gap = spacing.authBackTitleDefault,
+  style,
+}: AuthBackButtonProps) {
+  const handleBack = useAuthBack({ href, fallbackHref });
 
   return (
-    <Pressable
-      style={globalStyles.closeButton}
-      onPress={handleBack}
-      hitSlop={12}
-      accessibilityRole="button"
-      accessibilityLabel="Back"
-    >
-      <Text style={globalStyles.closeButtonText}>×</Text>
-    </Pressable>
+    <View style={[globalStyles.backArrowRow, style]} pointerEvents="box-none">
+      <Pressable
+        onPress={handleBack}
+        hitSlop={sizes.backArrowHitSlop}
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+      >
+        <View style={globalStyles.backArrowTriangleSlot}>
+          <View style={[globalStyles.backArrowTriangle, { borderRightColor: color }]} />
+        </View>
+      </Pressable>
+
+      <View style={{ width: gap }} />
+
+      <Text style={[globalStyles.authScreenTitle, { color }]} numberOfLines={1}>
+        {title}
+      </Text>
+    </View>
   );
 }

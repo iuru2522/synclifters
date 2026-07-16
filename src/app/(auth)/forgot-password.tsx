@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { View } from "react-native";
 import { AuthScreenLayout } from "@/components/auth/auth-screen-layout";
 import { FirebaseSetupCard } from "@/components/auth/firebase-setup-card";
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
@@ -18,10 +17,8 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <AuthScreenLayout>
-      <View style={{ width: "100%", maxWidth: 360, gap: 12 }}>
-        <ForgotPasswordForm disabled={submitting} onSubmittingChange={setSubmitting} />
-      </View>
+    <AuthScreenLayout swipeBack={{ href: "/sign-in" }}>
+      <ForgotPasswordForm disabled={submitting} onSubmittingChange={setSubmitting} />
     </AuthScreenLayout>
   );
 }

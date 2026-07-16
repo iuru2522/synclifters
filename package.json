@@ -3,11 +3,15 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
+    "@expo-google-fonts/league-spartan": "^0.4.2",
     "@expo-google-fonts/montserrat": "^0.4.2",
+    "@expo-google-fonts/poppins": "^0.4.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-google-signin/google-signin": "^16.1.2",
     "expo": "~57.0.0",
     "expo-apple-authentication": "~57.0.0",
+    "expo-blur": "~57.0.2",
+    "expo-build-properties": "~57.0.5",
     "expo-constants": "~57.0.2",
     "expo-crypto": "~57.0.0",
     "expo-dev-client": "~57.0.5",
@@ -31,6 +35,8 @@
     "react-native-reanimated": "4.5.0",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "4.25.2",
+    "react-native-svg": "15.15.4",
+    "react-native-video": "^6.19.2",
     "react-native-web": "~0.21.0"
   },
   "devDependencies": {

@@ -31,6 +31,23 @@
     },
     "plugins": [
       "./plugins/withModularHeaders",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "extraPods": [
+              {
+                "name": "AppCheckCore",
+                "version": "11.2.0"
+              },
+              {
+                "name": "AppAuth",
+                "modular_headers": true
+              }
+            ]
+          }
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",
@@ -40,6 +57,7 @@
           "imageWidth": 76
         }
       ],
+      "react-native-video",
       "@react-native-google-signin/google-signin",
       "expo-apple-authentication"
     ],

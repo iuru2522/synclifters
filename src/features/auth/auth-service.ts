@@ -13,17 +13,12 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { getFirebaseAuth, getFirebaseSetupMessage } from "@/lib/firebase";
-import {
-  createUserProfile,
-  isUserRole,
-  type UserRole,
-} from "@/features/users/user-profile";
+import { createUserProfile } from "@/features/users/user-profile";
 
 export type AuthMode = "signin" | "register";
 
 export type SignInWithEmailOptions = {
   displayName?: string;
-  role?: UserRole;
   firstName?: string;
   lastName?: string;
 };
@@ -79,14 +74,10 @@ export async function signInWithEmail(
     return;
   }
 
-  if (!options?.role || !isUserRole(options.role)) {
-    throw new AuthServiceError("Choose Athlete or Coach before signing up.", "ROLE_REQUIRED");
-  }
-
-  const firstName = options.firstName?.trim() ?? "";
-  const lastName = options.lastName?.trim() ?? "";
+  const firstName = options?.firstName?.trim() ?? "";
+  const lastName = options?.lastName?.trim() ?? "";
   const displayName =
-    options.displayName?.trim() || [firstName, lastName].filter(Boolean).join(" ").trim();
+    options?.displayName?.trim() || [firstName, lastName].filter(Boolean).join(" ").trim();
 
   const credential = await createUserWithEmailAndPassword(auth, email, password);
 
@@ -96,7 +87,6 @@ export async function signInWithEmail(
 
   try {
     await createUserProfile(credential.user.uid, {
-      role: options.role,
       firstName,
       lastName,
       email,

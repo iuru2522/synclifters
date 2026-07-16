@@ -9,6 +9,10 @@ import {
 } from "react";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 import {
+  getUserProfile,
+  type UserProfile,
+} from "@/features/users/user-profile";
+import {
   configureAuthProviders,
   isAppleSignInAvailable,
   sendPasswordReset,
@@ -23,6 +27,7 @@ import {
 
 type AuthContextValue = {
   user: User | null;
+  profile: UserProfile | null;
   isLoading: boolean;
   isConfigured: boolean;
   isAppleSignInAvailable: boolean;
@@ -43,7 +48,9 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [appleSignInAvailable, setAppleSignInAvailable] = useState(false);
 
   useEffect(() => {
@@ -55,20 +62,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const auth = getFirebaseAuth();
 
     if (!auth) {
-      setIsLoading(false);
+      setIsAuthLoading(false);
       return;
     }
 
     return onAuthStateChanged(auth, (nextUser) => {
       setUser(nextUser);
-      setIsLoading(false);
+      setIsAuthLoading(false);
     });
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!user) {
+      setProfile(null);
+      setIsProfileLoading(false);
+      return;
+    }
+
+    setIsProfileLoading(true);
+
+    void getUserProfile(user.uid)
+      .then((nextProfile) => {
+        if (!cancelled) {
+          setProfile(nextProfile);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setProfile(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsProfileLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
-      isLoading,
+      profile,
+      isLoading: isAuthLoading || isProfileLoading,
       isConfigured: isFirebaseConfigured,
       isAppleSignInAvailable: appleSignInAvailable,
       signInWithEmail,
@@ -78,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithApple,
       signOut,
     }),
-    [user, isLoading, appleSignInAvailable],
+    [user, profile, isAuthLoading, isProfileLoading, appleSignInAvailable],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

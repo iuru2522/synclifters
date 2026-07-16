@@ -1,10 +1,7 @@
 import { doc, getDoc, serverTimestamp, setDoc, type Timestamp } from "firebase/firestore";
 import { getFirebaseFirestore, getFirebaseSetupMessage } from "@/lib/firebase";
 
-export type UserRole = "athlete" | "coach";
-
 export type UserProfile = {
-  role: UserRole;
   firstName: string;
   lastName: string;
   email: string;
@@ -12,15 +9,10 @@ export type UserProfile = {
 };
 
 export type CreateUserProfileInput = {
-  role: UserRole;
   firstName: string;
   lastName: string;
   email: string;
 };
-
-export function isUserRole(value: unknown): value is UserRole {
-  return value === "athlete" || value === "coach";
-}
 
 function requireFirestore() {
   const db = getFirebaseFirestore();
@@ -40,7 +32,6 @@ export async function createUserProfile(
   const ref = doc(db, "users", uid);
 
   await setDoc(ref, {
-    role: input.role,
     firstName: input.firstName.trim(),
     lastName: input.lastName.trim(),
     email: input.email.trim().toLowerCase(),
@@ -58,12 +49,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
 
   const data = snapshot.data();
 
-  if (!isUserRole(data.role)) {
-    return null;
-  }
-
   return {
-    role: data.role,
     firstName: typeof data.firstName === "string" ? data.firstName : "",
     lastName: typeof data.lastName === "string" ? data.lastName : "",
     email: typeof data.email === "string" ? data.email : "",

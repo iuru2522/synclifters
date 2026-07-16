@@ -1,48 +1,82 @@
-import { useState } from "react";
-import { Alert, Pressable, Text, TextInput, View } from "react-native";
-import { Link } from "expo-router";
-import { SymbolView } from "expo-symbols";
+import { AppButton } from "@/components/app-button";
 import { useAuth } from "@/features/auth/auth-context";
 import { AuthServiceError } from "@/features/auth/auth-service";
-import type { UserRole } from "@/features/users/user-profile";
 import { colors, globalStyles } from "@/styles/global";
+import { Image } from "expo-image";
+import { Link } from "expo-router";
+import { useState } from "react";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import { AuthBackButton } from "./auth-back-button";
 
+const googleIcon = require("../../../assets/images/google-icon.png");
+
 type SignUpFormProps = {
-  role: UserRole;
   disabled?: boolean;
   onSubmittingChange?: (submitting: boolean) => void;
 };
 
-export function SignUpForm({ role, disabled = false, onSubmittingChange }: SignUpFormProps) {
-  const { signInWithEmail } = useAuth();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type SignUpField = "fullName" | "email" | "password";
+
+function isValidPassword(value: string) {
+  return (
+    value.length >= 8 &&
+    /\d/.test(value) &&
+    /[^A-Za-z0-9]/.test(value)
+  );
+}
+
+export function SignUpForm({ disabled = false, onSubmittingChange }: SignUpFormProps) {
+  const { signInWithEmail, signInWithGoogle } = useAuth();
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showFieldErrors, setShowFieldErrors] = useState(false);
+  const [focusedField, setFocusedField] = useState<SignUpField | null>(null);
+
+  const fullNameInvalid = fullName.trim().length === 0;
+  const trimmedEmail = email.trim();
+  const emailFormatInvalid = trimmedEmail.length > 0 && !EMAIL_PATTERN.test(trimmedEmail);
+  const emailEmpty = trimmedEmail.length === 0;
+  const emailInvalid = emailEmpty || !EMAIL_PATTERN.test(trimmedEmail);
+  const showEmailError = emailFormatInvalid || (showFieldErrors && emailEmpty);
+  const passwordInvalid = !isValidPassword(password);
+  const isDisabled = disabled || submitting;
+  const googleEnabled = Boolean(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
+
+  function getInputBorderStyle(field: SignUpField, showError: boolean) {
+    if (showError) {
+      return globalStyles.authInputError;
+    }
+
+    if (focusedField === field) {
+      return globalStyles.authInputFocused;
+    }
+
+    return null;
+  }
 
   async function handleSubmit() {
-    if (!agreedToTerms) {
-      Alert.alert(
-        "Terms required",
-        "Please agree to the SyncLifters Terms & Conditions before signing up.",
-      );
+    setShowFieldErrors(true);
+
+    if (fullNameInvalid || emailInvalid || passwordInvalid) {
       return;
     }
+
+    const trimmedName = fullName.trim();
+    const [firstName = "", ...lastNameParts] = trimmedName.split(/\s+/);
+    const lastName = lastNameParts.join(" ");
 
     setSubmitting(true);
     onSubmittingChange?.(true);
 
     try {
       await signInWithEmail(email, password, "register", {
-        role,
         firstName,
         lastName,
-        displayName: [firstName, lastName].filter(Boolean).join(" ").trim(),
+        displayName: trimmedName,
       });
     } catch (error) {
       const message =
@@ -55,153 +89,170 @@ export function SignUpForm({ role, disabled = false, onSubmittingChange }: SignU
     }
   }
 
-  const isDisabled = disabled || submitting;
+  async function handleGoogleSignIn() {
+    setSubmitting(true);
+    onSubmittingChange?.(true);
+
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      if (error instanceof AuthServiceError && error.cancelled) {
+        return;
+      }
+
+      const message =
+        error instanceof AuthServiceError ? error.message : "Google sign-in failed.";
+
+      Alert.alert("Sign-in failed", message);
+    } finally {
+      setSubmitting(false);
+      onSubmittingChange?.(false);
+    }
+  }
 
   return (
-    <View style={globalStyles.card}>
-      <AuthBackButton href="/sign-up-role" />
+    <View style={globalStyles.signUpScreen}>
+      <View style={globalStyles.signUpHeader}>
+        <AuthBackButton href="/sign-in" />
 
-      <View>
-        <Text style={globalStyles.heroTitle}>Let's Get You Started</Text>
-        <Text style={globalStyles.createAccountSubtitle}>
-          Create <Text style={globalStyles.brandAccent}>SL</Text> account
-        </Text>
+        <View style={globalStyles.authInputsCardShadow}>
+          <View style={globalStyles.signUpInputsCard}>
+          <View style={globalStyles.signUpCardFields}>
+            <View style={globalStyles.signUpInputGroup}>
+              <View style={globalStyles.authFormField}>
+                <Text style={globalStyles.signUpInputLabel}>Full Name</Text>
+              <TextInput
+                style={[
+                  globalStyles.input,
+                  globalStyles.signUpInput,
+                  getInputBorderStyle("fullName", showFieldErrors && fullNameInvalid),
+                ]}
+                placeholder="full name"
+                placeholderTextColor={colors.inputPlaceholder}
+                autoCapitalize="words"
+                autoComplete="name"
+                textContentType="name"
+                value={fullName}
+                onChangeText={setFullName}
+                onFocus={() => {
+                  setFocusedField("fullName");
+                }}
+                onBlur={() => {
+                  setFocusedField((current) => (current === "fullName" ? null : current));
+                }}
+                editable={!isDisabled}
+                accessibilityLabel="Full Name"
+              />
+            </View>
+
+            <View style={globalStyles.authFormField}>
+              <Text style={globalStyles.signUpInputLabel}>Email</Text>
+              <TextInput
+                style={[
+                  globalStyles.input,
+                  globalStyles.signUpInput,
+                  getInputBorderStyle("email", showEmailError),
+                ]}
+                placeholder="enter email"
+                placeholderTextColor={colors.inputPlaceholder}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                autoComplete="email"
+                textContentType="emailAddress"
+                value={email}
+                onChangeText={setEmail}
+                onFocus={() => {
+                  setFocusedField("email");
+                }}
+                onBlur={() => {
+                  setFocusedField((current) => (current === "email" ? null : current));
+                }}
+                editable={!isDisabled}
+                accessibilityLabel="Email"
+              />
+            </View>
+
+            <View style={globalStyles.authFormField}>
+              <Text style={globalStyles.signUpInputLabel}>Password</Text>
+              <TextInput
+                style={[
+                  globalStyles.input,
+                  globalStyles.signUpInput,
+                  getInputBorderStyle("password", showFieldErrors && passwordInvalid),
+                ]}
+                placeholder="************"
+                placeholderTextColor={colors.inputPlaceholder}
+                secureTextEntry
+                autoComplete="new-password"
+                textContentType="newPassword"
+                value={password}
+                onChangeText={setPassword}
+                onFocus={() => {
+                  setFocusedField("password");
+                }}
+                onBlur={() => {
+                  setFocusedField((current) => (current === "password" ? null : current));
+                }}
+                editable={!isDisabled}
+                accessibilityLabel="Password"
+              />
+            </View>
+            </View>
+
+            <View style={globalStyles.signUpSocialGroup}>
+              <Text style={globalStyles.signUpOrSignWith}>or sign with</Text>
+
+              <Pressable
+                style={globalStyles.signUpGoogleButton}
+                onPress={() => {
+                  void handleGoogleSignIn();
+                }}
+                disabled={isDisabled || !googleEnabled}
+                accessibilityRole="button"
+                accessibilityLabel="Sign up with Google"
+              >
+                <Image
+                  source={googleIcon}
+                  style={globalStyles.signUpGoogleIcon}
+                  contentFit="contain"
+                />
+              </Pressable>
+            </View>
+          </View>
+        </View>
+        </View>
       </View>
 
+      <View style={globalStyles.signUpPostHeader}>
+        <Text style={globalStyles.signUpLegalText}>
+          By continuing, you agree to{"\n"}
+          <Text style={globalStyles.signUpLegalLink}>Terms of Use</Text>
+          {" and "}
+          <Text style={globalStyles.signUpLegalLink}>Privacy Policy</Text>.
+        </Text>
 
-      <View style={globalStyles.fieldRow}>
-        <View style={[globalStyles.field, globalStyles.fieldHalf]}>
-          <Text style={globalStyles.label}>First Name</Text>
-          <TextInput
-            style={globalStyles.input}
-            placeholder="Ryan"
-            placeholderTextColor={colors.placeholder}
-            autoCapitalize="words"
-            autoComplete="given-name"
-            textContentType="givenName"
-            value={firstName}
-            onChangeText={setFirstName}
-            editable={!isDisabled}
+        <View style={globalStyles.signUpFormContent}>
+          <AppButton
+            title={submitting ? "Working..." : "Sign Up"}
+            onPress={() => {
+              void handleSubmit();
+            }}
+            disabled={isDisabled}
+            pressFillColor={colors.backArrow}
+            pressLabelColor={colors.inputText}
           />
-        </View>
-        <View style={[globalStyles.field, globalStyles.fieldHalf]}>
-          <Text style={globalStyles.label}>Last Name</Text>
-          <TextInput
-            style={globalStyles.input}
-            placeholder="Gosling"
-            placeholderTextColor={colors.placeholder}
-            autoCapitalize="words"
-            autoComplete="family-name"
-            textContentType="familyName"
-            value={lastName}
-            onChangeText={setLastName}
-            editable={!isDisabled}
-          />
-        </View>
-      </View>
 
-      <View style={globalStyles.field}>
-        <Text style={globalStyles.label}>Email</Text>
-        <TextInput
-          style={globalStyles.input}
-          placeholder="Enter Email"
-          placeholderTextColor={colors.placeholder}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          autoComplete="email"
-          textContentType="emailAddress"
-          value={email}
-          onChangeText={setEmail}
-          editable={!isDisabled}
-        />
-      </View>
-
-      <View style={globalStyles.field}>
-        <Text style={globalStyles.label}>Password</Text>
-        <View>
-          <TextInput
-            style={[globalStyles.input, globalStyles.inputWithIcon]}
-            placeholder="Enter Your Password"
-            placeholderTextColor={colors.placeholder}
-            secureTextEntry={!showPassword}
-            autoComplete="new-password"
-            textContentType="newPassword"
-            value={password}
-            onChangeText={setPassword}
-            editable={!isDisabled}
-          />
-          <Pressable
-            style={globalStyles.inputIconButton}
-            onPress={() => setShowPassword((current) => !current)}
-            accessibilityRole="button"
-            accessibilityLabel={showPassword ? "Hide password" : "Show password"}
-          >
-            <SymbolView
-              name={{
-                ios: showPassword ? "eye.slash" : "eye",
-                android: showPassword ? "visibility_off" : "visibility",
-                web: showPassword ? "visibility_off" : "visibility",
-              }}
-              size={20}
-              tintColor={colors.text}
-              fallback={<Text style={{ color: colors.text }}>{showPassword ? "Hide" : "Show"}</Text>}
-            />
-          </Pressable>
-        </View>
-      </View>
-
-      <Pressable
-        style={globalStyles.checkboxRow}
-        onPress={() => setAgreedToTerms((current) => !current)}
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked: agreedToTerms }}
-        accessibilityLabel="Agree to the SyncLifters Terms and Conditions"
-      >
-        <View style={[globalStyles.checkbox, agreedToTerms ? globalStyles.checkboxChecked : null]}>
-          {agreedToTerms ? <Text style={globalStyles.checkmark}>✓</Text> : null}
-        </View>
-        <Text style={globalStyles.checkboxLabel}>
-          Agree to the SyncLifters{" "}
-          <Text style={globalStyles.termsLink}>Terms & Conditions</Text>
-        </Text>
-      </Pressable>
-
-      <Pressable
-        style={globalStyles.checkboxRow}
-        onPress={() => setMarketingOptIn((current) => !current)}
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked: marketingOptIn }}
-        accessibilityLabel="Sign up to SyncLifters marketing emails"
-      >
-        <View style={[globalStyles.checkbox, marketingOptIn ? globalStyles.checkboxChecked : null]}>
-          {marketingOptIn ? <Text style={globalStyles.checkmark}>✓</Text> : null}
-        </View>
-        <Text style={globalStyles.checkboxLabel}>
-          Sign Up to SyncLigters marketing emails, exclusive offers, news, and more.
-        </Text>
-      </Pressable>
-
-      <Pressable
-        style={[globalStyles.primaryButton, isDisabled ? globalStyles.primaryButtonDisabled : null]}
-        onPress={() => {
-          void handleSubmit();
-        }}
-        disabled={isDisabled}
-        accessibilityRole="button"
-        accessibilityLabel="Sign Up"
-      >
-        <Text style={globalStyles.primaryButtonText}>
-          {submitting ? "Working..." : "Sign Up"}
-        </Text>
-      </Pressable>
-
-      <View style={globalStyles.promptRow}>
-        <Text style={globalStyles.promptText}>Already Have an Account? </Text>
         <Link href="/sign-in" asChild>
-          <Pressable disabled={isDisabled} accessibilityRole="link" accessibilityLabel="Log In">
-            <Text style={globalStyles.promptLink}>Log In</Text>
+          <Pressable
+            style={globalStyles.signUpLoginLink}
+            disabled={isDisabled}
+            accessibilityRole="link"
+            accessibilityLabel="Log in"
+          >
+            <Text style={globalStyles.signUpLoginLinkText}>Log In</Text>
           </Pressable>
         </Link>
+        </View>
       </View>
     </View>
   );

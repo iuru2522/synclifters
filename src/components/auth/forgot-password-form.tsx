@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Alert, Pressable, Text, TextInput, View } from "react-native";
-import { Link } from "expo-router";
+import { Alert, Text, TextInput, View } from "react-native";
+import { AppButton } from "@/components/app-button";
 import { useAuth } from "@/features/auth/auth-context";
 import { AuthServiceError } from "@/features/auth/auth-service";
 import { colors, globalStyles } from "@/styles/global";
@@ -11,6 +11,10 @@ type ForgotPasswordFormProps = {
   onSubmittingChange?: (submitting: boolean) => void;
 };
 
+type ForgotPasswordField = "email";
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function ForgotPasswordForm({
   disabled = false,
   onSubmittingChange,
@@ -18,8 +22,34 @@ export function ForgotPasswordForm({
   const { sendPasswordReset } = useAuth();
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showFieldErrors, setShowFieldErrors] = useState(false);
+  const [focusedField, setFocusedField] = useState<ForgotPasswordField | null>(null);
+
+  const trimmedEmail = email.trim();
+  const emailFormatInvalid = trimmedEmail.length > 0 && !EMAIL_PATTERN.test(trimmedEmail);
+  const emailEmpty = trimmedEmail.length === 0;
+  const emailInvalid = emailEmpty || !EMAIL_PATTERN.test(trimmedEmail);
+  const showEmailError = emailFormatInvalid || (showFieldErrors && emailEmpty);
+
+  function getInputBorderStyle(field: ForgotPasswordField, showError: boolean) {
+    if (showError) {
+      return globalStyles.authInputError;
+    }
+
+    if (focusedField === field) {
+      return globalStyles.authInputFocused;
+    }
+
+    return null;
+  }
 
   async function handleSubmit() {
+    setShowFieldErrors(true);
+
+    if (emailInvalid) {
+      return;
+    }
+
     setSubmitting(true);
     onSubmittingChange?.(true);
 
@@ -45,54 +75,53 @@ export function ForgotPasswordForm({
   const isDisabled = disabled || submitting;
 
   return (
-    <View style={globalStyles.card}>
-      <AuthBackButton href="/sign-in" />
+    <View style={globalStyles.forgotPasswordScreen}>
+      <View style={globalStyles.forgotPasswordHeader}>
+        <AuthBackButton href="/sign-in" title="Forgot Password?" />
 
-      <View>
-        <Text style={globalStyles.heroTitle}>Forgot Password</Text>
-        <Text style={globalStyles.heroSubtitle}>
-          Reset your <Text style={globalStyles.brandAccent}>SL</Text> password
-        </Text>
+        <View style={globalStyles.authInputsCardShadow}>
+          <View style={[globalStyles.signUpInputsCard, globalStyles.forgotPasswordInputsCard]}>
+          <View style={globalStyles.authFormField}>
+            <Text style={globalStyles.signUpInputLabel}>Email</Text>
+            <TextInput
+              style={[
+                globalStyles.input,
+                globalStyles.signUpInput,
+                getInputBorderStyle("email", showEmailError),
+              ]}
+              placeholder="enter email"
+              placeholderTextColor={colors.inputPlaceholder}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoComplete="email"
+              textContentType="emailAddress"
+              value={email}
+              onChangeText={setEmail}
+              onFocus={() => {
+                setFocusedField("email");
+              }}
+              onBlur={() => {
+                setFocusedField((current) => (current === "email" ? null : current));
+              }}
+              editable={!isDisabled}
+              accessibilityLabel="Email"
+            />
+          </View>
+        </View>
+        </View>
       </View>
 
-
-      <View style={globalStyles.field}>
-        <Text style={globalStyles.label}>Email</Text>
-        <TextInput
-          style={globalStyles.input}
-          placeholder="Enter Email"
-          placeholderTextColor={colors.placeholder}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          autoComplete="email"
-          textContentType="emailAddress"
-          value={email}
-          onChangeText={setEmail}
-          editable={!isDisabled}
+      <View style={globalStyles.forgotPasswordFormContent}>
+        <AppButton
+          title={submitting ? "Sending..." : "Send Reset Link"}
+          onPress={() => {
+            void handleSubmit();
+          }}
+          disabled={isDisabled}
+          borderColor={colors.resetButtonBorder}
+          pressFillColor={colors.resetButtonBorder}
+          pressLabelColor={colors.inputText}
         />
-      </View>
-
-      <Pressable
-        style={[globalStyles.primaryButton, isDisabled ? globalStyles.primaryButtonDisabled : null]}
-        onPress={() => {
-          void handleSubmit();
-        }}
-        disabled={isDisabled}
-        accessibilityRole="button"
-        accessibilityLabel="Send Reset Link"
-      >
-        <Text style={globalStyles.primaryButtonText}>
-          {submitting ? "Sending..." : "Send Reset Link"}
-        </Text>
-      </Pressable>
-
-      <View style={globalStyles.promptRow}>
-        <Text style={globalStyles.promptText}>Don't Have an Account? </Text>
-        <Link href="/sign-up-role" asChild>
-          <Pressable disabled={isDisabled} accessibilityRole="link" accessibilityLabel="Get Started">
-            <Text style={globalStyles.promptLink}>Get Started</Text>
-          </Pressable>
-        </Link>
       </View>
     </View>
   );

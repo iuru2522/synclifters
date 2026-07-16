@@ -1,21 +1,12 @@
 import { useState } from "react";
-import { Redirect, useLocalSearchParams } from "expo-router";
 import { AuthScreenLayout } from "@/components/auth/auth-screen-layout";
 import { FirebaseSetupCard } from "@/components/auth/firebase-setup-card";
 import { SignUpForm } from "@/components/auth/sign-up-form";
 import { useAuth } from "@/features/auth/auth-context";
-import { isUserRole, type UserRole } from "@/features/users/user-profile";
 
 export default function SignUpScreen() {
   const { isConfigured } = useAuth();
-  const { role: roleParam } = useLocalSearchParams<{ role?: string }>();
   const [submitting, setSubmitting] = useState(false);
-
-  const role: UserRole | null = isUserRole(roleParam) ? roleParam : null;
-
-  if (!role) {
-    return <Redirect href="/sign-up-role" />;
-  }
 
   if (!isConfigured) {
     return (
@@ -26,8 +17,8 @@ export default function SignUpScreen() {
   }
 
   return (
-    <AuthScreenLayout>
-      <SignUpForm role={role} disabled={submitting} onSubmittingChange={setSubmitting} />
+    <AuthScreenLayout swipeBack={{ href: "/sign-in" }}>
+      <SignUpForm disabled={submitting} onSubmittingChange={setSubmitting} />
     </AuthScreenLayout>
   );
 }

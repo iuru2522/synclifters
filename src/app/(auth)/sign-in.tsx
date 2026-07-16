@@ -17,7 +17,7 @@ export default function SignInScreen() {
   }
 
   return (
-    <AuthScreenLayout>
+    <AuthScreenLayout swipeBack={{ href: "/sign-up" }} videoBackground>
       <SignInForm disabled={submitting} onSubmittingChange={setSubmitting} />
     </AuthScreenLayout>
   );

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Alert, Button, View } from "react-native";
 import { useAuth } from "@/features/auth/auth-context";
 import { AuthServiceError } from "@/features/auth/auth-service";
-import { globalStyles } from "@/styles/global";
+import { globalStyles, layout } from "@/styles/global";
 import { AuthCard } from "./auth-card";
 
 type SocialSignInProps = {
@@ -74,7 +74,7 @@ export function SocialSignIn({ disabled = false, onSubmittingChange }: SocialSig
         <AppleAuthentication.AppleAuthenticationButton
           buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
           buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-          cornerRadius={10}
+          cornerRadius={layout.appleButtonRadius}
           style={[globalStyles.appleButton, isDisabled ? globalStyles.appleButtonDisabled : null]}
           onPress={() => {
             if (isDisabled) {

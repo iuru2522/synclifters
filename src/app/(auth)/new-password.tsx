@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { AuthScreenLayout } from "@/components/auth/auth-screen-layout";
 import { FirebaseSetupCard } from "@/components/auth/firebase-setup-card";
@@ -24,13 +23,11 @@ export default function NewPasswordScreen() {
 
   return (
     <AuthScreenLayout>
-      <View style={{ width: "100%", maxWidth: 360, gap: 12 }}>
-        <NewPasswordForm
-          oobCode={oobCode}
-          disabled={submitting}
-          onSubmittingChange={setSubmitting}
-        />
-      </View>
+      <NewPasswordForm
+        oobCode={oobCode}
+        disabled={submitting}
+        onSubmittingChange={setSubmitting}
+      />
     </AuthScreenLayout>
   );
 }

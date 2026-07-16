@@ -5,9 +5,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow create: if request.auth != null
         && request.auth.uid == userId
-        && request.resource.data.role in ['athlete', 'coach']
         && request.resource.data.keys().hasAll([
-          'role',
           'firstName',
           'lastName',
           'email',
@@ -16,9 +14,7 @@ service cloud.firestore {
 
       allow read: if request.auth != null && request.auth.uid == userId;
 
-      allow update: if request.auth != null
-        && request.auth.uid == userId
-        && request.resource.data.role == resource.data.role;
+      allow update: if request.auth != null && request.auth.uid == userId;
 
       allow delete: if false;
     }

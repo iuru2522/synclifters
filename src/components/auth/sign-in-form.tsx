@@ -1,25 +1,53 @@
-import { useState } from "react";
-import { Alert, Pressable, Text, TextInput, View } from "react-native";
-import { Link } from "expo-router";
-import { SymbolView } from "expo-symbols";
+import { AppButton } from "@/components/app-button";
+import { AuthBlurInputsCard } from "@/components/auth/auth-blur-inputs-card";
 import { useAuth } from "@/features/auth/auth-context";
 import { AuthServiceError } from "@/features/auth/auth-service";
 import { colors, globalStyles } from "@/styles/global";
-import { AuthBackButton } from "./auth-back-button";
+import { Image } from "expo-image";
+import { Link } from "expo-router";
+import { useState } from "react";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
+
+const googleIcon = require("../../../assets/images/google-icon.png");
 
 type SignInFormProps = {
   disabled?: boolean;
   onSubmittingChange?: (submitting: boolean) => void;
 };
 
+type SignInField = "email" | "password";
+
 export function SignInForm({ disabled = false, onSubmittingChange }: SignInFormProps) {
-  const { signInWithEmail } = useAuth();
+  const { signInWithEmail, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showFieldErrors, setShowFieldErrors] = useState(false);
+  const [focusedField, setFocusedField] = useState<SignInField | null>(null);
+  const googleEnabled = Boolean(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
+
+  const emailInvalid = email.trim().length === 0;
+  const passwordInvalid = password.length === 0;
+
+  function getInputBorderStyle(field: SignInField, invalid: boolean) {
+    if (focusedField === field) {
+      return globalStyles.authInputFocused;
+    }
+
+    if (showFieldErrors && invalid) {
+      return globalStyles.authInputError;
+    }
+
+    return null;
+  }
 
   async function handleSubmit() {
+    setShowFieldErrors(true);
+
+    if (emailInvalid || passwordInvalid) {
+      return;
+    }
+
     setSubmitting(true);
     onSubmittingChange?.(true);
 
@@ -36,95 +64,140 @@ export function SignInForm({ disabled = false, onSubmittingChange }: SignInFormP
     }
   }
 
+  async function handleGoogleSignIn() {
+    setSubmitting(true);
+    onSubmittingChange?.(true);
+
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      if (error instanceof AuthServiceError && error.cancelled) {
+        return;
+      }
+
+      const message =
+        error instanceof AuthServiceError ? error.message : "Google sign-in failed.";
+
+      Alert.alert("Sign-in failed", message);
+    } finally {
+      setSubmitting(false);
+      onSubmittingChange?.(false);
+    }
+  }
+
   const isDisabled = disabled || submitting;
 
   return (
-    <View style={globalStyles.card}>
-      <AuthBackButton href="/sign-up-role" />
-
-      <View>
-        <Text style={globalStyles.heroTitle}>Welcome Back</Text>
-        <Text style={globalStyles.heroSubtitle}>
-          Log In to <Text style={globalStyles.brandAccent}>SL</Text> Account
+    <View style={globalStyles.signInScreen}>
+      <View style={globalStyles.signInHeader}>
+        <Text style={[globalStyles.authScreenTitle, globalStyles.authScreenTitleTextCenter]}>
+          Welcome
         </Text>
-      </View>
 
+        <View style={[globalStyles.authBlurInputsCardWrap, globalStyles.authInputsCardShadow]}>
+          <AuthBlurInputsCard>
+            <View style={globalStyles.signUpInputGroup}>
+              <View style={globalStyles.authFormField}>
+                <Text style={globalStyles.signUpInputLabel}>Username or email</Text>
+                <TextInput
+                  style={[
+                    globalStyles.input,
+                    globalStyles.signUpInput,
+                    getInputBorderStyle("email", emailInvalid),
+                  ]}
+                  placeholder="enter your email"
+                  placeholderTextColor={colors.inputPlaceholder}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoComplete="username"
+                  textContentType="username"
+                  value={email}
+                  onChangeText={setEmail}
+                  onFocus={() => {
+                    setFocusedField("email");
+                  }}
+                  onBlur={() => {
+                    setFocusedField((current) => (current === "email" ? null : current));
+                  }}
+                  editable={!isDisabled}
+                  accessibilityLabel="Username or email"
+                />
+              </View>
 
-      <View style={globalStyles.field}>
-        <Text style={globalStyles.label}>Email</Text>
-        <TextInput
-          style={globalStyles.input}
-          placeholder="Enter Email"
-          placeholderTextColor={colors.placeholder}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          autoComplete="email"
-          textContentType="emailAddress"
-          value={email}
-          onChangeText={setEmail}
-          editable={!isDisabled}
-        />
-      </View>
-
-      <View style={globalStyles.field}>
-        <Text style={globalStyles.label}>Password</Text>
-        <View>
-          <TextInput
-            style={[globalStyles.input, globalStyles.inputWithIcon]}
-            placeholder="Enter Your Password"
-            placeholderTextColor={colors.placeholder}
-            secureTextEntry={!showPassword}
-            autoComplete="password"
-            textContentType="password"
-            value={password}
-            onChangeText={setPassword}
-            editable={!isDisabled}
-          />
-          <Pressable
-            style={globalStyles.inputIconButton}
-            onPress={() => setShowPassword((current) => !current)}
-            accessibilityRole="button"
-            accessibilityLabel={showPassword ? "Hide password" : "Show password"}
-          >
-            <SymbolView
-              name={{
-                ios: showPassword ? "eye.slash" : "eye",
-                android: showPassword ? "visibility_off" : "visibility",
-                web: showPassword ? "visibility_off" : "visibility",
-              }}
-              size={20}
-              tintColor={colors.text}
-              fallback={<Text style={{ color: colors.text }}>{showPassword ? "Hide" : "Show"}</Text>}
-            />
-          </Pressable>
+              <View style={globalStyles.authFormField}>
+                <Text style={globalStyles.signUpInputLabel}>Password</Text>
+                <TextInput
+                  style={[
+                    globalStyles.input,
+                    globalStyles.signUpInput,
+                    getInputBorderStyle("password", passwordInvalid),
+                  ]}
+                  placeholder="************"
+                  placeholderTextColor={colors.inputPlaceholder}
+                  secureTextEntry
+                  autoComplete="password"
+                  textContentType="password"
+                  value={password}
+                  onChangeText={setPassword}
+                  onFocus={() => {
+                    setFocusedField("password");
+                  }}
+                  onBlur={() => {
+                    setFocusedField((current) => (current === "password" ? null : current));
+                  }}
+                  editable={!isDisabled}
+                  accessibilityLabel="Password"
+                />
+                <Link href="/forgot-password" asChild>
+                  <Pressable style={globalStyles.signInForgotLink} disabled={isDisabled}>
+                    <Text style={globalStyles.signInForgotLinkText}>Forgot Password?</Text>
+                  </Pressable>
+                </Link>
+              </View>
+            </View>
+          </AuthBlurInputsCard>
         </View>
       </View>
 
-      <Link href="/forgot-password" asChild>
-        <Pressable disabled={isDisabled}>
-          <Text style={globalStyles.forgotLink}>Forgot Password</Text>
-        </Pressable>
-      </Link>
+      <View style={globalStyles.signInFormContent}>
+        <AppButton
+          title={submitting ? "Working..." : "Log In"}
+          onPress={() => {
+            void handleSubmit();
+          }}
+          disabled={isDisabled}
+          pressFillColor={colors.backArrow}
+          pressLabelColor={colors.inputText}
+        />
 
-      <Pressable
-        style={[globalStyles.primaryButton, isDisabled ? globalStyles.primaryButtonDisabled : null]}
-        onPress={() => {
-          void handleSubmit();
-        }}
-        disabled={isDisabled}
-        accessibilityRole="button"
-        accessibilityLabel="Log In"
-      >
-        <Text style={globalStyles.primaryButtonText}>
-          {submitting ? "Working..." : "Log In"}
-        </Text>
-      </Pressable>
+        <View style={globalStyles.signInSocialGroup}>
+          <Text style={globalStyles.signInOrSignWith}>or sign up with</Text>
 
-      <View style={globalStyles.promptRow}>
-        <Text style={globalStyles.promptText}>Don't Have an Account? </Text>
-        <Link href="/sign-up-role" asChild>
-          <Pressable disabled={isDisabled} accessibilityRole="link" accessibilityLabel="Sign Up">
-            <Text style={globalStyles.promptLink}>Sign Up</Text>
+          <Pressable
+            style={globalStyles.signUpGoogleButton}
+            onPress={() => {
+              void handleGoogleSignIn();
+            }}
+            disabled={isDisabled || !googleEnabled}
+            accessibilityRole="button"
+            accessibilityLabel="Sign in with Google"
+          >
+            <Image
+              source={googleIcon}
+              style={globalStyles.signUpGoogleIcon}
+              contentFit="contain"
+            />
+          </Pressable>
+        </View>
+
+        <Link href="/sign-up" asChild>
+          <Pressable
+            style={globalStyles.signUpLoginLink}
+            disabled={isDisabled}
+            accessibilityRole="link"
+            accessibilityLabel="Sign Up"
+          >
+            <Text style={globalStyles.signUpLoginLinkText}>Sign Up</Text>
           </Pressable>
         </Link>
       </View>
