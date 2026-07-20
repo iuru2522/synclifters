@@ -1,17 +1,47 @@
-import { Redirect } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
+import { useEffect } from "react";
 import { useAuth } from "@/features/auth/auth-context";
+import { isOnboardingComplete } from "@/features/users/user-profile";
 import { colors } from "@/styles/global";
 
 export default function AppLayout() {
-  const { user, isLoading, isConfigured } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user, isAuthLoading, isProfileLoading, isConfigured, profile } = useAuth();
 
-  if (isLoading) {
+  useEffect(() => {
+    if (isAuthLoading || (user && isProfileLoading && !profile)) {
+      return;
+    }
+
+    if (!isConfigured || !user) {
+      if (!pathname.startsWith("/sign-up") && !pathname.startsWith("/sign-in")) {
+        router.replace("/sign-up");
+      }
+
+      return;
+    }
+
+    if (!isOnboardingComplete(profile) && !pathname.startsWith("/gender")) {
+      router.replace("/gender");
+    }
+  }, [
+    isAuthLoading,
+    isConfigured,
+    isProfileLoading,
+    pathname,
+    profile,
+    router,
+    user,
+  ]);
+
+  if (isAuthLoading || (user && isProfileLoading && !profile)) {
     return null;
   }
 
-  if (!isConfigured || !user) {
-    return <Redirect href="/sign-up" />;
+  if (!isConfigured || !user || !isOnboardingComplete(profile)) {
+    return null;
   }
 
   return (
@@ -23,8 +53,8 @@ export default function AppLayout() {
       tintColor={colors.black}
     >
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Icon sf="1.circle.fill" md="looks_one" />
-        <NativeTabs.Trigger.Label>Tab1</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="person.circle.fill" md="person" />
+        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="tab2">
         <NativeTabs.Trigger.Icon sf="2.circle.fill" md="looks_two" />

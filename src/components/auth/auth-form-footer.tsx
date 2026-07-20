@@ -9,6 +9,8 @@ type AuthFormFooterProps = {
   nextTitle?: string;
   nextDisabled?: boolean;
   skipHref?: Href;
+  onSkipPress?: () => void | Promise<void>;
+  skipDisabled?: boolean;
   showSkip?: boolean;
   showNext?: boolean;
 };
@@ -18,6 +20,8 @@ export function AuthFormFooter({
   nextTitle = "Next",
   nextDisabled = false,
   skipHref = "/sign-in",
+  onSkipPress,
+  skipDisabled = false,
   showSkip = true,
   showNext = true,
 }: AuthFormFooterProps) {
@@ -40,7 +44,9 @@ export function AuthFormFooter({
           style={globalStyles.authFormFooterNextButton}
         />
       </View>
-      {showSkip ? <AuthSkipLink href={skipHref} /> : null}
+      {showSkip ? (
+        <AuthSkipLink href={skipHref} onPress={onSkipPress} disabled={skipDisabled || nextDisabled} />
+      ) : null}
     </View>
   );
 }

@@ -1,6 +1,7 @@
 import { onAuthStateChanged, User } from "firebase/auth";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -29,8 +30,12 @@ type AuthContextValue = {
   user: User | null;
   profile: UserProfile | null;
   isLoading: boolean;
+  isAuthLoading: boolean;
+  isProfileLoading: boolean;
   isConfigured: boolean;
   isAppleSignInAvailable: boolean;
+  refreshProfile: (options?: { silent?: boolean }) => Promise<void>;
+  patchProfile: (patch: Partial<UserProfile>) => void;
   signInWithEmail: (
     email: string,
     password: string,
@@ -72,6 +77,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const patchProfile = useCallback((patch: Partial<UserProfile>) => {
+    setProfile((current) => (current ? { ...current, ...patch } : current));
+  }, []);
+
+  const refreshProfile = useCallback(async (options?: { silent?: boolean }) => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+
+    const silent = options?.silent ?? false;
+
+    if (!silent) {
+      setIsProfileLoading(true);
+    }
+
+    try {
+      const nextProfile = await getUserProfile(user.uid);
+      setProfile(nextProfile);
+    } catch {
+      if (!silent) {
+        setProfile(null);
+      }
+    } finally {
+      if (!silent) {
+        setIsProfileLoading(false);
+      }
+    }
+  }, [user]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -110,8 +145,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       profile,
       isLoading: isAuthLoading || isProfileLoading,
+      isAuthLoading,
+      isProfileLoading,
       isConfigured: isFirebaseConfigured,
       isAppleSignInAvailable: appleSignInAvailable,
+      refreshProfile,
+      patchProfile,
       signInWithEmail,
       sendPasswordReset,
       setNewPassword,
@@ -119,7 +158,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithApple,
       signOut,
     }),
-    [user, profile, isAuthLoading, isProfileLoading, appleSignInAvailable],
+    [
+      user,
+      profile,
+      isAuthLoading,
+      isProfileLoading,
+      appleSignInAvailable,
+      refreshProfile,
+      patchProfile,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

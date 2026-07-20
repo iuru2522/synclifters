@@ -112,6 +112,7 @@ export const spacing = {
   cardGap: 14,
   formGap: 14,
   tabContent: 16,
+  profileFieldRow: 12,
   safeAreaTopMin: 12,
   safeAreaTopExtra: 4,
   safeAreaBottomMin: 8,
@@ -369,6 +370,41 @@ export const globalStyles = StyleSheet.create({
     ...typography.authTitle,
     color: colors.black,
     textAlign: "center",
+  },
+  profileScreenContent: {
+    flex: 1,
+    paddingHorizontal: layout.screenPaddingHorizontal,
+  },
+  profileScreenBody: {
+    flex: 1,
+    width: "100%",
+    maxWidth: layout.authMaxWidth,
+    alignSelf: "center",
+  },
+  profileCard: {
+    ...authInputsCardBase,
+    backgroundColor: colors.successCardTint,
+    gap: spacing.cardFields,
+  },
+  profileCardFields: {
+    gap: spacing.profileFieldRow,
+  },
+  profileFieldRow: {
+    gap: spacing.fieldStack,
+  },
+  profileFieldLabel: {
+    ...typography.authLabel,
+    color: colors.backArrow,
+    fontFamily: fonts.leagueSpartanMedium,
+    fontWeight: "500",
+    includeFontPadding: false,
+  },
+  profileFieldValue: {
+    ...typography.authInput,
+    color: colors.white,
+    fontFamily: fonts.montserratRegular,
+    fontWeight: "400",
+    includeFontPadding: false,
   },
   backArrowRow: {
     minHeight: sizes.backArrowRowMinHeight,

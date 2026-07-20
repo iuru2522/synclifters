@@ -3,7 +3,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { AuthServiceError } from "@/features/auth/auth-service";
 import { colors, globalStyles } from "@/styles/global";
 import { Image } from "expo-image";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import { AuthBackButton } from "./auth-back-button";
@@ -78,6 +78,7 @@ export function SignUpForm({ disabled = false, onSubmittingChange }: SignUpFormP
         lastName,
         displayName: trimmedName,
       });
+      router.replace("/gender");
     } catch (error) {
       const message =
         error instanceof AuthServiceError ? error.message : "Sign up failed.";

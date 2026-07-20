@@ -1,5 +1,5 @@
-import { TabScreen } from "@/components/app/tab-screen";
+import { ProfileTabScreen } from "@/components/app/profile-tab-screen";
 
 export default function Tab1Screen() {
-  return <TabScreen title="Tab1" />;
+  return <ProfileTabScreen />;
 }

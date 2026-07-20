@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { View } from "react-native";
 import { useMeasurementUnit } from "@/features/onboarding/measurement-unit-context";
+import { useOnboarding } from "@/features/onboarding/onboarding-context";
 import { globalStyles, spacing } from "@/styles/global";
 import { AuthBackButton } from "./auth-back-button";
 import { HeightRulerPicker } from "./height-ruler-picker";
@@ -8,8 +9,8 @@ import { convertHeight, getHeightRulerConfig } from "./height-ruler-units";
 
 export function HeightForm() {
   const { unit } = useMeasurementUnit();
+  const { height, setHeight } = useOnboarding();
   const config = getHeightRulerConfig(unit);
-  const [height, setHeight] = useState(config.default);
   const prevUnitRef = useRef(unit);
 
   useEffect(() => {
@@ -19,7 +20,7 @@ export function HeightForm() {
 
     setHeight((current) => convertHeight(current, prevUnitRef.current, unit));
     prevUnitRef.current = unit;
-  }, [unit]);
+  }, [setHeight, unit]);
 
   return (
     <View style={globalStyles.heightScreen}>

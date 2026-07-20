@@ -7,10 +7,11 @@ export type Gender = "male" | "female";
 
 type GenderFormProps = {
   gender: Gender | null;
-  onGenderChange: (gender: Gender) => void;
+  onGenderChange: (gender: Gender) => void | Promise<void>;
+  disabled?: boolean;
 };
 
-export function GenderForm({ gender, onGenderChange }: GenderFormProps) {
+export function GenderForm({ gender, onGenderChange, disabled = false }: GenderFormProps) {
   return (
     <View style={globalStyles.genderScreen}>
       <View style={globalStyles.genderHeader}>
@@ -21,8 +22,9 @@ export function GenderForm({ gender, onGenderChange }: GenderFormProps) {
             <AppButton
               title="Male"
               onPress={() => {
-                onGenderChange("male");
+                void onGenderChange("male");
               }}
+              disabled={disabled}
               borderColor={colors.genderMale}
               textStyle={[
                 globalStyles.genderOptionButtonText,
@@ -41,8 +43,9 @@ export function GenderForm({ gender, onGenderChange }: GenderFormProps) {
             <AppButton
               title="Female"
               onPress={() => {
-                onGenderChange("female");
+                void onGenderChange("female");
               }}
+              disabled={disabled}
               borderColor={colors.genderFemale}
               textStyle={[
                 globalStyles.genderOptionButtonText,
