@@ -10,6 +10,7 @@ type AuthBackButtonProps = {
   /** Exact px space from the arrow's right edge to the title (Figma). */
   gap?: number;
   style?: StyleProp<ViewStyle>;
+  onPress?: () => void;
 };
 
 export function AuthBackButton({
@@ -19,13 +20,14 @@ export function AuthBackButton({
   color = colors.backArrow,
   gap = spacing.authBackTitleDefault,
   style,
+  onPress,
 }: AuthBackButtonProps) {
   const handleBack = useAuthBack({ href, fallbackHref });
 
   return (
     <View style={[globalStyles.backArrowRow, style]} pointerEvents="box-none">
       <Pressable
-        onPress={handleBack}
+        onPress={onPress ?? handleBack}
         hitSlop={sizes.backArrowHitSlop}
         accessibilityRole="button"
         accessibilityLabel="Back"

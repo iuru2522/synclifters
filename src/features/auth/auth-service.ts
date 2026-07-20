@@ -2,15 +2,18 @@ import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
 import {
+  applyActionCode,
   Auth,
   confirmPasswordReset,
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   OAuthProvider,
+  sendEmailVerification,
   sendPasswordResetEmail,
   signInWithCredential,
   signInWithEmailAndPassword,
   updateProfile,
+  type User,
 } from "firebase/auth";
 import { getFirebaseAuth, getFirebaseSetupMessage } from "@/lib/firebase";
 import { createUserProfile } from "@/features/users/user-profile";
@@ -95,6 +98,16 @@ export async function signInWithEmail(
     const message =
       error instanceof Error ? error.message : "Failed to create user profile.";
     throw new AuthServiceError(message, "PROFILE_CREATE_FAILED");
+  }
+
+  try {
+    await sendEmailVerification(credential.user);
+  } catch (error: unknown) {
+    const authError = error as { code?: string; message?: string };
+    throw new AuthServiceError(
+      authError.message ?? "Account created, but the verification email failed to send.",
+      authError.code ?? "EMAIL_VERIFICATION_SEND_FAILED",
+    );
   }
 }
 
@@ -214,6 +227,65 @@ export async function setNewPassword(oobCode: string, newPassword: string): Prom
       authError.code,
     );
   }
+}
+
+export async function resendEmailVerification(): Promise<void> {
+  const auth = requireAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new AuthServiceError("Sign in to verify your email.", "NOT_SIGNED_IN");
+  }
+
+  if (user.emailVerified) {
+    return;
+  }
+
+  try {
+    await sendEmailVerification(user);
+  } catch (error: unknown) {
+    const authError = error as { code?: string; message?: string };
+    throw new AuthServiceError(
+      authError.message ?? "Failed to send verification email.",
+      authError.code,
+    );
+  }
+}
+
+export async function confirmEmailVerification(oobCode: string): Promise<User | null> {
+  const auth = requireAuth();
+  const code = oobCode.trim();
+
+  if (!code) {
+    throw new AuthServiceError(
+      "This verification link is missing or invalid. Request a new one.",
+      "OOB_CODE_REQUIRED",
+    );
+  }
+
+  try {
+    await applyActionCode(auth, code);
+    await auth.currentUser?.reload();
+    return auth.currentUser;
+  } catch (error: unknown) {
+    const authError = error as { code?: string; message?: string };
+    throw new AuthServiceError(
+      authError.message ?? "Failed to verify email.",
+      authError.code,
+    );
+  }
+}
+
+export async function refreshCurrentUser(): Promise<User | null> {
+  const auth = requireAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    return null;
+  }
+
+  await user.reload();
+  return auth.currentUser;
 }
 
 export async function signOut(): Promise<void> {
