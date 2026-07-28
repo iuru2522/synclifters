@@ -11,6 +11,7 @@ export const colors = {
   accent: "#C6F54B",
   buttonText: "#ACDB60",
   backArrow: "#ADDC60",
+  tabBarInactive: "#749340",
   resetButtonBorder: "#FF0001",
   supportHeader: "#C5BF16",
   supportOkInactive: "#918C11",
@@ -216,6 +217,9 @@ export const sizes = {
 } as const;
 
 export const typography = {
+  tabLabel: {
+    fontSize: 10,
+  },
   authTitle: {
     fontSize: 20,
     lineHeight: 28,
@@ -298,6 +302,7 @@ export const shadows = {
 
 export const fonts = {
   montserratExtraLight: "Montserrat_200ExtraLight",
+  montserratLight: "Montserrat_300Light",
   montserratRegular: "Montserrat_400Regular",
   montserratMedium: "Montserrat_500Medium",
   montserratBold: "Montserrat_700Bold",
@@ -373,6 +378,18 @@ export const globalStyles = StyleSheet.create({
     ...typography.authTitle,
     color: colors.black,
     textAlign: "center",
+  },
+  tabBarLabel: {
+    ...typography.tabLabel,
+    color: colors.tabBarInactive,
+    fontFamily: fonts.montserratLight,
+    fontWeight: "300",
+  },
+  tabBarLabelActive: {
+    ...typography.tabLabel,
+    color: colors.backArrow,
+    fontFamily: fonts.montserratLight,
+    fontWeight: "300",
   },
   profileScreenContent: {
     flex: 1,

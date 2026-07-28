@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import {
   useFonts,
   Montserrat_200ExtraLight,
+  Montserrat_300Light,
   Montserrat_400Regular,
   Montserrat_500Medium,
   Montserrat_700Bold,
@@ -23,6 +24,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     [fonts.montserratExtraLight]: Montserrat_200ExtraLight,
+    [fonts.montserratLight]: Montserrat_300Light,
     [fonts.montserratRegular]: Montserrat_400Regular,
     [fonts.montserratMedium]: Montserrat_500Medium,
     [fonts.montserratBold]: Montserrat_700Bold,
