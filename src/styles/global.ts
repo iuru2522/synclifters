@@ -62,7 +62,10 @@ export const spacing = {
   authBackTitleSupportError: 126,
   authBackTitleContactUs: 110,
   authBackTitleSportsExperience: 60,
+  authBackTitleVerifyEmail: 90,
   signInHeader: 214,
+  verifyEmailHeader: 180,
+  verifyEmailForm: 48,
   signInForm: 60,
   signUpHeader: 80,
   signUpLegal: 45,
@@ -474,6 +477,44 @@ export const globalStyles = StyleSheet.create({
   },
   forgotPasswordFormContent: {
     ...authBleedStretch,
+  },
+  verifyEmailScreen: {
+    ...authScreenBase,
+    gap: spacing.verifyEmailForm,
+  },
+  verifyEmailHeader: {
+    gap: spacing.verifyEmailHeader,
+    alignItems: "stretch",
+  },
+  verifyEmailFormContent: {
+    ...authBleedStretch,
+    gap: spacing.formGap,
+  },
+  verifyEmailCard: {
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    gap: spacing.fieldStack,
+  },
+  verifyEmailMessage: {
+    ...typography.authSmall,
+    color: colors.white,
+    fontFamily: fonts.leagueSpartanLight,
+    fontWeight: "300",
+    textAlign: "center",
+    includeFontPadding: false,
+  },
+  verifyEmailAddress: {
+    color: colors.legalLink,
+    fontFamily: fonts.leagueSpartanBold,
+    fontWeight: "700",
+  },
+  verifyEmailHint: {
+    ...typography.authSmall,
+    color: colors.textMuted,
+    fontFamily: fonts.leagueSpartanLight,
+    fontWeight: "300",
+    textAlign: "center",
+    includeFontPadding: false,
   },
   newPasswordScreen: {
     ...authScreenBase,

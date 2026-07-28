@@ -15,7 +15,10 @@ import {
 } from "@/features/users/user-profile";
 import {
   configureAuthProviders,
+  confirmEmailVerification,
   isAppleSignInAvailable,
+  refreshCurrentUser,
+  resendEmailVerification,
   sendPasswordReset,
   setNewPassword,
   signInWithApple,
@@ -33,6 +36,7 @@ type AuthContextValue = {
   isAuthLoading: boolean;
   isProfileLoading: boolean;
   isConfigured: boolean;
+  isEmailVerified: boolean;
   isAppleSignInAvailable: boolean;
   refreshProfile: (options?: { silent?: boolean }) => Promise<void>;
   patchProfile: (patch: Partial<UserProfile>) => void;
@@ -44,6 +48,9 @@ type AuthContextValue = {
   ) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   setNewPassword: (oobCode: string, newPassword: string) => Promise<void>;
+  resendEmailVerification: () => Promise<void>;
+  confirmEmailVerification: (oobCode: string) => Promise<void>;
+  refreshUser: () => Promise<User | null>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -57,6 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [appleSignInAvailable, setAppleSignInAvailable] = useState(false);
+  // Track separately: Firebase User.reload() mutates in place, so React may
+  // not re-render when only emailVerified flips on the same object reference.
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   useEffect(() => {
     configureAuthProviders();
@@ -73,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return onAuthStateChanged(auth, (nextUser) => {
       setUser(nextUser);
+      setIsEmailVerified(Boolean(nextUser?.emailVerified));
       setIsAuthLoading(false);
     });
   }, []);
@@ -140,6 +151,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [user]);
 
+  const refreshUser = useCallback(async () => {
+    const nextUser = await refreshCurrentUser();
+    setUser(nextUser);
+    setIsEmailVerified(Boolean(nextUser?.emailVerified));
+    return nextUser;
+  }, []);
+
+  const handleResendEmailVerification = useCallback(async () => {
+    await resendEmailVerification();
+  }, []);
+
+  const handleConfirmEmailVerification = useCallback(async (oobCode: string) => {
+    const nextUser = await confirmEmailVerification(oobCode);
+    setUser(nextUser);
+    setIsEmailVerified(Boolean(nextUser?.emailVerified));
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -148,12 +176,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthLoading,
       isProfileLoading,
       isConfigured: isFirebaseConfigured,
+      isEmailVerified,
       isAppleSignInAvailable: appleSignInAvailable,
       refreshProfile,
       patchProfile,
       signInWithEmail,
       sendPasswordReset,
       setNewPassword,
+      resendEmailVerification: handleResendEmailVerification,
+      confirmEmailVerification: handleConfirmEmailVerification,
+      refreshUser,
       signInWithGoogle,
       signInWithApple,
       signOut,
@@ -163,9 +195,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       isAuthLoading,
       isProfileLoading,
+      isEmailVerified,
       appleSignInAvailable,
       refreshProfile,
       patchProfile,
+      handleResendEmailVerification,
+      handleConfirmEmailVerification,
+      refreshUser,
     ],
   );
 

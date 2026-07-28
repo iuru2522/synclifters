@@ -1,14 +1,23 @@
-import { usePathname, useRouter } from "expo-router";
+import { usePathname, useRouter, type Href } from "expo-router";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 import { useEffect } from "react";
 import { useAuth } from "@/features/auth/auth-context";
 import { isOnboardingComplete } from "@/features/users/user-profile";
 import { colors } from "@/styles/global";
 
+const VERIFY_EMAIL_HREF = "/verify-email" as Href;
+
 export default function AppLayout() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthLoading, isProfileLoading, isConfigured, profile } = useAuth();
+  const {
+    user,
+    isAuthLoading,
+    isProfileLoading,
+    isConfigured,
+    isEmailVerified,
+    profile,
+  } = useAuth();
 
   useEffect(() => {
     if (isAuthLoading || (user && isProfileLoading && !profile)) {
@@ -23,12 +32,21 @@ export default function AppLayout() {
       return;
     }
 
+    if (!isEmailVerified) {
+      if (!pathname.startsWith("/verify-email")) {
+        router.replace(VERIFY_EMAIL_HREF);
+      }
+
+      return;
+    }
+
     if (!isOnboardingComplete(profile) && !pathname.startsWith("/gender")) {
       router.replace("/gender");
     }
   }, [
     isAuthLoading,
     isConfigured,
+    isEmailVerified,
     isProfileLoading,
     pathname,
     profile,
@@ -40,7 +58,7 @@ export default function AppLayout() {
     return null;
   }
 
-  if (!isConfigured || !user || !isOnboardingComplete(profile)) {
+  if (!isConfigured || !user || !isEmailVerified || !isOnboardingComplete(profile)) {
     return null;
   }
 
