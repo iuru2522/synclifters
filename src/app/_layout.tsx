@@ -8,7 +8,7 @@ import {
   Montserrat_500Medium,
   Montserrat_700Bold,
 } from "@expo-google-fonts/montserrat";
-import { Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
+import { Poppins_300Light, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import {
   LeagueSpartan_300Light,
   LeagueSpartan_500Medium,
@@ -28,6 +28,7 @@ export default function RootLayout() {
     [fonts.montserratRegular]: Montserrat_400Regular,
     [fonts.montserratMedium]: Montserrat_500Medium,
     [fonts.montserratBold]: Montserrat_700Bold,
+    [fonts.poppinsLight]: Poppins_300Light,
     [fonts.poppinsRegular]: Poppins_400Regular,
     [fonts.poppinsBold]: Poppins_700Bold,
     [fonts.leagueSpartanLight]: LeagueSpartan_300Light,

@@ -67,20 +67,35 @@ function formatSportsExperience(experience: UserSportsExperience | null | undefi
   return SPORTS_EXPERIENCE_LABELS[experience];
 }
 
+export function formatProfileFullName(profile: UserProfile | null) {
+  if (!profile) {
+    return "Not set";
+  }
+
+  const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
+
+  return fullName || "Not set";
+}
+
+export function formatProfileBirthday(profile: UserProfile | null) {
+  const birthday = profile?.birthday?.trim();
+
+  return birthday || "Not set";
+}
+
 export function formatProfileFields(profile: UserProfile | null): ProfileField[] {
   if (!profile) {
     return [];
   }
 
-  const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
-
   return [
-    { label: "Full name", value: fullName || "Not set" },
+    { label: "Full name", value: formatProfileFullName(profile) },
     { label: "Email", value: profile.email || "Not set" },
     { label: "Gender", value: formatGender(profile.gender) },
     { label: "Weight", value: formatWeight(profile.weight, profile.weightUnit) },
     { label: "Age", value: formatAge(profile.age) },
     { label: "Height", value: formatHeight(profile.height, profile.weightUnit) },
+    { label: "Birthday", value: formatProfileBirthday(profile) },
     {
       label: "Sports experience",
       value: formatSportsExperience(profile.sportsExperience),

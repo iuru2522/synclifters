@@ -100,7 +100,7 @@ export default function AppLayout() {
           History
         </NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="tab2">
+      <NativeTabs.Trigger name="workout">
         <NativeTabs.Trigger.Icon
           src={tabIcons.workout}
           renderingMode="original"

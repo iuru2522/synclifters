@@ -25,6 +25,7 @@ import {
   signInWithEmail,
   signInWithGoogle,
   signOut,
+  updateCurrentUserPassword,
   type AuthMode,
   type SignInWithEmailOptions,
 } from "./auth-service";
@@ -48,6 +49,7 @@ type AuthContextValue = {
   ) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   setNewPassword: (oobCode: string, newPassword: string) => Promise<void>;
+  updateCurrentUserPassword: (newPassword: string) => Promise<void>;
   resendEmailVerification: () => Promise<void>;
   confirmEmailVerification: (oobCode: string) => Promise<void>;
   refreshUser: () => Promise<User | null>;
@@ -183,6 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithEmail,
       sendPasswordReset,
       setNewPassword,
+      updateCurrentUserPassword,
       resendEmailVerification: handleResendEmailVerification,
       confirmEmailVerification: handleConfirmEmailVerification,
       refreshUser,

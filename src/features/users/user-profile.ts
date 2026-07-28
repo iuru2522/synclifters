@@ -21,6 +21,7 @@ export type UserProfile = {
   weightUnit?: UserWeightUnit | null;
   age?: number | null;
   height?: number | null;
+  birthday?: string | null;
   sportsExperience?: UserSportsExperience | null;
   onboardingComplete?: boolean;
 };
@@ -34,11 +35,15 @@ export type CreateUserProfileInput = {
 export type UpdateUserProfileInput = Partial<
   Pick<
     UserProfile,
+    | "firstName"
+    | "lastName"
+    | "email"
     | "gender"
     | "weight"
     | "weightUnit"
     | "age"
     | "height"
+    | "birthday"
     | "sportsExperience"
     | "onboardingComplete"
   >
@@ -130,6 +135,18 @@ export async function updateUserProfile(
 
   const payload: Record<string, unknown> = {};
 
+  if ("firstName" in input && typeof input.firstName === "string") {
+    payload.firstName = input.firstName.trim();
+  }
+
+  if ("lastName" in input && typeof input.lastName === "string") {
+    payload.lastName = input.lastName.trim();
+  }
+
+  if ("email" in input && typeof input.email === "string") {
+    payload.email = input.email.trim().toLowerCase();
+  }
+
   if ("gender" in input) {
     payload.gender = input.gender ?? null;
   }
@@ -148,6 +165,10 @@ export async function updateUserProfile(
 
   if ("height" in input) {
     payload.height = input.height ?? null;
+  }
+
+  if ("birthday" in input && typeof input.birthday === "string") {
+    payload.birthday = input.birthday.trim();
   }
 
   if ("sportsExperience" in input) {
@@ -181,6 +202,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     weightUnit: parseWeightUnit(data.weightUnit),
     age: parseNumber(data.age),
     height: parseNumber(data.height),
+    birthday: typeof data.birthday === "string" ? data.birthday : null,
     sportsExperience: parseSportsExperience(data.sportsExperience),
     onboardingComplete: data.onboardingComplete === true,
   };
