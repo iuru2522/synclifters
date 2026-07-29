@@ -133,6 +133,7 @@ export const spacing = {
   profileDeleteAccountBottom: 20,
   profileFieldSheetCardToButton: 36,
   profileFieldSheetTop: 34,
+  profileBirthdaySheetBottom: 13,
   profileAvatarInnerTop: 148,
   profileAvatarInnerLeft: 220,
   safeAreaTopMin: 12,
@@ -341,6 +342,13 @@ export const shadows = {
     shadowOpacity: 0.25,
     shadowRadius: 8.1,
     elevation: 4,
+  },
+  profileFieldSheet: {
+    shadowColor: colors.backArrow,
+    shadowOffset: { width: 0, height: -22 },
+    shadowOpacity: 1,
+    shadowRadius: 70.9,
+    elevation: 0,
   },
 } as const;
 
@@ -600,6 +608,41 @@ export const globalStyles = StyleSheet.create({
     paddingHorizontal: layout.screenPaddingHorizontal,
     paddingTop: spacing.profileFieldSheetTop,
     gap: spacing.profileFieldSheetCardToButton,
+    ...shadows.profileFieldSheet,
+  },
+  profileBirthdaySheetPanel: {
+    alignSelf: "stretch",
+    borderRadius: 0,
+    backgroundColor: colors.background,
+    paddingHorizontal: layout.screenPaddingHorizontal,
+    paddingTop: spacing.profileFieldSheetTop,
+    paddingBottom: spacing.profileBirthdaySheetBottom,
+    gap: spacing.profileFieldSheetCardToButton,
+    ...shadows.profileFieldSheet,
+  },
+  profileBirthdayCalendar: {
+    alignSelf: "stretch",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profileBirthdayCalendarPicker: {
+    alignSelf: "center",
+  },
+  profileWeekDaySheetPanel: {
+    alignSelf: "stretch",
+    borderRadius: 0,
+    backgroundColor: colors.background,
+    paddingHorizontal: layout.screenPaddingHorizontal,
+    paddingTop: spacing.profileFieldSheetTop,
+    paddingBottom: spacing.profileBirthdaySheetBottom,
+    gap: spacing.profileFieldSheetCardToButton,
+    ...shadows.profileFieldSheet,
+  },
+  profileWeekDayPicker: {
+    alignSelf: "stretch",
+  },
+  profileWeekDayPickerItem: {
+    color: colors.backArrow,
   },
   profileAvatarInner: {
     position: "absolute",

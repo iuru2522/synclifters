@@ -6,7 +6,13 @@ import { ProfileActionArrow } from "@/components/app/profile-action-arrow";
 import { ProfileCameraIcon } from "@/components/app/profile-camera-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { useAuth } from "@/features/auth/auth-context";
-import { formatProfileFields, formatProfileFullName, formatProfileBirthday } from "@/features/users/profile-display";
+import {
+  formatProfileFields,
+  formatProfileFullName,
+  formatProfileBirthday,
+  formatProfileFirstWeekDay,
+  formatProfileMetrics,
+} from "@/features/users/profile-display";
 import { colors, globalStyles, spacing } from "@/styles/global";
 
 const PROFILE_ACTION_BUTTON_COUNT = 10;
@@ -14,6 +20,12 @@ const NAME_SHEET_HREF = "/workout/name-sheet" as Href;
 const EMAIL_SHEET_HREF = "/workout/email-sheet" as Href;
 const NEW_PASSWORD_HREF = "/new-password" as Href;
 const BIRTHDAY_SHEET_HREF = "/workout/birthday-sheet" as Href;
+const WEIGHT_SHEET_HREF = "/workout/weight-sheet" as Href;
+const HEIGHT_SHEET_HREF = "/workout/height-sheet" as Href;
+const GENDER_SHEET_HREF = "/workout/gender-sheet" as Href;
+const SPORTS_EXPERIENCE_SHEET_HREF = "/workout/sports-experience-sheet" as Href;
+const METRICS_SHEET_HREF = "/workout/metrics-sheet" as Href;
+const WEEK_DAY_SHEET_HREF = "/workout/week-day-sheet" as Href;
 
 const CONNECTORS = [
   { id: "appleHealth", label: "Apple Health" },
@@ -38,6 +50,8 @@ export default function ProfileScreen() {
     formatProfileFields(profile).map((field) => [field.label, field.value]),
   );
   const birthdayLabel = formatProfileBirthday(profile);
+  const metricsLabel = formatProfileMetrics(profile);
+  const firstWeekDayLabel = formatProfileFirstWeekDay(profile);
   const buttonLabels = [
     formatProfileFullName(profile),
     profile?.email?.trim() || "Not set",
@@ -47,8 +61,8 @@ export default function ProfileScreen() {
     profileFields.Gender ?? "Not set",
     birthdayLabel === "Not set" ? "Birthday" : birthdayLabel,
     profileFields["Sports experience"] ?? "Not set",
-    "Metrics",
-    "1st Week Day",
+    metricsLabel === "Not set" ? "Metrics" : metricsLabel,
+    firstWeekDayLabel === "Not set" ? "1st Week Day" : firstWeekDayLabel,
   ];
 
   return (
@@ -120,11 +134,35 @@ export default function ProfileScreen() {
                             ? () => {
                                 router.push(NEW_PASSWORD_HREF);
                               }
-                            : index === 6
+                            : index === 3
                               ? () => {
-                                  router.push(BIRTHDAY_SHEET_HREF);
+                                  router.push(WEIGHT_SHEET_HREF);
                                 }
-                              : undefined
+                              : index === 4
+                                ? () => {
+                                    router.push(HEIGHT_SHEET_HREF);
+                                  }
+                                : index === 5
+                                  ? () => {
+                                      router.push(GENDER_SHEET_HREF);
+                                    }
+                                  : index === 6
+                                    ? () => {
+                                        router.push(BIRTHDAY_SHEET_HREF);
+                                      }
+                                    : index === 7
+                                      ? () => {
+                                          router.push(SPORTS_EXPERIENCE_SHEET_HREF);
+                                        }
+                                      : index === 8
+                                        ? () => {
+                                            router.push(METRICS_SHEET_HREF);
+                                          }
+                                        : index === 9
+                                          ? () => {
+                                              router.push(WEEK_DAY_SHEET_HREF);
+                                            }
+                                          : undefined
                     }
                   >
                     <Text style={globalStyles.profileActionButtonText} numberOfLines={1}>

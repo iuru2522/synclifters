@@ -1,28 +1,28 @@
-import { ProfileFieldSheet } from "@/components/app/profile-field-sheet";
+import { ProfileBirthdaySheet } from "@/components/app/profile-birthday-sheet";
 import { useAuth } from "@/features/auth/auth-context";
-import { formatProfileBirthday } from "@/features/users/profile-display";
+import {
+  formatBirthdayForStorage,
+  formatProfileBirthday,
+  parseBirthdayDate,
+} from "@/features/users/profile-display";
 import { updateUserProfile } from "@/features/users/user-profile";
 
 export default function BirthdaySheetScreen() {
   const { user, profile, patchProfile, refreshProfile } = useAuth();
   const initialBirthday = formatProfileBirthday(profile);
-  const initialValue = initialBirthday === "Not set" ? "" : initialBirthday;
+  const initialDate = parseBirthdayDate(
+    initialBirthday === "Not set" ? null : initialBirthday,
+  );
 
   return (
-    <ProfileFieldSheet
-      label="Birthday"
-      placeholder="birthday"
-      initialValue={initialValue}
-      autoCapitalize="none"
-      autoComplete="birthdate-full"
-      textContentType="birthdate"
-      emptyErrorTitle="Birthday required"
-      emptyErrorMessage="Please enter your birthday."
-      onSave={async (birthday) => {
+    <ProfileBirthdaySheet
+      initialDate={initialDate}
+      onSave={async (date) => {
         if (!user) {
           throw new Error("You must be signed in to update your birthday.");
         }
 
+        const birthday = formatBirthdayForStorage(date);
         await updateUserProfile(user.uid, { birthday });
         patchProfile({ birthday });
         void refreshProfile({ silent: true });

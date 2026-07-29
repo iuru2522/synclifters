@@ -10,6 +10,7 @@ import { getFirebaseFirestore, getFirebaseSetupMessage } from "@/lib/firebase";
 export type UserGender = "male" | "female";
 export type UserSportsExperience = "beginner" | "gym-rat" | "beast-mode";
 export type UserWeightUnit = "kg" | "lb";
+export type UserFirstWeekDay = "sunday" | "monday";
 
 export type UserProfile = {
   firstName: string;
@@ -22,6 +23,7 @@ export type UserProfile = {
   age?: number | null;
   height?: number | null;
   birthday?: string | null;
+  firstWeekDay?: UserFirstWeekDay | null;
   sportsExperience?: UserSportsExperience | null;
   onboardingComplete?: boolean;
 };
@@ -44,6 +46,7 @@ export type UpdateUserProfileInput = Partial<
     | "age"
     | "height"
     | "birthday"
+    | "firstWeekDay"
     | "sportsExperience"
     | "onboardingComplete"
   >
@@ -73,6 +76,18 @@ function parseGender(value: unknown): UserGender | null | undefined {
 
 function parseSportsExperience(value: unknown): UserSportsExperience | null | undefined {
   if (value === "beginner" || value === "gym-rat" || value === "beast-mode") {
+    return value;
+  }
+
+  if (value === null) {
+    return null;
+  }
+
+  return undefined;
+}
+
+function parseFirstWeekDay(value: unknown): UserFirstWeekDay | null | undefined {
+  if (value === "sunday" || value === "monday") {
     return value;
   }
 
@@ -171,6 +186,10 @@ export async function updateUserProfile(
     payload.birthday = input.birthday.trim();
   }
 
+  if ("firstWeekDay" in input) {
+    payload.firstWeekDay = input.firstWeekDay ?? null;
+  }
+
   if ("sportsExperience" in input) {
     payload.sportsExperience = input.sportsExperience ?? null;
   }
@@ -203,6 +222,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     age: parseNumber(data.age),
     height: parseNumber(data.height),
     birthday: typeof data.birthday === "string" ? data.birthday : null,
+    firstWeekDay: parseFirstWeekDay(data.firstWeekDay) ?? null,
     sportsExperience: parseSportsExperience(data.sportsExperience),
     onboardingComplete: data.onboardingComplete === true,
   };

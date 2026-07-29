@@ -1,4 +1,5 @@
 import type {
+  UserFirstWeekDay,
   UserGender,
   UserProfile,
   UserSportsExperience,
@@ -14,6 +15,11 @@ const SPORTS_EXPERIENCE_LABELS: Record<UserSportsExperience, string> = {
   beginner: "Beginner",
   "gym-rat": "Gym Rat",
   "beast-mode": "Beast Mode",
+};
+
+const FIRST_WEEK_DAY_LABELS: Record<UserFirstWeekDay, string> = {
+  sunday: "Sunday",
+  monday: "Monday",
 };
 
 function formatGender(gender: UserGender | null | undefined) {
@@ -81,6 +87,54 @@ export function formatProfileBirthday(profile: UserProfile | null) {
   const birthday = profile?.birthday?.trim();
 
   return birthday || "Not set";
+}
+
+export function parseBirthdayDate(value: string | null | undefined) {
+  const fallback = new Date();
+  fallback.setHours(12, 0, 0, 0);
+  fallback.setFullYear(fallback.getFullYear() - 18);
+
+  if (!value?.trim() || value === "Not set") {
+    return fallback;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return fallback;
+  }
+
+  parsed.setHours(12, 0, 0, 0);
+  return parsed;
+}
+
+export function formatBirthdayForStorage(date: Date) {
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export function formatProfileFirstWeekDay(profile: UserProfile | null) {
+  const firstWeekDay = profile?.firstWeekDay;
+
+  if (!firstWeekDay) {
+    return "Not set";
+  }
+
+  return FIRST_WEEK_DAY_LABELS[firstWeekDay];
+}
+
+export function formatProfileMetrics(profile: UserProfile | null) {
+  if (profile?.weightUnit === "lb") {
+    return "Lb";
+  }
+
+  if (profile?.weightUnit === "kg") {
+    return "Kg";
+  }
+
+  return "Not set";
 }
 
 export function formatProfileFields(profile: UserProfile | null): ProfileField[] {
