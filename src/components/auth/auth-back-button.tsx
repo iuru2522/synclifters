@@ -37,11 +37,14 @@ export function AuthBackButton({
         </View>
       </Pressable>
 
-      <View style={{ width: gap }} />
-
-      <Text style={[globalStyles.authScreenTitle, { color }]} numberOfLines={1}>
-        {title}
-      </Text>
+      {title ? (
+        <>
+          <View style={{ width: gap }} />
+          <Text style={[globalStyles.authScreenTitle, { color }]} numberOfLines={1}>
+            {title}
+          </Text>
+        </>
+      ) : null}
     </View>
   );
 }

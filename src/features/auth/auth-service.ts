@@ -12,6 +12,7 @@ import {
   sendPasswordResetEmail,
   signInWithCredential,
   signInWithEmailAndPassword,
+  updatePassword,
   updateProfile,
   type User,
 } from "firebase/auth";
@@ -224,6 +225,37 @@ export async function setNewPassword(oobCode: string, newPassword: string): Prom
     const authError = error as { code?: string; message?: string };
     throw new AuthServiceError(
       authError.message ?? "Failed to set a new password.",
+      authError.code,
+    );
+  }
+}
+
+export async function updateCurrentUserPassword(newPassword: string): Promise<void> {
+  const auth = requireAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new AuthServiceError("Sign in to change your password.", "NOT_SIGNED_IN");
+  }
+
+  if (!newPassword) {
+    throw new AuthServiceError("Enter a new password.", "PASSWORD_REQUIRED");
+  }
+
+  try {
+    await updatePassword(user, newPassword);
+  } catch (error: unknown) {
+    const authError = error as { code?: string; message?: string };
+
+    if (authError.code === "auth/requires-recent-login") {
+      throw new AuthServiceError(
+        "For security, sign in again before changing your password.",
+        authError.code,
+      );
+    }
+
+    throw new AuthServiceError(
+      authError.message ?? "Failed to update password.",
       authError.code,
     );
   }

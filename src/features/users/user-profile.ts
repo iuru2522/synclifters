@@ -10,6 +10,7 @@ import { getFirebaseFirestore, getFirebaseSetupMessage } from "@/lib/firebase";
 export type UserGender = "male" | "female";
 export type UserSportsExperience = "beginner" | "gym-rat" | "beast-mode";
 export type UserWeightUnit = "kg" | "lb";
+export type UserFirstWeekDay = "sunday" | "monday";
 
 export type UserProfile = {
   firstName: string;
@@ -21,6 +22,8 @@ export type UserProfile = {
   weightUnit?: UserWeightUnit | null;
   age?: number | null;
   height?: number | null;
+  birthday?: string | null;
+  firstWeekDay?: UserFirstWeekDay | null;
   sportsExperience?: UserSportsExperience | null;
   onboardingComplete?: boolean;
 };
@@ -34,11 +37,16 @@ export type CreateUserProfileInput = {
 export type UpdateUserProfileInput = Partial<
   Pick<
     UserProfile,
+    | "firstName"
+    | "lastName"
+    | "email"
     | "gender"
     | "weight"
     | "weightUnit"
     | "age"
     | "height"
+    | "birthday"
+    | "firstWeekDay"
     | "sportsExperience"
     | "onboardingComplete"
   >
@@ -68,6 +76,18 @@ function parseGender(value: unknown): UserGender | null | undefined {
 
 function parseSportsExperience(value: unknown): UserSportsExperience | null | undefined {
   if (value === "beginner" || value === "gym-rat" || value === "beast-mode") {
+    return value;
+  }
+
+  if (value === null) {
+    return null;
+  }
+
+  return undefined;
+}
+
+function parseFirstWeekDay(value: unknown): UserFirstWeekDay | null | undefined {
+  if (value === "sunday" || value === "monday") {
     return value;
   }
 
@@ -130,6 +150,18 @@ export async function updateUserProfile(
 
   const payload: Record<string, unknown> = {};
 
+  if ("firstName" in input && typeof input.firstName === "string") {
+    payload.firstName = input.firstName.trim();
+  }
+
+  if ("lastName" in input && typeof input.lastName === "string") {
+    payload.lastName = input.lastName.trim();
+  }
+
+  if ("email" in input && typeof input.email === "string") {
+    payload.email = input.email.trim().toLowerCase();
+  }
+
   if ("gender" in input) {
     payload.gender = input.gender ?? null;
   }
@@ -148,6 +180,14 @@ export async function updateUserProfile(
 
   if ("height" in input) {
     payload.height = input.height ?? null;
+  }
+
+  if ("birthday" in input && typeof input.birthday === "string") {
+    payload.birthday = input.birthday.trim();
+  }
+
+  if ("firstWeekDay" in input) {
+    payload.firstWeekDay = input.firstWeekDay ?? null;
   }
 
   if ("sportsExperience" in input) {
@@ -181,6 +221,8 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     weightUnit: parseWeightUnit(data.weightUnit),
     age: parseNumber(data.age),
     height: parseNumber(data.height),
+    birthday: typeof data.birthday === "string" ? data.birthday : null,
+    firstWeekDay: parseFirstWeekDay(data.firstWeekDay) ?? null,
     sportsExperience: parseSportsExperience(data.sportsExperience),
     onboardingComplete: data.onboardingComplete === true,
   };

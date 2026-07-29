@@ -28,7 +28,7 @@ export function NewPasswordForm({
   disabled = false,
   onSubmittingChange,
 }: NewPasswordFormProps) {
-  const { setNewPassword } = useAuth();
+  const { user, setNewPassword, updateCurrentUserPassword } = useAuth();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -66,14 +66,20 @@ export function NewPasswordForm({
 
       if (code) {
         await setNewPassword(code, password);
-      } else if (!__DEV__) {
+        router.replace("/success");
+      } else if (user) {
+        await updateCurrentUserPassword(password);
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace("/");
+        }
+      } else {
         throw new AuthServiceError(
           "This reset link is missing or invalid. Request a new one.",
           "OOB_CODE_REQUIRED",
         );
       }
-
-      router.replace("/success");
     } catch (error) {
       const message =
         error instanceof AuthServiceError ? error.message : "Failed to set a new password.";
@@ -90,7 +96,7 @@ export function NewPasswordForm({
   return (
     <View style={globalStyles.newPasswordScreen}>
       <View style={globalStyles.newPasswordHeader}>
-        <AuthBackButton href="/sign-in" title="New Password" gap={spacing.authBackTitleNewPassword} />
+        <AuthBackButton title="New Password" gap={spacing.authBackTitleNewPassword} />
 
         <View style={globalStyles.authInputsCardShadow}>
           <View style={[globalStyles.signUpInputsCard, globalStyles.newPasswordInputsCard]}>

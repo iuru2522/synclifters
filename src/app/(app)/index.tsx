@@ -1,5 +1,5 @@
-import { ProfileTabScreen } from "@/components/app/profile-tab-screen";
+import { TabScreen } from "@/components/app/tab-screen";
 
-export default function Tab1Screen() {
-  return <ProfileTabScreen />;
+export default function HistoryScreen() {
+  return <TabScreen title="History" />;
 }
