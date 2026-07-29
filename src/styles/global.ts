@@ -469,6 +469,11 @@ export const globalStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
+    overflow: "hidden",
+  },
+  profileAvatarImage: {
+    width: sizes.profileAvatar,
+    height: sizes.profileAvatar,
   },
   profileAvatarCamera: {
     width: sizes.profileAvatarCameraWidth,

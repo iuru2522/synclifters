@@ -1,6 +1,16 @@
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter, type Href } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, Switch, Text, View } from "react-native";
+import {
+  ActionSheetIOS,
+  Alert,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ProfileActionArrow } from "@/components/app/profile-action-arrow";
 import { ProfileCameraIcon } from "@/components/app/profile-camera-icon";
@@ -16,6 +26,7 @@ import {
 import { colors, globalStyles, spacing } from "@/styles/global";
 
 const PROFILE_ACTION_BUTTON_COUNT = 10;
+const PROFILE_PHOTO_MAX_BYTES = 10 * 1024 * 1024;
 const NAME_SHEET_HREF = "/workout/name-sheet" as Href;
 const EMAIL_SHEET_HREF = "/workout/email-sheet" as Href;
 const NEW_PASSWORD_HREF = "/new-password" as Href;
@@ -33,12 +44,20 @@ const CONNECTORS = [
   { id: "garminConnect", label: "Garmin Connect" },
 ] as const;
 
+const IMAGE_PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
+  mediaTypes: ["images"],
+  allowsEditing: true,
+  aspect: [1, 1],
+  quality: 0.8,
+};
+
 type ConnectorId = (typeof CONNECTORS)[number]["id"];
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { profile, signOut } = useAuth();
   const insets = useSafeAreaInsets();
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [connectors, setConnectors] = useState<Record<ConnectorId, boolean>>({
     appleHealth: false,
     appleWatch: false,
@@ -65,6 +84,82 @@ export default function ProfileScreen() {
     firstWeekDayLabel === "Not set" ? "1st Week Day" : firstWeekDayLabel,
   ];
 
+  const applyPickedAsset = (asset: ImagePicker.ImagePickerAsset) => {
+    if (asset.fileSize != null && asset.fileSize > PROFILE_PHOTO_MAX_BYTES) {
+      Alert.alert("Photo too large", "Please choose a JPG or PNG up to 10MB.");
+      return;
+    }
+
+    setPhotoUri(asset.uri);
+  };
+
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        "Camera permission needed",
+        "Allow camera access in Settings to take a profile photo.",
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync(IMAGE_PICKER_OPTIONS);
+    if (!result.canceled && result.assets[0]) {
+      applyPickedAsset(result.assets[0]);
+    }
+  };
+
+  const chooseFromLibrary = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        "Photos permission needed",
+        "Allow photo library access in Settings to choose a profile photo.",
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync(IMAGE_PICKER_OPTIONS);
+    if (!result.canceled && result.assets[0]) {
+      applyPickedAsset(result.assets[0]);
+    }
+  };
+
+  const openPhotoOptions = () => {
+    if (process.env.EXPO_OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ["Take Photo", "Choose from Library", "Cancel"],
+          cancelButtonIndex: 2,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 0) {
+            void takePhoto();
+          } else if (buttonIndex === 1) {
+            void chooseFromLibrary();
+          }
+        },
+      );
+      return;
+    }
+
+    Alert.alert("Upload photo", undefined, [
+      {
+        text: "Take Photo",
+        onPress: () => {
+          void takePhoto();
+        },
+      },
+      {
+        text: "Choose from Library",
+        onPress: () => {
+          void chooseFromLibrary();
+        },
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
+
   return (
     <View style={globalStyles.screen}>
       <AuthBackButton
@@ -86,7 +181,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View
+        <Pressable
           style={[
             globalStyles.profileAvatarInner,
             {
@@ -94,16 +189,28 @@ export default function ProfileScreen() {
               top: innerTop,
             },
           ]}
+          onPress={openPhotoOptions}
+          accessibilityRole="button"
+          accessibilityLabel="Upload profile photo"
         >
           <View style={globalStyles.profileAvatarPlus}>
             <View style={globalStyles.profileAvatarPlusBarHorizontal} />
             <View style={globalStyles.profileAvatarPlusBarVertical} />
           </View>
-        </View>
+        </Pressable>
         <View style={globalStyles.profileScreenBody}>
           <View style={globalStyles.profileAvatarBlock}>
             <View style={globalStyles.profileAvatar}>
-              <ProfileCameraIcon />
+              {photoUri ? (
+                <Image
+                  source={{ uri: photoUri }}
+                  style={globalStyles.profileAvatarImage}
+                  contentFit="cover"
+                  accessibilityLabel="Profile photo"
+                />
+              ) : (
+                <ProfileCameraIcon />
+              )}
             </View>
             <View style={globalStyles.profileUploadLabels}>
               <Text style={globalStyles.profileUploadPhotoText}>UPLOAD PHOTO</Text>

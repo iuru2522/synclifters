@@ -60,7 +60,15 @@
       "react-native-video",
       "@react-native-google-signin/google-signin",
       "expo-apple-authentication",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Synclifters to access your photos so you can set a profile picture.",
+          "cameraPermission": "Allow Synclifters to use your camera so you can take a profile picture.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
