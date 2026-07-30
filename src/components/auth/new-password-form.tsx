@@ -72,7 +72,7 @@ export function NewPasswordForm({
         if (router.canGoBack()) {
           router.back();
         } else {
-          router.replace("/");
+          router.replace("/workout");
         }
       } else {
         throw new AuthServiceError(

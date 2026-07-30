@@ -1,5 +1,5 @@
-import { TabScreen } from "@/components/app/tab-screen";
+import { Redirect } from "expo-router";
 
-export default function HistoryScreen() {
-  return <TabScreen title="History" />;
+export default function AppIndex() {
+  return <Redirect href="/workout" />;
 }

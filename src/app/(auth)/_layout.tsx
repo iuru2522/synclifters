@@ -45,7 +45,7 @@ export default function AuthLayout() {
 
     if (isOnboardingComplete(profile)) {
       if (inOnboarding || onVerifyEmail) {
-        router.replace("/");
+        router.replace("/workout");
       }
 
       return;

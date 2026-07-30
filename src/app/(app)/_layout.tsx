@@ -91,7 +91,7 @@ export default function AppLayout() {
       }}
       tintColor={colors.backArrow}
     >
-      <NativeTabs.Trigger name="index">
+      <NativeTabs.Trigger name="history">
         <NativeTabs.Trigger.Icon
           src={tabIcons.history}
           renderingMode="original"
