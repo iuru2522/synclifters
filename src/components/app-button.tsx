@@ -1,6 +1,13 @@
 import { colors, globalStyles, sizes } from "@/styles/global";
-import { useCallback } from "react";
-import { Pressable, Text, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
+import { type ReactNode, useCallback } from "react";
+import {
+  Pressable,
+  Text,
+  View,
+  type StyleProp,
+  type TextStyle,
+  type ViewStyle,
+} from "react-native";
 import Animated, {
   Easing,
   interpolateColor,
@@ -16,36 +23,116 @@ const pressTiming = {
   easing: Easing.out(Easing.cubic),
 };
 
+const DEFAULT_BORDER_WIDTH = 3;
+
 type AppButtonProps = {
   title: string;
   onPress: () => void;
   disabled?: boolean;
   borderColor?: string;
+  borderWidth?: number;
   textColor?: string;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
+  subtitle?: string;
+  subtitleStyle?: StyleProp<TextStyle>;
+  subtitleMeta?: string;
+  subtitleMetaStyle?: StyleProp<TextStyle>;
   pressFillColor?: string;
   pressLabelColor?: string;
   pressAccentColor?: string;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
   accessibilityLabel?: string;
 };
+
+function AppButtonLabel({
+  title,
+  textColor,
+  textStyle,
+  titleWithIconsStyle,
+  subtitle,
+  subtitleStyle,
+  subtitleMeta,
+  subtitleMetaStyle,
+  animatedTitleStyle,
+}: {
+  title: string;
+  textColor: string;
+  textStyle?: StyleProp<TextStyle>;
+  titleWithIconsStyle: StyleProp<TextStyle>;
+  subtitle?: string;
+  subtitleStyle?: StyleProp<TextStyle>;
+  subtitleMeta?: string;
+  subtitleMetaStyle?: StyleProp<TextStyle>;
+  animatedTitleStyle?: object;
+}) {
+  const titleNode = animatedTitleStyle ? (
+    <Animated.Text
+      style={[
+        globalStyles.appButtonText,
+        titleWithIconsStyle,
+        { color: textColor },
+        textStyle,
+        animatedTitleStyle,
+      ]}
+    >
+      {title}
+    </Animated.Text>
+  ) : (
+    <Text
+      style={[globalStyles.appButtonText, titleWithIconsStyle, { color: textColor }, textStyle]}
+    >
+      {title}
+    </Text>
+  );
+
+  if (!subtitle) {
+    return titleNode;
+  }
+
+  const subtitleNode = subtitleMeta ? (
+    <View style={globalStyles.appButtonSubtitleRow}>
+      <Text style={subtitleStyle}>{subtitle}</Text>
+      <Text style={subtitleMetaStyle}>{subtitleMeta}</Text>
+    </View>
+  ) : (
+    <Text style={subtitleStyle}>{subtitle}</Text>
+  );
+
+  return (
+    <View style={globalStyles.appButtonLabelStack}>
+      {titleNode}
+      {subtitleNode}
+    </View>
+  );
+}
 
 export function AppButton({
   title,
   onPress,
   disabled = false,
   borderColor = colors.backArrow,
+  borderWidth = DEFAULT_BORDER_WIDTH,
   textColor = colors.inputFill,
   style,
   textStyle,
+  subtitle,
+  subtitleStyle,
+  subtitleMeta,
+  subtitleMetaStyle,
   pressFillColor,
   pressLabelColor,
   pressAccentColor,
+  leftIcon,
+  rightIcon,
   accessibilityLabel,
 }: AppButtonProps) {
   const pressProgress = useSharedValue(0);
   const animatePress = Boolean(pressFillColor && pressLabelColor);
   const animatePressAccent = Boolean(pressAccentColor);
+  const withIcon = Boolean(leftIcon || rightIcon);
+  const titleWithIconsStyle = withIcon && !subtitle ? globalStyles.appButtonTitleWithIcons : null;
 
   const setPressed = useCallback(
     (pressed: boolean) => {
@@ -64,9 +151,9 @@ export function AppButton({
     return {
       backgroundColor: colors.background,
       borderColor: pressed ? pressAccentColor : borderColor,
-      borderWidth: 3,
+      borderWidth,
     };
-  }, [animatePressAccent, borderColor, pressAccentColor]);
+  }, [animatePressAccent, borderColor, borderWidth, pressAccentColor]);
 
   const animatedAccentTextStyle = useAnimatedStyle(() => {
     if (!animatePressAccent || !pressAccentColor) {
@@ -88,9 +175,9 @@ export function AppButton({
     return {
       backgroundColor: pressed ? pressFillColor : colors.background,
       borderColor: pressed ? pressFillColor : borderColor,
-      borderWidth: 3,
+      borderWidth,
     };
-  }, [animatePress, borderColor, pressFillColor]);
+  }, [animatePress, borderColor, borderWidth, pressFillColor]);
 
   const animatedTextStyle = useAnimatedStyle(() => {
     if (!animatePress || !pressLabelColor) {
@@ -107,7 +194,8 @@ export function AppButton({
       <AnimatedPressable
         style={[
           globalStyles.appButton,
-          { borderColor },
+          withIcon ? globalStyles.appButtonWithIcon : null,
+          { borderColor, borderWidth },
           disabled ? globalStyles.appButtonDisabled : null,
           style,
           disabled ? null : animatedAccentContainerStyle,
@@ -128,16 +216,19 @@ export function AppButton({
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? title}
       >
-        <Animated.Text
-          style={[
-            globalStyles.appButtonText,
-            { color: textColor },
-            textStyle,
-            disabled ? null : animatedAccentTextStyle,
-          ]}
-        >
-          {title}
-        </Animated.Text>
+        {leftIcon}
+        <AppButtonLabel
+          title={title}
+          textColor={textColor}
+          textStyle={textStyle}
+          titleWithIconsStyle={titleWithIconsStyle}
+          subtitle={subtitle}
+          subtitleStyle={subtitleStyle}
+          subtitleMeta={subtitleMeta}
+          subtitleMetaStyle={subtitleMetaStyle}
+          animatedTitleStyle={disabled ? undefined : animatedAccentTextStyle}
+        />
+        {rightIcon}
       </AnimatedPressable>
     );
   }
@@ -147,7 +238,8 @@ export function AppButton({
       <AnimatedPressable
         style={[
           globalStyles.appButton,
-          { borderColor },
+          withIcon ? globalStyles.appButtonWithIcon : null,
+          { borderColor, borderWidth },
           disabled ? globalStyles.appButtonDisabled : null,
           style,
           disabled ? null : animatedContainerStyle,
@@ -168,29 +260,49 @@ export function AppButton({
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? title}
       >
-        <Animated.Text
-          style={[
-            globalStyles.appButtonText,
-            { color: textColor },
-            textStyle,
-            disabled ? null : animatedTextStyle,
-          ]}
-        >
-          {title}
-        </Animated.Text>
+        {leftIcon}
+        <AppButtonLabel
+          title={title}
+          textColor={textColor}
+          textStyle={textStyle}
+          titleWithIconsStyle={titleWithIconsStyle}
+          subtitle={subtitle}
+          subtitleStyle={subtitleStyle}
+          subtitleMeta={subtitleMeta}
+          subtitleMetaStyle={subtitleMetaStyle}
+          animatedTitleStyle={disabled ? undefined : animatedTextStyle}
+        />
+        {rightIcon}
       </AnimatedPressable>
     );
   }
 
   return (
     <Pressable
-      style={[globalStyles.appButton, { borderColor }, disabled ? globalStyles.appButtonDisabled : null, style]}
+      style={[
+        globalStyles.appButton,
+        withIcon ? globalStyles.appButtonWithIcon : null,
+        { borderColor, borderWidth },
+        disabled ? globalStyles.appButtonDisabled : null,
+        style,
+      ]}
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
     >
-      <Text style={[globalStyles.appButtonText, { color: textColor }, textStyle]}>{title}</Text>
+      {leftIcon}
+      <AppButtonLabel
+        title={title}
+        textColor={textColor}
+        textStyle={textStyle}
+        titleWithIconsStyle={titleWithIconsStyle}
+        subtitle={subtitle}
+        subtitleStyle={subtitleStyle}
+        subtitleMeta={subtitleMeta}
+        subtitleMetaStyle={subtitleMetaStyle}
+      />
+      {rightIcon}
     </Pressable>
   );
 }
