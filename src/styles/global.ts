@@ -43,6 +43,8 @@ export const colors = {
   sportsExperienceBeastMode: "#FF0001",
   skipLink: "rgba(173, 220, 96, 0.5)",
   shadow: "#000000",
+  weekCalendarDay: "#B8E65A",
+  weekCalendarDayText: "#222222",
 } as const;
 
 export const layout = {
@@ -126,6 +128,10 @@ export const spacing = {
   workoutNameToGlassCards: 6,
   workoutGlassCardsToWide: 16,
   workoutGlassCardValueToLabel: 1,
+  workoutWeekCalendarTop: 16,
+  weekCalendarDayGap: 4,
+  weekCalendarWeekdayToDate: 5,
+  weekCalendarTodayElevate: 10,
   workoutTrainingProgramsTop: 26,
   workoutMyProgramsTop: 7,
   workoutMyProgramsToCreateButton: 10,
@@ -244,8 +250,16 @@ export const sizes = {
   workoutProgramThinBorderWidth: 1,
   workoutGlassCardHeight: 65,
   workoutGlassCardWideHeight: 120,
-  workoutGlassCardBannerHeight: 70,
   workoutGlassCardRadius: 22,
+  weekCalendarDayWidth: 43,
+  weekCalendarSelectedWidth: 79,
+  weekCalendarDayHeight: 60,
+  weekCalendarDayRadius: 12,
+  weekCalendarActivityDot: 6,
+  weekCalendarSelectedBorderWidth: 1.5,
+  weekCalendarDayPaddingVertical: 10,
+  weekCalendarAnimDuration: 220,
+  weekCalendarSelectedElevation: 3,
   profileAvatar: 160,
   profileAvatarInner: 40,
   profileAvatarCameraWidth: 53,
@@ -290,6 +304,18 @@ export const typography = {
   },
   workoutGlassCardLabel: {
     fontSize: 10,
+  },
+  weekCalendarWeekday: {
+    fontSize: 10,
+  },
+  weekCalendarDayNumber: {
+    fontSize: 10,
+  },
+  weekCalendarSelectedDayNumber: {
+    fontSize: 10,
+  },
+  weekCalendarTodayLabel: {
+    fontSize: 6,
   },
   workoutMyPrograms: {
     fontSize: 10,
@@ -400,6 +426,13 @@ export const shadows = {
     shadowRadius: 70.9,
     elevation: 0,
   },
+  weekCalendarSelected: {
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
+  },
 } as const;
 
 export const fonts = {
@@ -410,6 +443,8 @@ export const fonts = {
   montserratBold: "Montserrat_700Bold",
   poppinsLight: "Poppins_300Light",
   poppinsRegular: "Poppins_400Regular",
+  poppinsMedium: "Poppins_500Medium",
+  poppinsSemiBold: "Poppins_600SemiBold",
   poppinsBold: "Poppins_700Bold",
   leagueSpartanLight: "LeagueSpartan_300Light",
   leagueSpartanMedium: "LeagueSpartan_500Medium",
@@ -576,6 +611,10 @@ export const globalStyles = StyleSheet.create({
     paddingHorizontal: spacing.workoutGlassCardsInset,
     gap: spacing.workoutGlassCardsToWide,
   },
+  workoutWeekCalendarWrap: {
+    alignSelf: "stretch",
+    marginTop: spacing.workoutWeekCalendarTop,
+  },
   workoutTrainingProgramsLabel: {
     alignSelf: "stretch",
     marginTop: spacing.workoutTrainingProgramsTop,
@@ -674,12 +713,6 @@ export const globalStyles = StyleSheet.create({
   workoutGlassCardWide: {
     alignSelf: "stretch",
     height: sizes.workoutGlassCardWideHeight,
-    borderRadius: sizes.workoutGlassCardRadius,
-    backgroundColor: colors.workoutGlassCardFill,
-  },
-  workoutGlassCardBanner: {
-    alignSelf: "stretch",
-    height: sizes.workoutGlassCardBannerHeight,
     borderRadius: sizes.workoutGlassCardRadius,
     backgroundColor: colors.workoutGlassCardFill,
   },

@@ -1,4 +1,5 @@
 import { useRouter, type Href } from "expo-router";
+import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
@@ -6,6 +7,7 @@ import { WorkoutBellIcon } from "@/components/app/workout-bell-icon";
 import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-icon";
 import { WorkoutGlassCard } from "@/components/app/workout-glass-card";
 import { WorkoutStartIcon } from "@/components/app/workout-start-icon";
+import { WeekCalendar } from "@/components/WeekCalendar/WeekCalendar";
 import { useAuth } from "@/features/auth/auth-context";
 import { formatProfileFullName } from "@/features/users/profile-display";
 import { colors, globalStyles, sizes } from "@/styles/global";
@@ -17,6 +19,7 @@ export function WorkoutTabScreen() {
   const insets = useSafeAreaInsets();
   const { profile } = useAuth();
   const fullName = formatProfileFullName(profile);
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
 
   return (
     <View style={[globalStyles.workoutScreen, { paddingTop: insets.top }]}>
@@ -61,7 +64,9 @@ export function WorkoutTabScreen() {
         </View>
         <View style={globalStyles.workoutGlassCardWideWrap}>
           <WorkoutGlassCard style={globalStyles.workoutGlassCardWide} />
-          <WorkoutGlassCard style={globalStyles.workoutGlassCardBanner} />
+        </View>
+        <View style={globalStyles.workoutWeekCalendarWrap}>
+          <WeekCalendar selectedDate={selectedDate} onDateChange={setSelectedDate} />
         </View>
         <View style={globalStyles.workoutTrainingProgramsLabel}>
           <Text style={globalStyles.workoutGlassCardLabel}>TRAINING PROGRAMS</Text>
