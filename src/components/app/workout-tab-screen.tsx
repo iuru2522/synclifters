@@ -10,14 +10,17 @@ import { WorkoutStartIcon } from "@/components/app/workout-start-icon";
 import { WeekCalendar } from "@/components/WeekCalendar/WeekCalendar";
 import { useAuth } from "@/features/auth/auth-context";
 import { formatProfileFullName } from "@/features/users/profile-display";
+import { useUserPrograms } from "@/features/workout/user-programs";
 import { colors, globalStyles, sizes } from "@/styles/global";
 
 const PROFILE_HREF = "/workout/profile" as Href;
+const CREATE_PROGRAM_HREF = "/workout/create-program" as Href;
 
 export function WorkoutTabScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { profile } = useAuth();
+  const userPrograms = useUserPrograms();
   const fullName = formatProfileFullName(profile);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
 
@@ -73,6 +76,19 @@ export function WorkoutTabScreen() {
         </View>
         <Text style={globalStyles.workoutMyPrograms}>My Programs</Text>
         <View style={globalStyles.workoutCreateProgramButton}>
+          {userPrograms.map((program) => (
+            <AppButton
+              key={program.id}
+              title={program.name}
+              onPress={() => {}}
+              borderColor={colors.backArrow}
+              textColor={colors.inputText}
+              textStyle={globalStyles.workoutProgramFilledButtonText}
+              style={globalStyles.workoutProgramFilledButton}
+              leftIcon={<WorkoutExternalLinkIcon />}
+              rightIcon={<WorkoutStartIcon variant="filled" />}
+            />
+          ))}
           <AppButton
             title="Full Body Strength"
             onPress={() => {}}
@@ -95,7 +111,9 @@ export function WorkoutTabScreen() {
           />
           <AppButton
             title="Create New Program"
-            onPress={() => {}}
+            onPress={() => {
+              router.push(CREATE_PROGRAM_HREF);
+            }}
             borderColor={colors.white}
             borderWidth={sizes.workoutProgramThinBorderWidth}
             pressAccentColor={colors.backArrow}
