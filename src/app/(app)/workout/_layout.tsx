@@ -18,7 +18,17 @@ export default function WorkoutLayout() {
     >
       <Stack.Screen name="index" />
       <Stack.Screen name="profile" />
+      <Stack.Screen name="create-program" />
+      <Stack.Screen name="create-day" />
+      <Stack.Screen name="create-day-sheet" options={fieldSheetOptions} />
+      <Stack.Screen name="add-exercise-to-day" />
+      <Stack.Screen name="add-exercise" />
+      <Stack.Screen name="exercise" />
+      <Stack.Screen name="do-exercise" />
+      <Stack.Screen name="exercise-history" />
+
       <Stack.Screen name="name-sheet" options={fieldSheetOptions} />
+
       <Stack.Screen name="email-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="birthday-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="weight-sheet" options={fieldSheetOptions} />
@@ -27,6 +37,7 @@ export default function WorkoutLayout() {
       <Stack.Screen name="sports-experience-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="metrics-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="week-day-sheet" options={fieldSheetOptions} />
+      <Stack.Screen name="rep-type-sheet" options={fieldSheetOptions} />
     </Stack>
   );
 }
