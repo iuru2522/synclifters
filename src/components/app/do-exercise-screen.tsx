@@ -64,7 +64,16 @@ export function DoExerciseScreen() {
           </Text>
           <Pressable
             style={globalStyles.createDayHeaderMenu}
-            onPress={() => {}}
+            onPress={() => {
+              router.push({
+                pathname: "/workout/custom-exercise",
+                params: {
+                  ...(programName ? { programName } : {}),
+                  ...(dayName ? { dayName } : {}),
+                  ...(dayNames ? { dayNames } : {}),
+                },
+              } as Href);
+            }}
             hitSlop={sizes.backArrowHitSlop}
             accessibilityRole="button"
             accessibilityLabel="Menu"

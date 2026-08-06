@@ -9,14 +9,8 @@ import {
 } from "@/components/app/program-day-params";
 import { ProfileActionArrow } from "@/components/app/profile-action-arrow";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import { MUSCLE_GROUP_OPTIONS } from "@/features/workout/custom-exercise-muscle";
 import { globalStyles, sizes, spacing } from "@/styles/global";
-
-const EXERCISE_NAMES = [
-  "Triceps",
-  "Biceps",
-  "Chest",
-  "Back",
-] as const;
 
 export function ExerciseScreen() {
   const router = useRouter();
@@ -61,7 +55,7 @@ export function ExerciseScreen() {
         </View>
 
         <View style={globalStyles.addExerciseActionButtons}>
-          {EXERCISE_NAMES.map((label) => (
+          {MUSCLE_GROUP_OPTIONS.map((label) => (
             <Pressable
               key={label}
               style={globalStyles.exerciseMuscleGroupButton}

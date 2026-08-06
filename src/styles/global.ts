@@ -608,6 +608,28 @@ export const globalStyles = StyleSheet.create({
     paddingRight: spacing.profileActionButtonTextLeft,
     gap: spacing.profileActionButtonTextLeft,
   },
+  customExerciseImageButton: {
+    alignSelf: "stretch",
+    height: sizes.doExerciseCircle,
+    borderRadius: sizes.authInputRadius,
+    backgroundColor: colors.inputFill,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingLeft: spacing.profileActionButtonTextLeft,
+    paddingRight: spacing.profileActionButtonTextLeft,
+    gap: spacing.profileActionButtonTextLeft,
+  },
+  customExerciseImageThumb: {
+    width: sizes.doExerciseCircle,
+    height: sizes.doExerciseCircle,
+    borderRadius: sizes.doExerciseCircle / 2,
+    overflow: "hidden",
+    flexShrink: 0,
+  },
+  customExerciseImageThumbImage: {
+    width: sizes.doExerciseCircle,
+    height: sizes.doExerciseCircle,
+  },
   exerciseMuscleGroupButton: {
     alignSelf: "stretch",
     height: sizes.profileActionButtonHeight,
@@ -733,6 +755,10 @@ export const globalStyles = StyleSheet.create({
     alignItems: "stretch",
   },
   createProgramNextWrap: {
+    marginHorizontal: spacing.createProgramCardInset,
+  },
+  customExerciseAddWrap: {
+    marginTop: "auto",
     marginHorizontal: spacing.createProgramCardInset,
   },
   createDayHeader: {

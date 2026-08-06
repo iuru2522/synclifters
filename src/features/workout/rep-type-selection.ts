@@ -1,14 +1,14 @@
 import { useSyncExternalStore } from "react";
 
 export const REP_TYPE_OPTIONS = [
-  { label: "DROPSET", value: "dropset" },
-  { label: "SUPERSET", value: "superset" },
-  { label: "REGULAR", value: "regular" },
+  { label: "Regular", value: "regular" },
+  { label: "Superset", value: "superset" },
+  { label: "Dropset", value: "dropset" },
 ] as const;
 
 export type RepType = (typeof REP_TYPE_OPTIONS)[number]["value"];
 
-let selectedRepType: RepType | null = null;
+let selectedRepType: RepType | null = "regular";
 const listeners = new Set<() => void>();
 
 function emit() {
