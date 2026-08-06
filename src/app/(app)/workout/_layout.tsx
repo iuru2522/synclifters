@@ -25,6 +25,7 @@ export default function WorkoutLayout() {
       <Stack.Screen name="add-exercise" />
       <Stack.Screen name="exercise" />
       <Stack.Screen name="do-exercise" />
+      <Stack.Screen name="custom-exercise" />
       <Stack.Screen name="exercise-history" />
 
       <Stack.Screen name="name-sheet" options={fieldSheetOptions} />
@@ -36,8 +37,13 @@ export default function WorkoutLayout() {
       <Stack.Screen name="gender-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="sports-experience-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="metrics-sheet" options={fieldSheetOptions} />
+      <Stack.Screen name="exercise-name-sheet" options={fieldSheetOptions} />
+      <Stack.Screen name="muscle-sheet" options={fieldSheetOptions} />
+      <Stack.Screen name="measure-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="week-day-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="rep-type-sheet" options={fieldSheetOptions} />
+      <Stack.Screen name="dropset-lvls-sheet" options={fieldSheetOptions} />
+      <Stack.Screen name="superset-exercise-sheet" options={fieldSheetOptions} />
     </Stack>
   );
 }
