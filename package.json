@@ -58,5 +58,12 @@
     "apk:debug": "cd android && .\\gradlew.bat assembleDebug && cd ..",
     "apk:release": "cd android && .\\gradlew.bat assembleRelease && cd .."
   },
-  "private": true
+  "private": true,
+  "packageManager": "pnpm@10.34.5",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@firebase/util",
+      "protobufjs"
+    ]
+  }
 }

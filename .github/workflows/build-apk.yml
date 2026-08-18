@@ -15,19 +15,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Verify Node
         run: |
           node --version
-          npm --version
+          pnpm --version
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Prepare Google Services config
         env:
@@ -42,7 +45,7 @@ jobs:
           fi
 
       - name: Prebuild for Android
-        run: npx expo prebuild --platform android --clean
+        run: pnpm exec expo prebuild --platform android --clean
 
       - name: Set up Java
         uses: actions/setup-java@v4
