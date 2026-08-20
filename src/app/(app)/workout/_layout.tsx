@@ -30,6 +30,8 @@ export default function WorkoutLayout() {
       <Stack.Screen name="start-workout" />
       <Stack.Screen name="program-day" />
       <Stack.Screen name="program-day-exercise" />
+      <Stack.Screen name="workout-screen" />
+      <Stack.Screen name="set-screen" />
 
       <Stack.Screen name="name-sheet" options={fieldSheetOptions} />
 
