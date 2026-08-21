@@ -1,0 +1,25 @@
+import Svg, { Path } from "react-native-svg";
+import { colors, globalStyles, sizes } from "@/styles/global";
+
+type ChevronDownIconProps = {
+  color?: string;
+};
+
+const CHEVRON_PATH =
+  "M2.83041 3.19661C2.78114 3.19685 2.73232 3.18724 2.68682 3.16835C2.64131 3.14946 2.60003 3.12167 2.56541 3.08661L0.0654122 0.586613C0.0155496 0.513665 -0.0069515 0.425452 0.00187718 0.337532C0.0107059 0.249613 0.0502974 0.167635 0.113669 0.106057C0.17704 0.044479 0.260121 0.00725684 0.348257 0.000955275C0.436394 -0.00534629 0.523925 0.0196777 0.595412 0.0716135L2.83041 2.29161L5.06541 0.0716135C5.13589 0.0259181 5.21967 0.00520759 5.30332 0.0128013C5.38697 0.0203951 5.46565 0.0558535 5.52675 0.113493C5.58785 0.171133 5.62783 0.247616 5.64028 0.330684C5.65273 0.413752 5.63693 0.498595 5.59541 0.571613L3.09541 3.07161C3.06208 3.10939 3.02138 3.13997 2.97581 3.16146C2.93024 3.18296 2.88077 3.19492 2.83041 3.19661Z";
+
+export function ChevronDownIcon({
+  color = colors.backArrow,
+}: ChevronDownIconProps) {
+  return (
+    <Svg
+      width={sizes.setScreenChevronWidth}
+      height={sizes.setScreenChevronHeight}
+      viewBox="0 0 5.64442 3.19662"
+      style={globalStyles.setScreenChevronIcon}
+      accessibilityElementsHidden
+    >
+      <Path d={CHEVRON_PATH} fill={color} />
+    </Svg>
+  );
+}

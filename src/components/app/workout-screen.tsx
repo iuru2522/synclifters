@@ -1,24 +1,52 @@
+import { useState } from "react";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
+import { ChevronDownIcon } from "@/components/app/chevron-down-icon";
 import { ClockIcon } from "@/components/app/clock-icon";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
+import { PlusCircleIcon } from "@/components/app/plus-circle-icon";
 import { readSearchParam } from "@/components/app/program-day-params";
+import { SaveExerciseOverlay } from "@/components/app/save-exercise-overlay";
 import { SaveIcon } from "@/components/app/save-icon";
 import { StopwatchIcon } from "@/components/app/stopwatch-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import { useRecordedDropSets } from "@/features/workout/recorded-drop-sets";
+import { useRecordedWorkingSets } from "@/features/workout/recorded-working-sets";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 export function WorkoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [saveWorkoutVisible, setSaveWorkoutVisible] = useState(false);
   const params = useLocalSearchParams<{
     exerciseName?: string | string[];
+    dayName?: string | string[];
+    programName?: string | string[];
   }>();
   const exerciseName = readSearchParam(params.exerciseName);
+  const dayName = readSearchParam(params.dayName);
+  const programName = readSearchParam(params.programName);
+  const dropSets = useRecordedDropSets();
+  const workingSets = useRecordedWorkingSets();
+  const hasSetRows = workingSets.length > 0 || dropSets.length > 0;
+
+  function finishWorkout() {
+    setSaveWorkoutVisible(false);
+    const query = new URLSearchParams({
+      ...(programName ? { programName } : {}),
+      ...(dayName ? { dayName } : {}),
+    }).toString();
+    router.replace(
+      (query
+        ? `/workout/program-day-exercise?${query}`
+        : "/workout/program-day-exercise") as Href,
+    );
+  }
 
   return (
+    <View style={globalStyles.workoutScreen}>
     <View
       style={[
         globalStyles.workoutScreen,
@@ -48,7 +76,9 @@ export function WorkoutScreen() {
         </Text>
         <View style={[globalStyles.createDayHeaderMenu, globalStyles.createDayHeaderMenuRow]}>
           <Pressable
-            onPress={() => {}}
+            onPress={() => {
+              setSaveWorkoutVisible(true);
+            }}
             hitSlop={sizes.backArrowHitSlop}
             accessibilityRole="button"
             accessibilityLabel="Save"
@@ -66,104 +96,99 @@ export function WorkoutScreen() {
         </View>
       </View>
       <View style={globalStyles.workoutAccentBar}>
-        {exerciseName ? (
-          <Text style={globalStyles.workoutAccentBarLabel} numberOfLines={1}>
-            {exerciseName}
-          </Text>
-        ) : null}
+        <View style={globalStyles.workoutAccentBarTitle}>
+          {exerciseName ? (
+            <Text style={globalStyles.workoutAccentBarLabel} numberOfLines={1}>
+              {exerciseName}
+            </Text>
+          ) : null}
+        </View>
+        <Pressable
+          style={globalStyles.workoutAccentBarPlus}
+          onPress={() => {}}
+          hitSlop={sizes.backArrowHitSlop}
+          accessibilityRole="button"
+          accessibilityLabel="Add"
+        >
+          <PlusCircleIcon color={colors.background} />
+        </Pressable>
       </View>
       <View style={globalStyles.workoutSetHeaders}>
         <View style={globalStyles.workoutSetColSet}>
           <Text style={globalStyles.workoutSetHeaderLabel}>SET</Text>
         </View>
         <View style={globalStyles.workoutSetColWeight}>
-          <Text style={globalStyles.workoutSetHeaderLabel}>WEIGHT | KG</Text>
+          <View style={globalStyles.workoutSetHeaderWeightRow}>
+            <Text style={globalStyles.workoutSetHeaderLabel}>WEIGHT | KG</Text>
+            <Pressable
+              onPress={() => {}}
+              hitSlop={sizes.backArrowHitSlop}
+              accessibilityRole="button"
+              accessibilityLabel="Weight unit"
+            >
+              <ChevronDownIcon />
+            </Pressable>
+          </View>
         </View>
         <View style={globalStyles.workoutSetColReps}>
           <Text style={globalStyles.workoutSetHeaderLabel}>REPS</Text>
         </View>
       </View>
       <View style={globalStyles.workoutSetHeadersLine} />
-      <View style={globalStyles.workoutSetValues}>
-        <View style={globalStyles.workoutSetColSet}>
-          <Text style={globalStyles.workoutSetWLabel}>W</Text>
-        </View>
-        <View style={globalStyles.workoutSetColWeight}>
-          <View style={globalStyles.workoutSetValueWithExponent}>
-            <Text style={globalStyles.workoutSetWeightLabel}>20</Text>
-            <Text style={globalStyles.workoutSetValueExponent}>+2</Text>
+      {workingSets.map((set) => (
+        <View key={set.label}>
+          <View style={globalStyles.workoutSetValues}>
+            <View style={globalStyles.workoutSetColSet}>
+              <Text style={globalStyles.workoutSetIndexLabel}>{set.label}</Text>
+            </View>
+            <View style={globalStyles.workoutSetColWeight}>
+              <Text style={globalStyles.workoutSetIndexLabel}>{set.weight}</Text>
+            </View>
+            <View style={globalStyles.workoutSetColReps}>
+              <Text style={globalStyles.workoutSetIndexLabel}>{set.reps}</Text>
+            </View>
           </View>
+          <View style={globalStyles.workoutSetValuesLine} />
         </View>
-        <View style={globalStyles.workoutSetColReps}>
-          <View style={globalStyles.workoutSetValueWithExponent}>
-            <Text style={globalStyles.workoutSetWeightLabel}>8</Text>
-            <Text style={globalStyles.workoutSetValueExponentNegative}>-2</Text>
+      ))}
+      {dropSets.length > 0 ? (
+        <>
+          <View style={globalStyles.workoutDropSetGroup}>
+            <View
+              style={[globalStyles.workoutSetStatusBar, globalStyles.workoutSetStatusBarDrop]}
+            />
+            {dropSets.map((drop, index) => (
+              <View key={`drop-${index}`} style={globalStyles.workoutDropSetRow}>
+                <View style={globalStyles.workoutSetColSet}>
+                  <Text style={globalStyles.workoutSetIndexLabel}>{`D${index + 1}`}</Text>
+                </View>
+                <View style={globalStyles.workoutSetColWeight}>
+                  <Text style={globalStyles.workoutSetIndexLabel}>{drop.weight}</Text>
+                </View>
+                <View style={globalStyles.workoutSetColReps}>
+                  <Text style={globalStyles.workoutSetIndexLabel}>{drop.reps}</Text>
+                </View>
+              </View>
+            ))}
           </View>
-        </View>
-      </View>
-      <View style={globalStyles.workoutSetValuesLine} />
-      <View style={globalStyles.workoutSetValues}>
-        <View style={globalStyles.workoutSetColSet}>
-          <Text style={globalStyles.workoutSetIndexLabel}>1</Text>
-        </View>
-        <View style={globalStyles.workoutSetColWeight}>
-          <View style={globalStyles.workoutSetValueWithExponent}>
-            <Text style={globalStyles.workoutSetIndexLabel}>20</Text>
-            <Text style={globalStyles.workoutSetValueExponent}>+2</Text>
-          </View>
-        </View>
-        <View style={globalStyles.workoutSetColReps}>
-          <View style={globalStyles.workoutSetValueWithExponent}>
-            <Text style={globalStyles.workoutSetIndexLabel}>8</Text>
-            <Text style={globalStyles.workoutSetValueExponentNegative}>-2</Text>
-          </View>
-        </View>
-      </View>
-      <View style={globalStyles.workoutSetValuesLine} />
-      <View style={globalStyles.workoutSetValues}>
-        <View style={globalStyles.workoutSetColSet}>
-          <Text style={globalStyles.workoutSetIndexLabel}>2</Text>
-        </View>
-        <View style={globalStyles.workoutSetColWeight}>
-          <View style={globalStyles.workoutSetValueWithExponent}>
-            <Text style={globalStyles.workoutSetIndexLabel}>20</Text>
-            <Text style={globalStyles.workoutSetValueExponent}>+2</Text>
-          </View>
-        </View>
-        <View style={globalStyles.workoutSetColReps}>
-          <View style={globalStyles.workoutSetValueWithExponent}>
-            <Text style={globalStyles.workoutSetIndexLabel}>8</Text>
-            <Text style={globalStyles.workoutSetValueExponentNegative}>-2</Text>
-          </View>
-        </View>
-      </View>
-      <View style={globalStyles.workoutSetValuesLine} />
-      <View style={globalStyles.workoutSetValues}>
-        <View style={globalStyles.workoutSetColSet}>
-          <Text style={globalStyles.workoutSetMutedLabel}>3</Text>
-        </View>
-        <View style={globalStyles.workoutSetColWeight}>
-          <View style={globalStyles.workoutSetValueWithExponent}>
-            <Text style={globalStyles.workoutSetMutedLabel}>18</Text>
-            <Text
-              style={globalStyles.workoutSetValueExponentHidden}
-              accessibilityElementsHidden
-            >
-              +2
-            </Text>
-          </View>
-        </View>
-        <View style={globalStyles.workoutSetColReps}>
-          <Text style={globalStyles.workoutSetMutedLabel}>10</Text>
-        </View>
-      </View>
-      <View style={globalStyles.workoutSetValuesLine} />
-      <Text style={globalStyles.workoutLastWorkout}>Last Workout Was 06/11/25</Text>
+          <View style={globalStyles.workoutSetRowLine} />
+        </>
+      ) : null}
+      {hasSetRows ? (
+        <Text style={globalStyles.workoutLastWorkout}>Last Workout Was 06/11/25</Text>
+      ) : null}
       <View style={globalStyles.programDayExerciseSelectDayWrap}>
         <AppButton
           title="ADD SET"
           onPress={() => {
-            router.push("/workout/set-screen" as Href);
+            const query = new URLSearchParams({
+              ...(programName ? { programName } : {}),
+              ...(dayName ? { dayName } : {}),
+              ...(exerciseName ? { exerciseName } : {}),
+            }).toString();
+            router.push(
+              (query ? `/workout/set-screen?${query}` : "/workout/set-screen") as Href,
+            );
           }}
           borderColor={colors.backArrow}
           textColor={colors.inputFill}
@@ -185,7 +210,7 @@ export function WorkoutScreen() {
           ]}
         >
           <ClockIcon />
-          <Text style={globalStyles.programDayExerciseTimerText}>00:00</Text>
+          <Text style={globalStyles.programDayExerciseTimerText}>00:22</Text>
         </View>
         <View
           style={[
@@ -194,9 +219,18 @@ export function WorkoutScreen() {
           ]}
         >
           <StopwatchIcon />
-          <Text style={globalStyles.programDayExerciseTimerText}>00:00</Text>
+          <Text style={globalStyles.programDayExerciseStopwatchTimerText}>00:00</Text>
         </View>
       </View>
+    </View>
+      <SaveExerciseOverlay
+        visible={saveWorkoutVisible}
+        finishTitle="FINISH WORKOUT"
+        onFinish={finishWorkout}
+        onCancel={() => {
+          setSaveWorkoutVisible(false);
+        }}
+      />
     </View>
   );
 }

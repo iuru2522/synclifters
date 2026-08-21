@@ -1,18 +1,51 @@
-import { useRouter } from "expo-router";
+import { useState } from "react";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
+import { ChevronDownIcon } from "@/components/app/chevron-down-icon";
 import { ClockIcon } from "@/components/app/clock-icon";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
+import { readSearchParam } from "@/components/app/program-day-params";
+import { SaveExerciseOverlay } from "@/components/app/save-exercise-overlay";
+import { SetFeelingBar, type SetFeeling } from "@/components/app/set-feeling-bar";
+import { SetNumericInput } from "@/components/app/set-numeric-input";
 import { StopwatchIcon } from "@/components/app/stopwatch-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import { addRecordedWorkingSet } from "@/features/workout/recorded-working-sets";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 export function SetScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [weight, setWeight] = useState("00.0");
+  const [reps, setReps] = useState("0");
+  const [setFeeling, setSetFeeling] = useState<SetFeeling>("W");
+  const [saveExerciseVisible, setSaveExerciseVisible] = useState(false);
+  const params = useLocalSearchParams<{
+    exerciseName?: string | string[];
+    dayName?: string | string[];
+    programName?: string | string[];
+  }>();
+  const exerciseName = readSearchParam(params.exerciseName);
+  const dayName = readSearchParam(params.dayName);
+  const programName = readSearchParam(params.programName);
+
+  function finishExercise() {
+    addRecordedWorkingSet({ weight, reps });
+    setSaveExerciseVisible(false);
+    const query = new URLSearchParams({
+      ...(programName ? { programName } : {}),
+      ...(dayName ? { dayName } : {}),
+      ...(exerciseName ? { exerciseName } : {}),
+    }).toString();
+    router.replace(
+      (query ? `/workout/workout-screen?${query}` : "/workout/workout-screen") as Href,
+    );
+  }
 
   return (
+    <View style={globalStyles.workoutScreen}>
     <View
       style={[
         globalStyles.workoutScreen,
@@ -44,14 +77,43 @@ export function SetScreen() {
           <CreateDayBurgerIcon />
         </Pressable>
       </View>
-      <Text style={globalStyles.setScreenWeightLabel}>WEIGHT | KG</Text>
-      <Text style={globalStyles.setScreenWeightValue}>50.0</Text>
+      <View style={globalStyles.setScreenWeightLabelRow}>
+        <Text style={globalStyles.setScreenWeightLabel}>WEIGHT | KG</Text>
+        <Pressable
+          onPress={() => {}}
+          hitSlop={sizes.backArrowHitSlop}
+          accessibilityRole="button"
+          accessibilityLabel="Weight unit"
+        >
+          <ChevronDownIcon />
+        </Pressable>
+      </View>
+      <SetNumericInput
+        value={weight}
+        onChangeText={setWeight}
+        keyboardType="decimal-pad"
+        accessibilityLabel="Weight"
+      />
       <View style={globalStyles.setScreenWeightLine} />
+      <Text style={[globalStyles.setScreenWeightLabel, globalStyles.setScreenRepsLabel]}>
+        REPS
+      </Text>
+      <SetNumericInput
+        value={reps}
+        onChangeText={setReps}
+        keyboardType="number-pad"
+        accessibilityLabel="Reps"
+      />
+      <View style={globalStyles.setScreenWeightLine} />
+      <Text style={globalStyles.setScreenFeelingLabel}>SET FEELING</Text>
+      <SetFeelingBar value={setFeeling} onChange={setSetFeeling} />
       <View style={globalStyles.setScreenFooter}>
         <View style={globalStyles.setScreenRecordWrap}>
           <AppButton
             title="RECORD"
-            onPress={() => {}}
+            onPress={() => {
+              setSaveExerciseVisible(true);
+            }}
             borderColor={colors.backArrow}
             textColor={colors.inputFill}
             pressAccentColor={colors.backArrow}
@@ -59,41 +121,59 @@ export function SetScreen() {
         </View>
         <Pressable
           style={globalStyles.setScreenDropSetLink}
-          onPress={() => {}}
+          onPress={() => {
+            const query = new URLSearchParams({
+              ...(programName ? { programName } : {}),
+              ...(dayName ? { dayName } : {}),
+              ...(exerciseName ? { exerciseName } : {}),
+            }).toString();
+            router.push(
+              (query ? `/workout/drop-set-entry?${query}` : "/workout/drop-set-entry") as Href,
+            );
+          }}
           hitSlop={sizes.backArrowHitSlop}
           accessibilityRole="button"
           accessibilityLabel="Record as Drop Set"
         >
           <Text style={globalStyles.setScreenDropSetLabel}>Record as Drop Set</Text>
         </Pressable>
+      </View>
+      <View
+        style={[
+          globalStyles.setScreenTimers,
+          {
+            paddingBottom: Math.max(insets.bottom, spacing.safeAreaBottomMin),
+          },
+        ]}
+      >
         <View
           style={[
-            globalStyles.workoutTimers,
-            {
-              paddingBottom: Math.max(insets.bottom, spacing.safeAreaBottomMin),
-            },
+            globalStyles.programDayExerciseTimer,
+            globalStyles.programDayExerciseClockTimer,
           ]}
         >
-          <View
-            style={[
-              globalStyles.programDayExerciseTimer,
-              globalStyles.programDayExerciseClockTimer,
-            ]}
-          >
-            <ClockIcon />
-            <Text style={globalStyles.programDayExerciseTimerText}>00:00</Text>
-          </View>
-          <View
-            style={[
-              globalStyles.programDayExerciseTimer,
-              globalStyles.programDayExerciseStopwatchTimer,
-            ]}
-          >
-            <StopwatchIcon />
-            <Text style={globalStyles.programDayExerciseTimerText}>00:00</Text>
-          </View>
+          <ClockIcon />
+          <Text style={globalStyles.programDayExerciseTimerText}>00:22</Text>
+        </View>
+        <View
+          style={[
+            globalStyles.programDayExerciseTimer,
+            globalStyles.programDayExerciseStopwatchTimer,
+          ]}
+        >
+          <StopwatchIcon />
+          <Text style={globalStyles.programDayExerciseTimerText}>00:00</Text>
         </View>
       </View>
+    </View>
+      <SaveExerciseOverlay
+        visible={saveExerciseVisible}
+        finishTitle="FINISH EXERCISE"
+        onFinish={finishExercise}
+        onCancel={() => {
+          setSaveExerciseVisible(false);
+        }}
+      />
     </View>
   );
 }

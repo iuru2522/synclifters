@@ -29,14 +29,21 @@ export function ProgramDayExerciseScreen() {
   const programName = readSearchParam(params.programName);
 
   function openWorkout(exerciseName?: string) {
-    router.push({
-      pathname: "/workout/workout-screen",
-      params: {
-        ...(programName ? { programName } : {}),
-        ...(dayName ? { dayName } : {}),
-        ...(exerciseName ? { exerciseName } : {}),
-      },
-    } as Href);
+    const params = new URLSearchParams({
+      ...(programName ? { programName } : {}),
+      ...(dayName ? { dayName } : {}),
+      ...(exerciseName ? { exerciseName } : {}),
+    });
+    const query = params.toString();
+    router.push(
+      (query ? `/workout/workout-screen?${query}` : "/workout/workout-screen") as Href,
+    );
+  }
+
+  function openExerciseHistory(exerciseName: string) {
+    router.push(
+      `/workout/exercise-history?exerciseName=${encodeURIComponent(exerciseName)}` as Href,
+    );
   }
 
   return (
@@ -91,20 +98,30 @@ export function ProgramDayExerciseScreen() {
       <View style={globalStyles.programDayExerciseCirclesRow}>
         {EXERCISES.map((name) => (
           <View key={name} style={globalStyles.doExerciseItem}>
-            <Pressable
-              style={globalStyles.doExerciseSelectTarget}
-              onPress={() => {
-                openWorkout(name);
-              }}
-              hitSlop={sizes.backArrowHitSlop}
-              accessibilityRole="button"
-              accessibilityLabel={name}
-            >
-              <View style={globalStyles.doExerciseCircle} />
-              <Text style={globalStyles.programDayExerciseName} numberOfLines={1}>
-                {name}
-              </Text>
-            </Pressable>
+            <View style={globalStyles.doExerciseSelectTarget}>
+              <Pressable
+                onPress={() => {
+                  openExerciseHistory(name);
+                }}
+                hitSlop={sizes.backArrowHitSlop}
+                accessibilityRole="button"
+                accessibilityLabel={`${name} history`}
+              >
+                <View style={globalStyles.doExerciseCircle} />
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  openWorkout(name);
+                }}
+                hitSlop={sizes.backArrowHitSlop}
+                accessibilityRole="button"
+                accessibilityLabel={name}
+              >
+                <Text style={globalStyles.programDayExerciseName} numberOfLines={1}>
+                  {name}
+                </Text>
+              </Pressable>
+            </View>
           </View>
         ))}
       </View>
