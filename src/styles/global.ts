@@ -156,6 +156,7 @@ export const spacing = {
   programDayLineToDay: 13,
   programDayDayLabelLeft: 76,
   programDayBackLeft: 35,
+  programDayEditTop: 41,
   programDayExerciseHeaderToCircle: 30,
   programDayExerciseSelectDaySide: 69,
   startWorkoutProgramButtonTitleToSubtitle: 4,
@@ -1695,6 +1696,11 @@ export const globalStyles = StyleSheet.create({
   },
   programDayBackButton: {
     marginLeft: spacing.programDayBackLeft,
+  },
+  programDayEditWrap: {
+    alignSelf: "stretch",
+    marginTop: spacing.programDayEditTop,
+    paddingHorizontal: spacing.programDayExerciseSelectDaySide,
   },
   startWorkoutYourPrograms: {
     ...typography.workoutMyPrograms,

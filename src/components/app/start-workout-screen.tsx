@@ -1,8 +1,9 @@
-import { useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
+import { readSearchParam } from "@/components/app/program-day-params";
 import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-icon";
 import { WorkoutStartIcon } from "@/components/app/workout-start-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
@@ -73,6 +74,8 @@ function ProgramButton({
 export function StartWorkoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ showEdit?: string | string[] }>();
+  const showEdit = readSearchParam(params.showEdit) === "1";
   const [selectedButton, setSelectedButton] = useState<ProgramButtonSelection | null>(null);
 
   function selectProgram(
@@ -80,10 +83,11 @@ export function StartWorkoutScreen() {
     programName: string,
   ) {
     setSelectedButton(selection);
-    router.push({
-      pathname: "/workout/program-day",
-      params: { programName },
-    } as Href);
+    const query = new URLSearchParams({
+      programName,
+      ...(showEdit ? { showEdit: "1" } : {}),
+    }).toString();
+    router.push(`/workout/program-day?${query}` as Href);
   }
 
   return (

@@ -10,19 +10,21 @@ const PROGRAM_DAYS = [1, 2, 3, 4, 5, 6, 7] as const;
 export function ProgramDayScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ programName?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    programName?: string | string[];
+    showEdit?: string | string[];
+  }>();
   const programName = readSearchParam(params.programName);
+  const showEdit = readSearchParam(params.showEdit) === "1";
   const programDaysLabel = programName ? `${programName} Days` : "Days";
 
   function openDay(day: number) {
-    const dayName = `Day ${day}`;
-    router.push({
-      pathname: "/workout/program-day-exercise",
-      params: {
-        ...(programName ? { programName } : {}),
-        dayName,
-      },
-    } as Href);
+    const query = new URLSearchParams({
+      dayName: `Day ${day}`,
+      ...(programName ? { programName } : {}),
+      ...(showEdit ? { showEdit: "1" } : {}),
+    }).toString();
+    router.push(`/workout/program-day-exercise?${query}` as Href);
   }
 
   return (

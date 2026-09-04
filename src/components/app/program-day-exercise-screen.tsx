@@ -1,13 +1,14 @@
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppButton } from "@/components/app-button";
 import { ClockIcon } from "@/components/app/clock-icon";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { SaveIcon } from "@/components/app/save-icon";
 import { StopwatchIcon } from "@/components/app/stopwatch-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
-import { globalStyles, sizes, spacing } from "@/styles/global";
+import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 const EXERCISES = [
   "Tricep Pushdown",
@@ -24,15 +25,18 @@ export function ProgramDayExerciseScreen() {
   const params = useLocalSearchParams<{
     dayName?: string | string[];
     programName?: string | string[];
+    showEdit?: string | string[];
   }>();
   const dayName = readSearchParam(params.dayName);
   const programName = readSearchParam(params.programName);
+  const showEdit = readSearchParam(params.showEdit) === "1";
 
   function openWorkout(exerciseName?: string) {
     const params = new URLSearchParams({
       ...(programName ? { programName } : {}),
       ...(dayName ? { dayName } : {}),
       ...(exerciseName ? { exerciseName } : {}),
+      ...(showEdit ? { showEdit: "1" } : {}),
     });
     const query = params.toString();
     router.push(
@@ -125,6 +129,18 @@ export function ProgramDayExerciseScreen() {
           </View>
         ))}
       </View>
+      {showEdit ? (
+        <View style={globalStyles.programDayEditWrap}>
+          <AppButton
+            title="EDIT"
+            onPress={() => {}}
+            borderColor={colors.white}
+            borderWidth={sizes.workoutProgramThinBorderWidth}
+            pressAccentColor={colors.backArrow}
+            accessibilityLabel="Edit"
+          />
+        </View>
+      ) : null}
       <View style={globalStyles.addExerciseDayRecordLink}>
         <Text style={globalStyles.addExerciseDayRecordLabel}>ADD EXERCISE</Text>
       </View>

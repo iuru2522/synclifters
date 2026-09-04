@@ -13,7 +13,7 @@ import { useMenuOverlay } from "@/features/menu/menu-overlay-context";
 import { colors, globalStyles, sizes } from "@/styles/global";
 import type { ReactNode } from "react";
 
-const CREATE_PROGRAM_HREF = "/workout/create-program" as Href;
+const PROGRAMS_HREF = "/workout/start-workout?showEdit=1" as Href;
 const PROFILE_HREF = "/workout/profile" as Href;
 const PROGRESS_HREF = "/workout/progress" as Href;
 
@@ -40,7 +40,7 @@ const MENU_ITEMS_ROW_ONE: MenuItemConfig[] = [
     id: "programs",
     label: "PROGRAMS",
     icon: <MenuProgramsIcon />,
-    href: CREATE_PROGRAM_HREF,
+    href: PROGRAMS_HREF,
   },
 ];
 
