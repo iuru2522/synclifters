@@ -132,7 +132,14 @@ export function AppButton({
   const animatePress = Boolean(pressFillColor && pressLabelColor);
   const animatePressAccent = Boolean(pressAccentColor);
   const withIcon = Boolean(leftIcon || rightIcon);
-  const titleWithIconsStyle = withIcon && !subtitle ? globalStyles.appButtonTitleWithIcons : null;
+  // Only let the title flex when there is no subtitle stack — flex on the title
+  // grows it away from subtitles inside the label column and creates a large gap.
+  const titleWithIconsStyle =
+    withIcon && !subtitle
+      ? globalStyles.appButtonTitleWithIcons
+      : withIcon
+        ? globalStyles.appButtonLabelTitle
+        : null;
 
   const setPressed = useCallback(
     (pressed: boolean) => {

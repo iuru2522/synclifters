@@ -1,7 +1,3 @@
-import { useRouter, type Href } from "expo-router";
-import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { WorkoutBellIcon } from "@/components/app/workout-bell-icon";
 import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-icon";
@@ -12,9 +8,16 @@ import { useAuth } from "@/features/auth/auth-context";
 import { formatProfileFullName } from "@/features/users/profile-display";
 import { useUserPrograms } from "@/features/workout/user-programs";
 import { colors, globalStyles, sizes } from "@/styles/global";
+import { useRouter, type Href } from "expo-router";
+import { useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PROFILE_HREF = "/workout/profile" as Href;
 const CREATE_PROGRAM_HREF = "/workout/create-program" as Href;
+const START_WORKOUT_HREF = "/workout/start-workout" as Href;
+
+type StartTrainingSelection = "program" | "day";
 
 export function WorkoutTabScreen() {
   const router = useRouter();
@@ -23,6 +26,11 @@ export function WorkoutTabScreen() {
   const userPrograms = useUserPrograms();
   const fullName = formatProfileFullName(profile);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [startTrainingSelection, setStartTrainingSelection] =
+    useState<StartTrainingSelection | null>(null);
+
+  const programSelected = startTrainingSelection === "program";
+  const daySelected = startTrainingSelection === "day";
 
   return (
     <View style={[globalStyles.workoutScreen, { paddingTop: insets.top }]}>
@@ -71,6 +79,63 @@ export function WorkoutTabScreen() {
         <View style={globalStyles.workoutWeekCalendarWrap}>
           <WeekCalendar selectedDate={selectedDate} onDateChange={setSelectedDate} />
         </View>
+        <View style={globalStyles.workoutStartTrainingLabel}>
+          <Text style={globalStyles.workoutGlassCardLabel}>START TRAINING</Text>
+        </View>
+        <Text style={globalStyles.workoutMyPrograms}>Selected Program</Text>
+        <View style={globalStyles.workoutSelectedProgramButtonWrap}>
+          <AppButton
+            title="Full Body Strength"
+            onPress={() => {
+              setStartTrainingSelection("program");
+            }}
+            borderColor={colors.backArrow}
+            borderWidth={sizes.workoutProgramThinBorderWidth}
+            textColor={programSelected ? colors.inputText : colors.inputFill}
+            textStyle={[
+              globalStyles.workoutProgramOutlinedButtonText,
+              programSelected ? globalStyles.workoutSelectedProgramButtonTextSelected : null,
+            ]}
+            style={[
+              globalStyles.workoutSelectedProgramButton,
+              programSelected ? globalStyles.workoutSelectedProgramButtonSelected : null,
+            ]}
+            pressFillColor={programSelected ? undefined : colors.backArrow}
+            pressLabelColor={programSelected ? undefined : colors.inputText}
+          />
+        </View>
+        <Text style={globalStyles.workoutStartTrainingDay}>Day</Text>
+        <View style={globalStyles.workoutSelectedProgramButtonWrap}>
+          <AppButton
+            title="Day 1"
+            onPress={() => {
+              setStartTrainingSelection("day");
+            }}
+            borderColor={colors.backArrow}
+            borderWidth={sizes.workoutProgramThinBorderWidth}
+            textColor={daySelected ? colors.inputText : colors.inputFill}
+            textStyle={[
+              globalStyles.workoutProgramOutlinedButtonText,
+              daySelected ? globalStyles.workoutSelectedProgramButtonTextSelected : null,
+            ]}
+            style={[
+              globalStyles.workoutSelectedProgramButton,
+              daySelected ? globalStyles.workoutSelectedProgramButtonSelected : null,
+            ]}
+            pressFillColor={daySelected ? undefined : colors.backArrow}
+            pressLabelColor={daySelected ? undefined : colors.inputText}
+          />
+        </View>
+        <Pressable
+          style={globalStyles.workoutStartTrainingGreenBar}
+          onPress={() => {
+            router.push(START_WORKOUT_HREF);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Start Workout"
+        >
+          <Text style={globalStyles.workoutStartTrainingGreenBarText}>Start Workout</Text>
+        </Pressable>
         <View style={globalStyles.workoutTrainingProgramsLabel}>
           <Text style={globalStyles.workoutGlassCardLabel}>TRAINING PROGRAMS</Text>
         </View>
