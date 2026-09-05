@@ -795,6 +795,26 @@ export const globalStyles = StyleSheet.create({
     alignSelf: "stretch",
     paddingRight: spacing.doExerciseLinkRight,
   },
+  historyDayExerciseSwipe: {
+    alignSelf: "stretch",
+  },
+  historyDayExerciseSwipeChildren: {
+    backgroundColor: colors.background,
+  },
+  historySwipeDelete: {
+    width: spacing.swipeBackTranslation,
+    backgroundColor: colors.resetButtonBorder,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  historySwipeDeleteText: {
+    ...typography.doExerciseName,
+    color: colors.inputFill,
+    fontFamily: fonts.poppinsBold,
+    fontWeight: "700",
+    includeFontPadding: false,
+    textTransform: "uppercase",
+  },
   doExerciseSelectTarget: {
     flex: 1,
     flexDirection: "row",

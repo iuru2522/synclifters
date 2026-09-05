@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { Alert, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { ClockIcon } from "@/components/app/clock-icon";
@@ -7,17 +7,16 @@ import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { SaveIcon } from "@/components/app/save-icon";
 import { StopwatchIcon } from "@/components/app/stopwatch-icon";
+import { HistoryDayExerciseRow } from "@/components/app/history-day-exercise-row";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import {
+  HISTORY_DAY_SEED_NAMES,
+  removeHistoryDayRecord,
+  renameHistoryDayRecord,
+  useHistoryDayRecords,
+  type HistoryDayRecord,
+} from "@/features/workout/history-day-records";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
-
-const EXERCISES = [
-  "Tricep Pushdown",
-  "Barbell Bench Press",
-  "Lat Pulldown",
-  "Romanian Deadlift",
-  "Shoulder Press",
-  "Cable Fly",
-] as const;
 
 export function ProgramDayExerciseScreen() {
   const router = useRouter();
@@ -32,6 +31,13 @@ export function ProgramDayExerciseScreen() {
   const programName = readSearchParam(params.programName);
   const showEdit = readSearchParam(params.showEdit) === "1";
   const fromHistory = readSearchParam(params.fromHistory) === "1";
+  const historyProgramName = programName ?? "";
+  const historyDayName = dayName ?? "";
+  const historyRecords = useHistoryDayRecords(
+    historyProgramName,
+    historyDayName,
+    fromHistory,
+  );
 
   function openWorkout(exerciseName?: string) {
     const params = new URLSearchParams({
@@ -51,6 +57,46 @@ export function ProgramDayExerciseScreen() {
     router.push(
       `/workout/exercise-history?exerciseName=${encodeURIComponent(exerciseName)}` as Href,
     );
+  }
+
+  function applyRenamedRecord(record: HistoryDayRecord, value: string | undefined) {
+    const trimmed = value?.trim() ?? "";
+    if (!trimmed) {
+      Alert.alert("Exercise name required", "Please enter an exercise name.");
+      return;
+    }
+
+    renameHistoryDayRecord(historyProgramName, historyDayName, record.id, trimmed);
+  }
+
+  function editHistoryRecord(record: HistoryDayRecord) {
+    if (process.env.EXPO_OS === "ios") {
+      Alert.prompt(
+        "Exercise name",
+        undefined,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Save",
+            onPress: (value?: string) => {
+              applyRenamedRecord(record, value);
+            },
+          },
+        ],
+        "plain-text",
+        record.name,
+      );
+      return;
+    }
+
+    router.push({
+      pathname: "/workout/history-exercise-name-sheet",
+      params: {
+        programName: historyProgramName,
+        dayName: historyDayName,
+        recordId: record.id,
+      },
+    } as Href);
   }
 
   return (
@@ -105,35 +151,54 @@ export function ProgramDayExerciseScreen() {
         </View>
       </View>
       <View style={globalStyles.programDayExerciseCirclesRow}>
-        {EXERCISES.map((name) => (
-          <View key={name} style={globalStyles.doExerciseItem}>
-            <View style={globalStyles.doExerciseSelectTarget}>
-              <Pressable
-                onPress={() => {
-                  openExerciseHistory(name);
+        {fromHistory
+          ? historyRecords.map((record) => (
+              <HistoryDayExerciseRow
+                key={record.id}
+                record={record}
+                onOpenHistory={() => {
+                  openExerciseHistory(record.name);
                 }}
-                hitSlop={sizes.backArrowHitSlop}
-                accessibilityRole="button"
-                accessibilityLabel={`${name} history`}
-              >
-                <View style={globalStyles.doExerciseCircle} />
-              </Pressable>
-              <Pressable
-                style={globalStyles.programDayExerciseNamePressable}
-                onPress={() => {
-                  openWorkout(name);
+                onOpenWorkout={() => {
+                  openWorkout(record.name);
                 }}
-                hitSlop={sizes.backArrowHitSlop}
-                accessibilityRole="button"
-                accessibilityLabel={name}
-              >
-                <Text style={globalStyles.programDayExerciseName} numberOfLines={1}>
-                  {name}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        ))}
+                onEdit={() => {
+                  editHistoryRecord(record);
+                }}
+                onDelete={() => {
+                  removeHistoryDayRecord(historyProgramName, historyDayName, record.id);
+                }}
+              />
+            ))
+          : HISTORY_DAY_SEED_NAMES.map((name) => (
+              <View key={name} style={globalStyles.doExerciseItem}>
+                <View style={globalStyles.doExerciseSelectTarget}>
+                  <Pressable
+                    onPress={() => {
+                      openExerciseHistory(name);
+                    }}
+                    hitSlop={sizes.backArrowHitSlop}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${name} history`}
+                  >
+                    <View style={globalStyles.doExerciseCircle} />
+                  </Pressable>
+                  <Pressable
+                    style={globalStyles.programDayExerciseNamePressable}
+                    onPress={() => {
+                      openWorkout(name);
+                    }}
+                    hitSlop={sizes.backArrowHitSlop}
+                    accessibilityRole="button"
+                    accessibilityLabel={name}
+                  >
+                    <Text style={globalStyles.programDayExerciseName} numberOfLines={1}>
+                      {name}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))}
       </View>
       {showEdit ? (
         <View style={globalStyles.programDayEditWrap}>
