@@ -13,9 +13,11 @@ export function ProgramDayScreen() {
   const params = useLocalSearchParams<{
     programName?: string | string[];
     showEdit?: string | string[];
+    fromHistory?: string | string[];
   }>();
   const programName = readSearchParam(params.programName);
   const showEdit = readSearchParam(params.showEdit) === "1";
+  const fromHistory = readSearchParam(params.fromHistory) === "1";
   const programDaysLabel = programName ? `${programName} Days` : "Days";
 
   function openDay(day: number) {
@@ -23,8 +25,13 @@ export function ProgramDayScreen() {
       dayName: `Day ${day}`,
       ...(programName ? { programName } : {}),
       ...(showEdit ? { showEdit: "1" } : {}),
+      ...(fromHistory ? { fromHistory: "1" } : {}),
     }).toString();
-    router.push(`/workout/program-day-exercise?${query}` as Href);
+    router.push(
+      (fromHistory
+        ? `/workout/workout-screen?${query}`
+        : `/workout/program-day-exercise?${query}`) as Href,
+    );
   }
 
   return (

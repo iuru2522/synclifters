@@ -26,10 +26,12 @@ export function ProgramDayExerciseScreen() {
     dayName?: string | string[];
     programName?: string | string[];
     showEdit?: string | string[];
+    fromHistory?: string | string[];
   }>();
   const dayName = readSearchParam(params.dayName);
   const programName = readSearchParam(params.programName);
   const showEdit = readSearchParam(params.showEdit) === "1";
+  const fromHistory = readSearchParam(params.fromHistory) === "1";
 
   function openWorkout(exerciseName?: string) {
     const params = new URLSearchParams({
@@ -37,6 +39,7 @@ export function ProgramDayExerciseScreen() {
       ...(dayName ? { dayName } : {}),
       ...(exerciseName ? { exerciseName } : {}),
       ...(showEdit ? { showEdit: "1" } : {}),
+      ...(fromHistory ? { fromHistory: "1" } : {}),
     });
     const query = params.toString();
     router.push(
@@ -73,7 +76,7 @@ export function ProgramDayExerciseScreen() {
           <Text
             style={[
               globalStyles.createDayHeaderTitle,
-              globalStyles.createDayHeaderTitleWithSave,
+              fromHistory ? null : globalStyles.createDayHeaderTitleWithSave,
             ]}
             numberOfLines={1}
           >
@@ -81,14 +84,16 @@ export function ProgramDayExerciseScreen() {
           </Text>
         ) : null}
         <View style={[globalStyles.createDayHeaderMenu, globalStyles.createDayHeaderMenuRow]}>
-          <Pressable
-            onPress={() => {}}
-            hitSlop={sizes.backArrowHitSlop}
-            accessibilityRole="button"
-            accessibilityLabel="Save"
-          >
-            <SaveIcon />
-          </Pressable>
+          {fromHistory ? null : (
+            <Pressable
+              onPress={() => {}}
+              hitSlop={sizes.backArrowHitSlop}
+              accessibilityRole="button"
+              accessibilityLabel="Save"
+            >
+              <SaveIcon />
+            </Pressable>
+          )}
           <Pressable
             onPress={() => {}}
             hitSlop={sizes.backArrowHitSlop}
@@ -114,6 +119,7 @@ export function ProgramDayExerciseScreen() {
                 <View style={globalStyles.doExerciseCircle} />
               </Pressable>
               <Pressable
+                style={globalStyles.programDayExerciseNamePressable}
                 onPress={() => {
                   openWorkout(name);
                 }}

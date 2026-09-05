@@ -1,5 +1,5 @@
-import { TabScreen } from "@/components/app/tab-screen";
+import { HistoryScreen } from "@/components/app/history-screen";
 
-export default function HistoryScreen() {
-  return <TabScreen title="History" />;
+export default function HistoryRoute() {
+  return <HistoryScreen />;
 }
