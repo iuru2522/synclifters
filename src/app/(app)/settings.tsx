@@ -1,7 +1,13 @@
-import { Redirect, type Href } from "expo-router";
-
-const WORKOUT_HREF = "/workout" as Href;
+import { View } from "react-native";
+import { MenuOverlay } from "@/components/app/menu-overlay";
+import { WorkoutTabScreen } from "@/components/app/workout-tab-screen";
+import { globalStyles } from "@/styles/global";
 
 export default function SettingsScreen() {
-  return <Redirect href={WORKOUT_HREF} />;
+  return (
+    <View style={globalStyles.screen}>
+      <WorkoutTabScreen />
+      <MenuOverlay />
+    </View>
+  );
 }

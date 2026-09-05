@@ -51,8 +51,7 @@ export const colors = {
   setFeelingHard: "#E6B616",
   workoutLastWorkout: "rgba(255, 255, 241, 0.5)",
   saveExerciseOverlay: "rgba(23, 29, 28, 0.1)",
-  menuOverlayGradientStart: "rgba(23, 29, 28, 0)",
-  menuOverlayGradientEnd: "#171D1C",
+  menuOverlayProLink: "#16BAC5",
 } as const;
 
 export const layout = {
@@ -224,10 +223,7 @@ export const spacing = {
   workoutBellToProfile: 16,
   menuOverlayHeaderTop: 39,
   menuOverlayHeaderHorizontal: 16,
-  menuGridTop: 55,
-  menuGridRowGap: 70,
-  menuIconToLabel: 5,
-  menuGridHorizontalInset: 12,
+  menuIconToLabel: 8,
   progressScreenBottom: 24,
   progressHeaderToContent: 30,
   progressSectionLabelToRows: 10,
@@ -341,7 +337,18 @@ export const sizes = {
   workoutProfileButton: 44,
   menuOverlayPanelHeight: 400,
   menuOverlayTabBarReserve: 56,
+  menuFigmaWidth: 393,
   menuIconSize: 40,
+  menuGridItemWidth: 96,
+  menuGridIconTop: 94,
+  menuGridSecondIconTop: 204,
+  menuGridCalculatorLeft: 28,
+  menuGridProgressLeft: 178,
+  menuGridProgramsLeft: 330,
+  menuGridNotificationsLeft: 104,
+  menuGridSettingsLeft: 259,
+  menuBellIconWidth: 30.85,
+  menuBellIconHeight: 29.2,
   progressMetricDiagramHeight: 174,
   workoutBellWidth: 19,
   workoutBellHeight: 18,
@@ -1854,6 +1861,7 @@ export const globalStyles = StyleSheet.create({
   menuOverlayRoot: {
     ...StyleSheet.absoluteFill,
     zIndex: 20,
+    overflow: "visible",
   },
   menuOverlayDismissArea: {
     flex: 1,
@@ -1862,6 +1870,8 @@ export const globalStyles = StyleSheet.create({
     height: sizes.menuOverlayPanelHeight,
     paddingTop: spacing.menuOverlayHeaderTop,
     paddingHorizontal: spacing.menuOverlayHeaderHorizontal,
+    backgroundColor: colors.background,
+    ...shadows.profileFieldSheet,
   },
   menuOverlayHeader: {
     flexDirection: "row",
@@ -1877,31 +1887,17 @@ export const globalStyles = StyleSheet.create({
   },
   menuOverlayProLink: {
     ...typography.menuOverlayProLink,
-    color: colors.backArrow,
+    color: colors.menuOverlayProLink,
     fontFamily: fonts.poppinsBold,
     fontWeight: "700",
     includeFontPadding: false,
     textAlign: "right",
   },
-  menuGridRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: spacing.menuGridTop,
-    paddingHorizontal: spacing.menuGridHorizontalInset,
-  },
-  menuGridRowSecond: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: spacing.menuGridRowGap,
-    paddingHorizontal: spacing.menuGridHorizontalInset,
-  },
   menuGridItem: {
-    width: sizes.menuIconSize + 24,
+    position: "absolute",
     alignItems: "center",
+    width: sizes.menuGridItemWidth,
     gap: spacing.menuIconToLabel,
-  },
-  menuGridItemSpacer: {
-    width: sizes.menuIconSize + 24,
   },
   menuGridIconWrap: {
     width: sizes.menuIconSize,
@@ -1912,8 +1908,8 @@ export const globalStyles = StyleSheet.create({
   menuGridLabel: {
     ...typography.menuGridLabel,
     color: colors.backArrow,
-    fontFamily: fonts.poppinsBold,
-    fontWeight: "700",
+    fontFamily: fonts.poppinsLight,
+    fontWeight: "300",
     textAlign: "center",
     includeFontPadding: false,
   },

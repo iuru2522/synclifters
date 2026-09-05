@@ -1,7 +1,5 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter, type Href } from "expo-router";
-import { Pressable, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Pressable, Text, useWindowDimensions, View } from "react-native";
 import {
   MenuCalculatorIcon,
   MenuNotificationsIcon,
@@ -9,10 +7,10 @@ import {
   MenuProgressIcon,
   MenuSettingsIcon,
 } from "@/components/app/menu-icons";
-import { useMenuOverlay } from "@/features/menu/menu-overlay-context";
-import { colors, globalStyles, sizes } from "@/styles/global";
+import { globalStyles, sizes } from "@/styles/global";
 import type { ReactNode } from "react";
 
+const WORKOUT_HREF = "/workout" as Href;
 const PROGRAMS_HREF = "/workout/start-workout?showEdit=1" as Href;
 const PROFILE_HREF = "/workout/profile" as Href;
 const PROGRESS_HREF = "/workout/progress" as Href;
@@ -22,52 +20,70 @@ type MenuItemConfig = {
   label: string;
   icon: ReactNode;
   href?: Href;
+  left: number;
+  top: number;
 };
 
-const MENU_ITEMS_ROW_ONE: MenuItemConfig[] = [
+const MENU_ITEMS: MenuItemConfig[] = [
   {
     id: "calculator",
     label: "CALCULATOR",
     icon: <MenuCalculatorIcon />,
+    left: sizes.menuGridCalculatorLeft,
+    top: sizes.menuGridIconTop,
   },
   {
     id: "progress",
     label: "PROGRESS",
     icon: <MenuProgressIcon />,
     href: PROGRESS_HREF,
+    left: sizes.menuGridProgressLeft,
+    top: sizes.menuGridIconTop,
   },
   {
     id: "programs",
     label: "PROGRAMS",
     icon: <MenuProgramsIcon />,
     href: PROGRAMS_HREF,
+    left: sizes.menuGridProgramsLeft,
+    top: sizes.menuGridIconTop,
   },
-];
-
-const MENU_ITEMS_ROW_TWO: MenuItemConfig[] = [
   {
     id: "notifications",
     label: "NOTIFICATIONS",
     icon: <MenuNotificationsIcon />,
+    left: sizes.menuGridNotificationsLeft,
+    top: sizes.menuGridSecondIconTop,
   },
   {
     id: "settings",
     label: "SETINGS",
     icon: <MenuSettingsIcon />,
     href: PROFILE_HREF,
+    left: sizes.menuGridSettingsLeft,
+    top: sizes.menuGridSecondIconTop,
   },
 ];
 
 function MenuGridItem({
   item,
+  scaleX,
   onPress,
 }: {
   item: MenuItemConfig;
+  scaleX: number;
   onPress: (item: MenuItemConfig) => void;
 }) {
   return (
     <Pressable
-      style={globalStyles.menuGridItem}
+      style={[
+        globalStyles.menuGridItem,
+        {
+          top: item.top,
+          left:
+            item.left * scaleX - (sizes.menuGridItemWidth - sizes.menuIconSize) / 2,
+        },
+      ]}
       onPress={() => {
         onPress(item);
       }}
@@ -82,38 +98,31 @@ function MenuGridItem({
 
 export function MenuOverlay() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { isOpen, closeMenu } = useMenuOverlay();
-  const tabBarReserve = sizes.menuOverlayTabBarReserve + insets.bottom;
+  const { width } = useWindowDimensions();
+  const scaleX = width / sizes.menuFigmaWidth;
 
-  function handleItemPress(item: MenuItemConfig) {
-    closeMenu();
-
-    if (item.href) {
-      router.push(item.href);
-    }
+  function closeMenu() {
+    router.navigate(WORKOUT_HREF);
   }
 
-  if (!isOpen) {
-    return null;
+  function handleItemPress(item: MenuItemConfig) {
+    if (item.href) {
+      router.push(item.href);
+      return;
+    }
+
+    closeMenu();
   }
 
   return (
-    <View
-      style={[globalStyles.menuOverlayRoot, { bottom: tabBarReserve }]}
-      pointerEvents="box-none"
-    >
+    <View style={globalStyles.menuOverlayRoot} pointerEvents="box-none">
       <Pressable
         style={globalStyles.menuOverlayDismissArea}
         onPress={closeMenu}
         accessibilityRole="button"
         accessibilityLabel="Close menu"
       />
-      <LinearGradient
-        colors={[colors.menuOverlayGradientStart, colors.menuOverlayGradientEnd]}
-        locations={[0, 0.45]}
-        style={globalStyles.menuOverlayPanel}
-      >
+      <View style={globalStyles.menuOverlayPanel}>
         <View style={globalStyles.menuOverlayHeader}>
           <Text style={globalStyles.menuOverlayTitle}>MENU</Text>
           <Pressable
@@ -124,18 +133,10 @@ export function MenuOverlay() {
             <Text style={globalStyles.menuOverlayProLink}>PRO VERSION WAIT LIST</Text>
           </Pressable>
         </View>
-        <View style={globalStyles.menuGridRow}>
-          {MENU_ITEMS_ROW_ONE.map((item) => (
-            <MenuGridItem key={item.id} item={item} onPress={handleItemPress} />
-          ))}
-        </View>
-        <View style={globalStyles.menuGridRowSecond}>
-          <View style={globalStyles.menuGridItemSpacer} />
-          {MENU_ITEMS_ROW_TWO.map((item) => (
-            <MenuGridItem key={item.id} item={item} onPress={handleItemPress} />
-          ))}
-        </View>
-      </LinearGradient>
+        {MENU_ITEMS.map((item) => (
+          <MenuGridItem key={item.id} item={item} scaleX={scaleX} onPress={handleItemPress} />
+        ))}
+      </View>
     </View>
   );
 }
