@@ -1,6 +1,9 @@
-import { updateProfile } from "firebase/auth";
 import { ProfileFieldSheet } from "@/components/app/profile-field-sheet";
 import { useAuth } from "@/features/auth/auth-context";
+import {
+  AuthServiceError,
+  updateCurrentUserDisplayName,
+} from "@/features/auth/auth-service";
 import { formatProfileFullName } from "@/features/users/profile-display";
 import { updateUserProfile } from "@/features/users/user-profile";
 
@@ -28,7 +31,17 @@ export default function NameSheetScreen() {
         const lastName = lastNameParts.join(" ");
 
         await updateUserProfile(user.uid, { firstName, lastName });
-        await updateProfile(user, { displayName: trimmedName });
+
+        try {
+          await updateCurrentUserDisplayName(trimmedName);
+        } catch (error) {
+          if (error instanceof AuthServiceError) {
+            throw new Error(error.message);
+          }
+
+          throw error;
+        }
+
         patchProfile({ firstName, lastName });
         void refreshProfile({ silent: true });
       }}

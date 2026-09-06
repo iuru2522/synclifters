@@ -12,6 +12,10 @@ export type UserSportsExperience = "beginner" | "gym-rat" | "beast-mode";
 export type UserWeightUnit = "kg" | "lb";
 export type UserFirstWeekDay = "sunday" | "monday";
 
+export type UserStats = {
+  trainingDaysCount: number;
+};
+
 export type UserProfile = {
   firstName: string;
   lastName: string;
@@ -26,6 +30,8 @@ export type UserProfile = {
   firstWeekDay?: UserFirstWeekDay | null;
   sportsExperience?: UserSportsExperience | null;
   onboardingComplete?: boolean;
+  photoUrl?: string | null;
+  stats?: UserStats | null;
 };
 
 export type CreateUserProfileInput = {
@@ -49,8 +55,24 @@ export type UpdateUserProfileInput = Partial<
     | "firstWeekDay"
     | "sportsExperience"
     | "onboardingComplete"
+    | "photoUrl"
+    | "stats"
   >
 >;
+
+function parseStats(value: unknown): UserStats | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const trainingDaysCount = (value as { trainingDaysCount?: unknown }).trainingDaysCount;
+
+  if (typeof trainingDaysCount !== "number" || !Number.isFinite(trainingDaysCount)) {
+    return { trainingDaysCount: 0 };
+  }
+
+  return { trainingDaysCount: Math.max(0, Math.floor(trainingDaysCount)) };
+}
 
 function requireFirestore() {
   const db = getFirebaseFirestore();
@@ -198,6 +220,16 @@ export async function updateUserProfile(
     payload.onboardingComplete = input.onboardingComplete ?? false;
   }
 
+  if ("photoUrl" in input) {
+    payload.photoUrl = input.photoUrl ?? null;
+  }
+
+  if ("stats" in input && input.stats) {
+    payload.stats = {
+      trainingDaysCount: Math.max(0, Math.floor(input.stats.trainingDaysCount)),
+    };
+  }
+
   await setDoc(ref, payload, { merge: true });
 }
 
@@ -225,5 +257,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     firstWeekDay: parseFirstWeekDay(data.firstWeekDay) ?? null,
     sportsExperience: parseSportsExperience(data.sportsExperience),
     onboardingComplete: data.onboardingComplete === true,
+    photoUrl: typeof data.photoUrl === "string" ? data.photoUrl : null,
+    stats: parseStats(data.stats),
   };
 }

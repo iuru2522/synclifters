@@ -1,6 +1,16 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
-import { Auth, getAuth, GoogleAuthProvider } from "firebase/auth";
+import {
+  Auth,
+  getAuth,
+  GoogleAuthProvider,
+  initializeAuth,
+  // @ts-expect-error RN persistence helper exists at runtime; web typings omit it
+  getReactNativePersistence,
+} from "firebase/auth";
 import { Firestore, getFirestore } from "firebase/firestore";
+import { FirebaseStorage, getStorage } from "firebase/storage";
+import { Platform } from "react-native";
 
 export type FirebaseClientConfig = {
   apiKey?: string;
@@ -32,6 +42,7 @@ export const isFirebaseConfigured =
 
 let authInstance: Auth | null = null;
 let firestoreInstance: Firestore | null = null;
+let storageInstance: FirebaseStorage | null = null;
 
 function getFirebaseApp(): FirebaseApp | null {
   if (!isFirebaseConfigured) {
@@ -39,6 +50,34 @@ function getFirebaseApp(): FirebaseApp | null {
   }
 
   return getApps().length ? getApp() : initializeApp(firebaseConfig);
+}
+
+function createAuth(app: FirebaseApp): Auth {
+  if (Platform.OS === "web") {
+    return getAuth(app);
+  }
+
+  if (typeof getReactNativePersistence !== "function") {
+    return getAuth(app);
+  }
+
+  try {
+    return initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    });
+  } catch (error: unknown) {
+    const code =
+      typeof error === "object" && error !== null && "code" in error
+        ? String((error as { code?: unknown }).code)
+        : "";
+
+    // Hot reload / second init — fall back to the existing Auth instance.
+    if (code === "auth/already-initialized") {
+      return getAuth(app);
+    }
+
+    throw error;
+  }
 }
 
 export function getFirebaseAuth(): Auth | null {
@@ -49,7 +88,7 @@ export function getFirebaseAuth(): Auth | null {
   }
 
   if (!authInstance) {
-    authInstance = getAuth(app);
+    authInstance = createAuth(app);
   }
 
   return authInstance;
@@ -67,6 +106,20 @@ export function getFirebaseFirestore(): Firestore | null {
   }
 
   return firestoreInstance;
+}
+
+export function getFirebaseStorage(): FirebaseStorage | null {
+  const app = getFirebaseApp();
+
+  if (!app) {
+    return null;
+  }
+
+  if (!storageInstance) {
+    storageInstance = getStorage(app);
+  }
+
+  return storageInstance;
 }
 
 export function getFirebaseSetupMessage(): string {

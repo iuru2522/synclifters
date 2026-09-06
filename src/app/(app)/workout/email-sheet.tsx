@@ -1,6 +1,6 @@
-import { updateEmail } from "firebase/auth";
 import { ProfileFieldSheet } from "@/components/app/profile-field-sheet";
 import { useAuth } from "@/features/auth/auth-context";
+import { AuthServiceError, updateCurrentUserEmail } from "@/features/auth/auth-service";
 import { updateUserProfile } from "@/features/users/user-profile";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,15 +32,13 @@ export default function EmailSheetScreen() {
         const email = trimmedEmail.toLowerCase();
 
         try {
-          await updateEmail(user, email);
+          await updateCurrentUserEmail(email);
         } catch (error) {
-          const authError = error as { code?: string; message?: string };
-
-          if (authError.code === "auth/requires-recent-login") {
-            throw new Error("For security, sign in again before changing your email.");
+          if (error instanceof AuthServiceError) {
+            throw new Error(error.message);
           }
 
-          throw new Error(authError.message ?? "Failed to update email.");
+          throw error;
         }
 
         await updateUserProfile(user.uid, { email });

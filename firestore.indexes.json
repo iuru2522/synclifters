@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "bodyMetrics",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "recordedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "sessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "exerciseIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "performedAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
