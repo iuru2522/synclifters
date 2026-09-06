@@ -1,6 +1,7 @@
 import { usePathname, useRouter, type Href } from "expo-router";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 import { useEffect } from "react";
+import { View } from "react-native";
 import { useAuth } from "@/features/auth/auth-context";
 import { isOnboardingComplete } from "@/features/users/user-profile";
 import { colors, globalStyles } from "@/styles/global";
@@ -23,6 +24,43 @@ const tabIcons = {
     selected: require("../../../assets/images/tabIcons/qrcode-active.png"),
   },
 } as const;
+
+function AppTabs() {
+  return (
+    <View style={globalStyles.screen}>
+      <NativeTabs
+        labelStyle={{
+          default: tabBarLabelStyle,
+          selected: tabBarLabelActiveStyle,
+        }}
+        iconColor={{
+          default: colors.tabBarInactive,
+          selected: colors.backArrow,
+        }}
+        tintColor={colors.backArrow}
+      >
+        <NativeTabs.Trigger name="history">
+          <NativeTabs.Trigger.Icon src={tabIcons.history} renderingMode="original" />
+          <NativeTabs.Trigger.Label selectedStyle={tabBarLabelActiveStyle}>
+            History
+          </NativeTabs.Trigger.Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="workout">
+          <NativeTabs.Trigger.Icon src={tabIcons.workout} renderingMode="original" />
+          <NativeTabs.Trigger.Label selectedStyle={tabBarLabelActiveStyle}>
+            Workout
+          </NativeTabs.Trigger.Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="settings">
+          <NativeTabs.Trigger.Icon src={tabIcons.menu} renderingMode="original" />
+          <NativeTabs.Trigger.Label selectedStyle={tabBarLabelActiveStyle}>
+            Menu
+          </NativeTabs.Trigger.Label>
+        </NativeTabs.Trigger>
+      </NativeTabs>
+    </View>
+  );
+}
 
 export default function AppLayout() {
   const router = useRouter();
@@ -79,45 +117,5 @@ export default function AppLayout() {
     return null;
   }
 
-  return (
-    <NativeTabs
-      labelStyle={{
-        default: tabBarLabelStyle,
-        selected: tabBarLabelActiveStyle,
-      }}
-      iconColor={{
-        default: colors.tabBarInactive,
-        selected: colors.backArrow,
-      }}
-      tintColor={colors.backArrow}
-    >
-      <NativeTabs.Trigger name="history">
-        <NativeTabs.Trigger.Icon
-          src={tabIcons.history}
-          renderingMode="original"
-        />
-        <NativeTabs.Trigger.Label selectedStyle={tabBarLabelActiveStyle}>
-          History
-        </NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="workout">
-        <NativeTabs.Trigger.Icon
-          src={tabIcons.workout}
-          renderingMode="original"
-        />
-        <NativeTabs.Trigger.Label selectedStyle={tabBarLabelActiveStyle}>
-          Workout
-        </NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="settings">
-        <NativeTabs.Trigger.Icon
-          src={tabIcons.menu}
-          renderingMode="original"
-        />
-        <NativeTabs.Trigger.Label selectedStyle={tabBarLabelActiveStyle}>
-          Menu
-        </NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
-  );
+  return <AppTabs />;
 }

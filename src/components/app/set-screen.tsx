@@ -26,10 +26,14 @@ export function SetScreen() {
     exerciseName?: string | string[];
     dayName?: string | string[];
     programName?: string | string[];
+    showEdit?: string | string[];
+    fromHistory?: string | string[];
   }>();
   const exerciseName = readSearchParam(params.exerciseName);
   const dayName = readSearchParam(params.dayName);
   const programName = readSearchParam(params.programName);
+  const showEdit = readSearchParam(params.showEdit) === "1";
+  const fromHistory = readSearchParam(params.fromHistory) === "1";
 
   function finishExercise() {
     addRecordedWorkingSet({ weight, reps });
@@ -38,6 +42,8 @@ export function SetScreen() {
       ...(programName ? { programName } : {}),
       ...(dayName ? { dayName } : {}),
       ...(exerciseName ? { exerciseName } : {}),
+      ...(showEdit ? { showEdit: "1" } : {}),
+      ...(fromHistory ? { fromHistory: "1" } : {}),
     }).toString();
     router.replace(
       (query ? `/workout/workout-screen?${query}` : "/workout/workout-screen") as Href,
@@ -126,6 +132,8 @@ export function SetScreen() {
               ...(programName ? { programName } : {}),
               ...(dayName ? { dayName } : {}),
               ...(exerciseName ? { exerciseName } : {}),
+              ...(showEdit ? { showEdit: "1" } : {}),
+              ...(fromHistory ? { fromHistory: "1" } : {}),
             }).toString();
             router.push(
               (query ? `/workout/drop-set-entry?${query}` : "/workout/drop-set-entry") as Href,

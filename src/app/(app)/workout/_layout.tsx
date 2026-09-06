@@ -33,6 +33,10 @@ export default function WorkoutLayout() {
       <Stack.Screen name="workout-screen" />
       <Stack.Screen name="set-screen" />
       <Stack.Screen name="drop-set-entry" />
+      <Stack.Screen name="progress" />
+      <Stack.Screen name="progress-muscle" />
+      <Stack.Screen name="progress-metric" />
+      <Stack.Screen name="progress-metric-detail" />
 
       <Stack.Screen name="name-sheet" options={fieldSheetOptions} />
 
@@ -44,6 +48,7 @@ export default function WorkoutLayout() {
       <Stack.Screen name="sports-experience-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="metrics-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="exercise-name-sheet" options={fieldSheetOptions} />
+      <Stack.Screen name="history-exercise-name-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="muscle-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="measure-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="week-day-sheet" options={fieldSheetOptions} />

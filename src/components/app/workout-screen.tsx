@@ -24,10 +24,14 @@ export function WorkoutScreen() {
     exerciseName?: string | string[];
     dayName?: string | string[];
     programName?: string | string[];
+    showEdit?: string | string[];
+    fromHistory?: string | string[];
   }>();
   const exerciseName = readSearchParam(params.exerciseName);
   const dayName = readSearchParam(params.dayName);
   const programName = readSearchParam(params.programName);
+  const showEdit = readSearchParam(params.showEdit) === "1";
+  const fromHistory = readSearchParam(params.fromHistory) === "1";
   const dropSets = useRecordedDropSets();
   const workingSets = useRecordedWorkingSets();
   const hasSetRows = workingSets.length > 0 || dropSets.length > 0;
@@ -37,6 +41,8 @@ export function WorkoutScreen() {
     const query = new URLSearchParams({
       ...(programName ? { programName } : {}),
       ...(dayName ? { dayName } : {}),
+      ...(showEdit ? { showEdit: "1" } : {}),
+      ...(fromHistory ? { fromHistory: "1" } : {}),
     }).toString();
     router.replace(
       (query
@@ -103,15 +109,17 @@ export function WorkoutScreen() {
             </Text>
           ) : null}
         </View>
-        <Pressable
-          style={globalStyles.workoutAccentBarPlus}
-          onPress={() => {}}
-          hitSlop={sizes.backArrowHitSlop}
-          accessibilityRole="button"
-          accessibilityLabel="Add"
-        >
-          <PlusCircleIcon color={colors.background} />
-        </Pressable>
+        {fromHistory ? null : (
+          <Pressable
+            style={globalStyles.workoutAccentBarPlus}
+            onPress={() => {}}
+            hitSlop={sizes.backArrowHitSlop}
+            accessibilityRole="button"
+            accessibilityLabel="Add"
+          >
+            <PlusCircleIcon color={colors.background} />
+          </Pressable>
+        )}
       </View>
       <View style={globalStyles.workoutSetHeaders}>
         <View style={globalStyles.workoutSetColSet}>
@@ -177,6 +185,18 @@ export function WorkoutScreen() {
       {hasSetRows ? (
         <Text style={globalStyles.workoutLastWorkout}>Last Workout Was 06/11/25</Text>
       ) : null}
+      {fromHistory ? null : (
+        <View style={globalStyles.programDayEditWrap}>
+          <AppButton
+            title="EDIT"
+            onPress={() => {}}
+            borderColor={colors.white}
+            borderWidth={sizes.workoutProgramThinBorderWidth}
+            pressAccentColor={colors.backArrow}
+            accessibilityLabel="Edit"
+          />
+        </View>
+      )}
       <View style={globalStyles.programDayExerciseSelectDayWrap}>
         <AppButton
           title="ADD SET"
@@ -185,6 +205,8 @@ export function WorkoutScreen() {
               ...(programName ? { programName } : {}),
               ...(dayName ? { dayName } : {}),
               ...(exerciseName ? { exerciseName } : {}),
+              ...(showEdit ? { showEdit: "1" } : {}),
+              ...(fromHistory ? { fromHistory: "1" } : {}),
             }).toString();
             router.push(
               (query ? `/workout/set-screen?${query}` : "/workout/set-screen") as Href,
