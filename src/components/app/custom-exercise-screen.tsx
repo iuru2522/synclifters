@@ -18,6 +18,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { formatProfileMetrics } from "@/features/users/profile-display";
 import {
   formatExerciseNameLabel,
+  setSelectedExerciseName,
   useSelectedExerciseName,
 } from "@/features/workout/custom-exercise-name";
 import {
@@ -26,26 +27,33 @@ import {
 } from "@/features/workout/custom-exercise-image";
 import {
   formatMuscleGroupLabel,
+  setSelectedMuscleGroup,
   useSelectedMuscleGroup,
 } from "@/features/workout/custom-exercise-muscle";
 import {
   formatMeasureLabel,
+  setSelectedMeasure,
   useSelectedMeasure,
 } from "@/features/workout/custom-exercise-measure";
 import {
   formatDropsetLvlsLabel,
+  setSelectedDropsetLvls,
   useSelectedDropsetLvls,
 } from "@/features/workout/custom-exercise-dropset-lvls";
 import {
   formatSupersetExerciseLabel,
+  setSelectedSupersetExercise,
   useSelectedSupersetExercise,
 } from "@/features/workout/custom-exercise-superset-exercise";
 import { addExerciseToDay } from "@/features/workout/day-exercises";
+import { createCustomExercise } from "@/features/workout/exercise-repository";
 import {
   formatRepTypeLabel,
+  setSelectedRepType,
   useSelectedRepType,
 } from "@/features/workout/rep-type-selection";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
+import { useState } from "react";
 
 const METRICS_SHEET_HREF = "/workout/metrics-sheet" as Href;
 const EXERCISE_NAME_SHEET_HREF = "/workout/exercise-name-sheet" as Href;
@@ -66,7 +74,7 @@ const IMAGE_PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
 export function CustomExerciseScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const params = useLocalSearchParams<{
     programName?: string | string[];
     dayName?: string | string[];
@@ -83,6 +91,7 @@ export function CustomExerciseScreen() {
   const selectedDropsetLvls = useSelectedDropsetLvls();
   const selectedSupersetExercise = useSelectedSupersetExercise();
   const selectedImageUri = useSelectedExerciseImageUri();
+  const [isSaving, setIsSaving] = useState(false);
   const buttons = [
     { id: "exercise-name", label: formatExerciseNameLabel(selectedExerciseName) },
     { id: "muscle", label: formatMuscleGroupLabel(selectedMuscleGroup) },
@@ -103,24 +112,78 @@ export function CustomExerciseScreen() {
       : []),
   ];
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const exerciseName = selectedExerciseName?.trim();
     if (!exerciseName) {
       Alert.alert("Exercise name required", "Please enter an exercise name before adding.");
       return;
     }
 
-    if (dayName) {
-      addExerciseToDay(dayName, exerciseName);
+    if (!dayName) {
+      Alert.alert("Day required", "Open custom exercise from a program day.");
+      return;
     }
 
-    router.dismissTo({
-      pathname: "/workout/add-exercise-to-day",
-      params: {
+    if (!user) {
+      Alert.alert("Sign in required", "Sign in to save a custom exercise.");
+      return;
+    }
+
+    if (isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const created = await createCustomExercise(user.uid, {
+        name: exerciseName,
+        muscleGroup: selectedMuscleGroup ?? "Triceps",
+        measure: selectedMeasure,
+        repType: selectedRepType,
+        dropsetLvls: selectedRepType === "dropset" ? selectedDropsetLvls : null,
+        supersetExerciseName:
+          selectedRepType === "superset" ? selectedSupersetExercise : null,
+        imageUri: selectedImageUri,
+      });
+
+      addExerciseToDay(dayName, {
+        id: `pe_${created.id}`,
+        exerciseId: created.id,
+        name: created.name,
+        source: "custom",
+        muscleGroup: created.muscleGroup,
+        measure: created.measure,
+        repType: created.repType,
+        dropsetLvls: created.dropsetLvls,
+        supersetExerciseName: created.supersetExerciseName,
+        imageUrl: created.imageUrl,
+      });
+
+      setSelectedExerciseName(null);
+      setSelectedMuscleGroup(null);
+      setSelectedMeasure(null);
+      setSelectedRepType("regular");
+      setSelectedDropsetLvls(null);
+      setSelectedSupersetExercise(null);
+      setSelectedExerciseImageUri(null);
+
+      const query = new URLSearchParams({
         ...(programName ? { programName } : {}),
         ...(dayNames ? { dayNames } : {}),
-      },
-    } as Href);
+      }).toString();
+      router.dismissTo(
+        (query
+          ? `/workout/add-exercise-to-day?${query}`
+          : "/workout/add-exercise-to-day") as Href,
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to save custom exercise.";
+      Alert.alert("Save failed", message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const applyPickedAsset = (asset: ImagePicker.ImagePickerAsset) => {
@@ -290,8 +353,10 @@ export function CustomExerciseScreen() {
 
         <View style={globalStyles.customExerciseAddWrap}>
           <AppButton
-            title="Add"
-            onPress={handleAdd}
+            title={isSaving ? "Saving..." : "Add"}
+            onPress={() => {
+              void handleAdd();
+            }}
             borderColor={colors.white}
             borderWidth={sizes.workoutProgramThinBorderWidth}
             pressAccentColor={colors.backArrow}

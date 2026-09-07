@@ -8,8 +8,8 @@ import { useAuth } from "@/features/auth/auth-context";
 import { formatProfileFullName } from "@/features/users/profile-display";
 import { useUserPrograms } from "@/features/workout/user-programs";
 import { colors, globalStyles, sizes } from "@/styles/global";
-import { useRouter, type Href } from "expo-router";
-import { useState } from "react";
+import { useFocusEffect, useRouter, type Href } from "expo-router";
+import { useCallback, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -23,11 +23,17 @@ export function WorkoutTabScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { profile } = useAuth();
-  const userPrograms = useUserPrograms();
+  const { programs, isLoading, error, refresh } = useUserPrograms();
   const fullName = formatProfileFullName(profile);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [startTrainingSelection, setStartTrainingSelection] =
     useState<StartTrainingSelection | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
 
   const programSelected = startTrainingSelection === "program";
   const daySelected = startTrainingSelection === "day";
@@ -141,11 +147,24 @@ export function WorkoutTabScreen() {
         </View>
         <Text style={globalStyles.workoutMyPrograms}>My Programs</Text>
         <View style={globalStyles.workoutCreateProgramButton}>
-          {userPrograms.map((program) => (
+          {isLoading ? (
+            <Text style={globalStyles.workoutMyPrograms}>Loading programs…</Text>
+          ) : null}
+          {error ? <Text style={globalStyles.workoutMyPrograms}>{error}</Text> : null}
+          {!isLoading && !error && programs.length === 0 ? (
+            <Text style={globalStyles.workoutMyPrograms}>No programs yet</Text>
+          ) : null}
+          {programs.map((program) => (
             <AppButton
               key={program.id}
               title={program.name}
-              onPress={() => {}}
+              onPress={() => {
+                const query = new URLSearchParams({
+                  programId: program.id,
+                  programName: program.name,
+                }).toString();
+                router.push(`/workout/start-workout?${query}` as Href);
+              }}
               borderColor={colors.backArrow}
               textColor={colors.inputText}
               textStyle={globalStyles.workoutProgramFilledButtonText}
@@ -154,26 +173,6 @@ export function WorkoutTabScreen() {
               rightIcon={<WorkoutStartIcon variant="filled" />}
             />
           ))}
-          <AppButton
-            title="Full Body Strength"
-            onPress={() => {}}
-            borderColor={colors.backArrow}
-            textColor={colors.inputText}
-            textStyle={globalStyles.workoutProgramFilledButtonText}
-            style={globalStyles.workoutProgramFilledButton}
-            leftIcon={<WorkoutExternalLinkIcon />}
-            rightIcon={<WorkoutStartIcon variant="filled" />}
-          />
-          <AppButton
-            title="Split - Burn"
-            onPress={() => {}}
-            borderColor={colors.backArrow}
-            textColor={colors.inputText}
-            textStyle={globalStyles.workoutProgramFilledButtonText}
-            style={globalStyles.workoutProgramFilledButton}
-            leftIcon={<WorkoutExternalLinkIcon />}
-            rightIcon={<WorkoutStartIcon variant="outline" />}
-          />
           <AppButton
             title="Create New Program"
             onPress={() => {
@@ -187,38 +186,38 @@ export function WorkoutTabScreen() {
         </View>
         <Text style={globalStyles.workoutMyPrograms}>Preset Workouts</Text>
         <View style={globalStyles.workoutCreateProgramButton}>
-        <AppButton
-          title="Full Body Burn"
-          subtitle="3 Days/Week"
-          subtitleMeta="Advanced"
-          onPress={() => {}}
-          borderColor={colors.backArrow}
-          borderWidth={sizes.workoutProgramThinBorderWidth}
-          textColor={colors.inputFill}
-          textStyle={globalStyles.workoutProgramOutlinedButtonText}
-          subtitleStyle={globalStyles.workoutProgramOutlinedButtonSubtitle}
-          subtitleMetaStyle={globalStyles.workoutProgramOutlinedButtonSubtitleMeta}
-          pressAccentColor={colors.backArrow}
-          style={globalStyles.workoutProgramOutlinedButton}
-          leftIcon={<WorkoutExternalLinkIcon color={colors.backArrow} />}
-          rightIcon={<WorkoutStartIcon variant="filled" color={colors.backArrow} />}
-        />
-        <AppButton
-          title="Full Strength"
-          subtitle="3 Days/Week"
-          subtitleMeta="Advanced"
-          onPress={() => {}}
-          borderColor={colors.backArrow}
-          borderWidth={sizes.workoutProgramThinBorderWidth}
-          textColor={colors.inputFill}
-          textStyle={globalStyles.workoutProgramOutlinedButtonText}
-          subtitleStyle={globalStyles.workoutProgramOutlinedButtonSubtitle}
-          subtitleMetaStyle={globalStyles.workoutProgramOutlinedButtonSubtitleMeta}
-          pressAccentColor={colors.backArrow}
-          style={globalStyles.workoutProgramOutlinedButton}
-          leftIcon={<WorkoutExternalLinkIcon color={colors.backArrow} />}
-          rightIcon={<WorkoutStartIcon variant="outline" color={colors.backArrow} />}
-        />
+          <AppButton
+            title="Full Body Burn"
+            subtitle="3 Days/Week"
+            subtitleMeta="Advanced"
+            onPress={() => {}}
+            borderColor={colors.backArrow}
+            borderWidth={sizes.workoutProgramThinBorderWidth}
+            textColor={colors.inputFill}
+            textStyle={globalStyles.workoutProgramOutlinedButtonText}
+            subtitleStyle={globalStyles.workoutProgramOutlinedButtonSubtitle}
+            subtitleMetaStyle={globalStyles.workoutProgramOutlinedButtonSubtitleMeta}
+            pressAccentColor={colors.backArrow}
+            style={globalStyles.workoutProgramOutlinedButton}
+            leftIcon={<WorkoutExternalLinkIcon color={colors.backArrow} />}
+            rightIcon={<WorkoutStartIcon variant="filled" color={colors.backArrow} />}
+          />
+          <AppButton
+            title="Full Strength"
+            subtitle="3 Days/Week"
+            subtitleMeta="Advanced"
+            onPress={() => {}}
+            borderColor={colors.backArrow}
+            borderWidth={sizes.workoutProgramThinBorderWidth}
+            textColor={colors.inputFill}
+            textStyle={globalStyles.workoutProgramOutlinedButtonText}
+            subtitleStyle={globalStyles.workoutProgramOutlinedButtonSubtitle}
+            subtitleMetaStyle={globalStyles.workoutProgramOutlinedButtonSubtitleMeta}
+            pressAccentColor={colors.backArrow}
+            style={globalStyles.workoutProgramOutlinedButton}
+            leftIcon={<WorkoutExternalLinkIcon color={colors.backArrow} />}
+            rightIcon={<WorkoutStartIcon variant="outline" color={colors.backArrow} />}
+          />
         </View>
       </ScrollView>
     </View>

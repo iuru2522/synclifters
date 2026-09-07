@@ -20,8 +20,8 @@ export function getSelectedExerciseImageUri() {
   return selectedImageUri;
 }
 
-export function setSelectedExerciseImageUri(value: string) {
-  selectedImageUri = value;
+export function setSelectedExerciseImageUri(value: string | null) {
+  selectedImageUri = value?.trim() ? value.trim() : null;
   emit();
 }
 
