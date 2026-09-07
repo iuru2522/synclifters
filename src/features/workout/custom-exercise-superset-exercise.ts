@@ -29,7 +29,7 @@ export function getSelectedSupersetExercise() {
   return selectedSupersetExercise;
 }
 
-export function setSelectedSupersetExercise(value: SupersetExerciseOption) {
+export function setSelectedSupersetExercise(value: SupersetExerciseOption | null) {
   selectedSupersetExercise = value;
   emit();
 }

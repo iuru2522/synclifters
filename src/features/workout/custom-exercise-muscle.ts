@@ -29,7 +29,7 @@ export function getSelectedMuscleGroup() {
   return selectedMuscleGroup;
 }
 
-export function setSelectedMuscleGroup(value: MuscleGroup) {
+export function setSelectedMuscleGroup(value: MuscleGroup | null) {
   selectedMuscleGroup = value;
   emit();
 }

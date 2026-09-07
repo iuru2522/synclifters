@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
@@ -10,6 +11,7 @@ import {
 } from "@/components/app/program-day-params";
 import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import { useAuth } from "@/features/auth/auth-context";
 import { useExercisesByDay } from "@/features/workout/day-exercises";
 import { saveUserProgram } from "@/features/workout/user-programs";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
@@ -17,7 +19,9 @@ import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 export function AddExerciseToDayScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const exercisesByDay = useExercisesByDay();
+  const [isSaving, setIsSaving] = useState(false);
   const params = useLocalSearchParams<{
     programName?: string | string[];
     dayNames?: string | string[];
@@ -34,6 +38,45 @@ export function AddExerciseToDayScreen() {
     return single ? [single] : [];
   })();
   const bottomPadding = Math.max(insets.bottom, spacing.safeAreaBottomMin);
+
+  const handleSave = async () => {
+    if (!programName) {
+      Alert.alert("Program name required", "Go back and enter a program name.");
+      return;
+    }
+
+    if (!user) {
+      Alert.alert("Sign in required", "Sign in to save your program.");
+      return;
+    }
+
+    if (dayNames.length === 0) {
+      Alert.alert("Day required", "Add at least one day before saving.");
+      return;
+    }
+
+    if (isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      await saveUserProgram({
+        uid: user.uid,
+        name: programName,
+        dayNames,
+        exercisesByDay,
+      });
+      router.dismissTo("/workout" as Href);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to save program.";
+      Alert.alert("Save failed", message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <View style={globalStyles.createProgramScreen}>
@@ -103,14 +146,12 @@ export function AddExerciseToDayScreen() {
                 <Pressable
                   style={globalStyles.addExerciseDayRecordLink}
                   onPress={() => {
-                    router.push({
-                      pathname: "/workout/add-exercise",
-                      params: {
-                        ...(programName ? { programName } : {}),
-                        dayName: name,
-                        dayNames: serializeDayNames(dayNames),
-                      },
-                    } as Href);
+                    const query = new URLSearchParams({
+                      dayName: name,
+                      dayNames: serializeDayNames(dayNames),
+                      ...(programName ? { programName } : {}),
+                    }).toString();
+                    router.push(`/workout/add-exercise?${query}` as Href);
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={`Add exercise to ${name}`}
@@ -127,13 +168,11 @@ export function AddExerciseToDayScreen() {
         <Pressable
           style={globalStyles.addExerciseAddDayBar}
           onPress={() => {
-            router.push({
-              pathname: "/workout/create-day",
-              params: {
-                ...(programName ? { programName } : {}),
-                dayNames: serializeDayNames(dayNames),
-              },
-            } as Href);
+            const query = new URLSearchParams({
+              dayNames: serializeDayNames(dayNames),
+              ...(programName ? { programName } : {}),
+            }).toString();
+            router.push(`/workout/create-day?${query}` as Href);
           }}
           accessibilityRole="button"
           accessibilityLabel="Add Day"
@@ -143,19 +182,9 @@ export function AddExerciseToDayScreen() {
 
         <View style={globalStyles.addExerciseSaveWrap}>
           <AppButton
-            title="Save"
+            title={isSaving ? "Saving..." : "Save"}
             onPress={() => {
-              if (!programName) {
-                return;
-              }
-
-              saveUserProgram({
-                name: programName,
-                dayNames,
-                exercisesByDay,
-              });
-
-              router.dismissTo("/workout" as Href);
+              void handleSave();
             }}
             borderColor={colors.white}
             borderWidth={sizes.workoutProgramThinBorderWidth}
