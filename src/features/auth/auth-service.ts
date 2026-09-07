@@ -12,6 +12,7 @@ import {
   sendPasswordResetEmail,
   signInWithCredential,
   signInWithEmailAndPassword,
+  updateEmail,
   updatePassword,
   updateProfile,
   type User,
@@ -256,6 +257,62 @@ export async function updateCurrentUserPassword(newPassword: string): Promise<vo
 
     throw new AuthServiceError(
       authError.message ?? "Failed to update password.",
+      authError.code,
+    );
+  }
+}
+
+export async function updateCurrentUserEmail(email: string): Promise<void> {
+  const auth = requireAuth();
+  const user = auth.currentUser;
+  const trimmedEmail = email.trim().toLowerCase();
+
+  if (!user) {
+    throw new AuthServiceError("Sign in to update your email.", "NOT_SIGNED_IN");
+  }
+
+  if (!trimmedEmail) {
+    throw new AuthServiceError("Enter your email address.", "EMAIL_REQUIRED");
+  }
+
+  try {
+    await updateEmail(user, trimmedEmail);
+  } catch (error: unknown) {
+    const authError = error as { code?: string; message?: string };
+
+    if (authError.code === "auth/requires-recent-login") {
+      throw new AuthServiceError(
+        "For security, sign in again before changing your email.",
+        authError.code,
+      );
+    }
+
+    throw new AuthServiceError(
+      authError.message ?? "Failed to update email.",
+      authError.code,
+    );
+  }
+}
+
+export async function updateCurrentUserDisplayName(displayName: string): Promise<void> {
+  const auth = requireAuth();
+  const user = auth.currentUser;
+  const trimmedName = displayName.trim();
+
+  if (!user) {
+    throw new AuthServiceError("Sign in to update your name.", "NOT_SIGNED_IN");
+  }
+
+  if (!trimmedName) {
+    throw new AuthServiceError("Enter your full name.", "NAME_REQUIRED");
+  }
+
+  try {
+    await updateProfile(user, { displayName: trimmedName });
+  } catch (error: unknown) {
+    const authError = error as { code?: string; message?: string };
+    throw new AuthServiceError(
+      authError.message ?? "Failed to update display name.",
       authError.code,
     );
   }
