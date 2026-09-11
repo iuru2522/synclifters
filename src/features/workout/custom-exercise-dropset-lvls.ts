@@ -24,7 +24,7 @@ export function getSelectedDropsetLvls() {
   return selectedDropsetLvls;
 }
 
-export function setSelectedDropsetLvls(value: DropsetLvlsOption) {
+export function setSelectedDropsetLvls(value: DropsetLvlsOption | null) {
   selectedDropsetLvls = value;
   emit();
 }

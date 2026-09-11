@@ -30,7 +30,7 @@ export function getSelectedMeasure() {
   return selectedMeasure;
 }
 
-export function setSelectedMeasure(value: MeasureOption) {
+export function setSelectedMeasure(value: MeasureOption | null) {
   selectedMeasure = value;
   emit();
 }

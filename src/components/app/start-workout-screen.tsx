@@ -1,5 +1,5 @@
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useCallback, useState } from "react";
 import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
@@ -7,32 +7,30 @@ import { readSearchParam } from "@/components/app/program-day-params";
 import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-icon";
 import { WorkoutStartIcon } from "@/components/app/workout-start-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import { useUserPrograms } from "@/features/workout/user-programs";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
-const YOUR_PROGRAM_BUTTONS = [
-  "Full Body Strength",
-  "Full Body Strength",
-  "Full Body Strength",
-  "Full Body Strength",
-] as const;
-
 const PRESET_WORKOUT_BUTTONS = [
-  "Full Body Strength",
-  "Full Body Strength",
-  "Full Body Strength",
-  "Full Body Strength",
+  "Full Body Burn",
+  "Full Strength",
 ] as const;
 
 type ProgramButtonSelection =
-  | { section: "your"; index: number }
+  | { section: "your"; programId: string }
   | { section: "preset"; index: number };
 
-function isSelection(
+function isYourSelection(
   selection: ProgramButtonSelection | null,
-  section: ProgramButtonSelection["section"],
+  programId: string,
+) {
+  return selection?.section === "your" && selection.programId === programId;
+}
+
+function isPresetSelection(
+  selection: ProgramButtonSelection | null,
   index: number,
 ) {
-  return selection?.section === section && selection.index === index;
+  return selection?.section === "preset" && selection.index === index;
 }
 
 function ProgramButton({
@@ -76,13 +74,29 @@ export function StartWorkoutScreen() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ showEdit?: string | string[] }>();
   const showEdit = readSearchParam(params.showEdit) === "1";
-  const [selectedButton, setSelectedButton] = useState<ProgramButtonSelection | null>(null);
+  const { programs, isLoading, error, refresh } = useUserPrograms();
+  const [selectedButton, setSelectedButton] = useState<ProgramButtonSelection | null>(
+    null,
+  );
 
-  function selectProgram(
-    selection: ProgramButtonSelection,
-    programName: string,
-  ) {
-    setSelectedButton(selection);
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
+
+  function selectYourProgram(programId: string, programName: string) {
+    setSelectedButton({ section: "your", programId });
+    const query = new URLSearchParams({
+      programId,
+      programName,
+      ...(showEdit ? { showEdit: "1" } : {}),
+    }).toString();
+    router.push(`/workout/program-day?${query}` as Href);
+  }
+
+  function selectPreset(index: number, programName: string) {
+    setSelectedButton({ section: "preset", index });
     const query = new URLSearchParams({
       programName,
       ...(showEdit ? { showEdit: "1" } : {}),
@@ -115,13 +129,22 @@ export function StartWorkoutScreen() {
       </View>
       <Text style={globalStyles.startWorkoutYourPrograms}>Your programs</Text>
       <View style={globalStyles.workoutCreateProgramButton}>
-        {YOUR_PROGRAM_BUTTONS.map((title, index) => (
+        {isLoading ? (
+          <Text style={globalStyles.startWorkoutYourPrograms}>Loading programs…</Text>
+        ) : null}
+        {error ? (
+          <Text style={globalStyles.startWorkoutYourPrograms}>{error}</Text>
+        ) : null}
+        {!isLoading && !error && programs.length === 0 ? (
+          <Text style={globalStyles.startWorkoutYourPrograms}>No programs yet</Text>
+        ) : null}
+        {programs.map((program) => (
           <ProgramButton
-            key={`your-program-${index}`}
-            title={title}
-            selected={isSelection(selectedButton, "your", index)}
+            key={program.id}
+            title={program.name}
+            selected={isYourSelection(selectedButton, program.id)}
             onPress={() => {
-              selectProgram({ section: "your", index }, title);
+              selectYourProgram(program.id, program.name);
             }}
           />
         ))}
@@ -134,9 +157,9 @@ export function StartWorkoutScreen() {
             title={title}
             subtitle="3 Days/Week"
             subtitleMeta="Advanced"
-            selected={isSelection(selectedButton, "preset", index)}
+            selected={isPresetSelection(selectedButton, index)}
             onPress={() => {
-              selectProgram({ section: "preset", index }, title);
+              selectPreset(index, title);
             }}
           />
         ))}

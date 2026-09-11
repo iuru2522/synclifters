@@ -5,7 +5,7 @@ import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
-import { addExerciseToDay } from "@/features/workout/day-exercises";
+import { addExerciseToDay, catalogExerciseId } from "@/features/workout/day-exercises";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 const TRICEPS_EXERCISES = [
@@ -31,7 +31,19 @@ export function DoExerciseScreen() {
 
   const handleSelectExercise = (exerciseName: string) => {
     if (dayName) {
-      addExerciseToDay(dayName, exerciseName);
+      const exerciseId = catalogExerciseId(exerciseName);
+      addExerciseToDay(dayName, {
+        id: `pe_${exerciseId}`,
+        exerciseId,
+        name: exerciseName,
+        source: "catalog",
+        muscleGroup: muscleGroup || "Triceps",
+        measure: null,
+        repType: "regular",
+        dropsetLvls: null,
+        supersetExerciseName: null,
+        imageUrl: null,
+      });
     }
 
     router.dismissTo({

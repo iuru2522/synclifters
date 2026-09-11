@@ -1,9 +1,8 @@
 import { useSyncExternalStore } from "react";
+import type { ProgramExercise } from "@/features/workout/types";
 
-export type DayExercise = {
-  id: string;
-  name: string;
-};
+/** Builder scratchpad exercise — full snapshot fields for Firestore program save. */
+export type DayExercise = ProgramExercise;
 
 let exercisesByDay: Record<string, DayExercise[]> = {};
 const listeners = new Set<() => void>();
@@ -29,23 +28,30 @@ export function getExercisesForDay(dayName: string) {
   return exercisesByDay[dayName] ?? [];
 }
 
-export function addExerciseToDay(dayName: string, exerciseName: string) {
+export function catalogExerciseId(name: string) {
+  return `catalog:${name.trim().toLowerCase().replace(/\s+/g, "-")}`;
+}
+
+export function addExerciseToDay(dayName: string, exercise: DayExercise) {
   const existing = exercisesByDay[dayName] ?? [];
-  const alreadyAdded = existing.some((exercise) => exercise.name === exerciseName);
+  const alreadyAdded = existing.some(
+    (item) =>
+      item.exerciseId === exercise.exerciseId || item.name === exercise.name,
+  );
+
   if (alreadyAdded) {
     return;
   }
 
   exercisesByDay = {
     ...exercisesByDay,
-    [dayName]: [
-      ...existing,
-      {
-        id: `${dayName}-${exerciseName}-${existing.length}`,
-        name: exerciseName,
-      },
-    ],
+    [dayName]: [...existing, exercise],
   };
+  emit();
+}
+
+export function clearExercisesByDay() {
+  exercisesByDay = {};
   emit();
 }
 

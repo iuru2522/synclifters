@@ -20,8 +20,8 @@ export function getSelectedExerciseName() {
   return selectedExerciseName;
 }
 
-export function setSelectedExerciseName(value: string) {
-  selectedExerciseName = value;
+export function setSelectedExerciseName(value: string | null) {
+  selectedExerciseName = value?.trim() ? value.trim() : null;
   emit();
 }
 

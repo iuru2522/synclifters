@@ -3,7 +3,8 @@ import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
-import { useUserPrograms, type UserProgram } from "@/features/workout/user-programs";
+import { useUserPrograms } from "@/features/workout/user-programs";
+import type { Program } from "@/features/workout/types";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 const HISTORY_DATE = "JUL 11, 2025";
@@ -21,13 +22,16 @@ const FALLBACK_HISTORY: HistoryEntry[] = [
   { programName: "PROGRAM'S NAME", dayName: "DAY NAME", date: HISTORY_DATE },
 ];
 
-function historyEntriesFromPrograms(programs: UserProgram[]): HistoryEntry[] {
+function historyEntriesFromPrograms(programs: Program[]): HistoryEntry[] {
   if (programs.length === 0) {
     return FALLBACK_HISTORY;
   }
 
   return programs.flatMap((program) => {
-    const dayNames = program.dayNames.length > 0 ? program.dayNames : ["DAY NAME"];
+    const dayNames =
+      program.days.length > 0
+        ? program.days.map((day) => day.name)
+        : ["DAY NAME"];
     return dayNames.map((dayName) => ({
       programName: program.name,
       dayName,
@@ -39,8 +43,8 @@ function historyEntriesFromPrograms(programs: UserProgram[]): HistoryEntry[] {
 export function HistoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const userPrograms = useUserPrograms();
-  const historyEntries = historyEntriesFromPrograms(userPrograms);
+  const { programs } = useUserPrograms();
+  const historyEntries = historyEntriesFromPrograms(programs);
 
   function openProgram(programName: string, dayName: string) {
     const query = new URLSearchParams({
