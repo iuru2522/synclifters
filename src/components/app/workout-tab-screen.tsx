@@ -30,11 +30,20 @@ export function WorkoutTabScreen() {
     refresh: refreshSessions,
   } = useUserSessions();
   const fullName = formatProfileFullName(profile);
-  const trainingDaysCount = profile?.stats?.trainingDaysCount ?? 0;
-  const weightValue =
-    typeof profile?.weight === "number" ? String(profile.weight) : "—";
-  const weightUnit =
-    profile?.weightUnit === "lb" ? "LB" : profile?.weightUnit === "kg" ? "KG" : "";
+  let trainingDaysCount = 0;
+  if (profile && profile.stats && typeof profile.stats.trainingDaysCount === "number") {
+    trainingDaysCount = profile.stats.trainingDaysCount;
+  }
+  let weightValue = "—";
+  if (profile && typeof profile.weight === "number") {
+    weightValue = String(profile.weight);
+  }
+  let weightUnit = "";
+  if (profile && profile.weightUnit === "lb") {
+    weightUnit = "LB";
+  } else if (profile && profile.weightUnit === "kg") {
+    weightUnit = "KG";
+  }
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [startTrainingSelection, setStartTrainingSelection] =
     useState<StartTrainingSelection | null>(null);
