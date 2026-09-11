@@ -17,12 +17,17 @@ import { ProfileCameraIcon } from "@/components/app/profile-camera-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { useAuth } from "@/features/auth/auth-context";
 import {
+  profileImageStoragePath,
+  uploadImageFromUri,
+} from "@/features/storage/upload";
+import {
   formatProfileFields,
   formatProfileFullName,
   formatProfileBirthday,
   formatProfileFirstWeekDay,
   formatProfileMetrics,
 } from "@/features/users/profile-display";
+import { updateUserProfile } from "@/features/users/user-profile";
 import { colors, globalStyles, spacing } from "@/styles/global";
 
 const PROFILE_ACTION_BUTTON_COUNT = 10;
@@ -55,9 +60,10 @@ type ConnectorId = (typeof CONNECTORS)[number]["id"];
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { profile, signOut } = useAuth();
+  const { user, profile, patchProfile, refreshProfile, signOut } = useAuth();
   const insets = useSafeAreaInsets();
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [localPhotoUri, setLocalPhotoUri] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [connectors, setConnectors] = useState<Record<ConnectorId, boolean>>({
     appleHealth: false,
     appleWatch: false,
@@ -65,6 +71,7 @@ export default function ProfileScreen() {
   });
   const avatarTop = insets.top + spacing.profileAvatarTop;
   const innerTop = insets.top + spacing.profileAvatarInnerTop;
+  const photoUri = localPhotoUri ?? profile?.photoUrl ?? null;
   const profileFields = Object.fromEntries(
     formatProfileFields(profile).map((field) => [field.label, field.value]),
   );
@@ -90,7 +97,37 @@ export default function ProfileScreen() {
       return;
     }
 
-    setPhotoUri(asset.uri);
+    if (!user) {
+      Alert.alert("Sign in required", "Sign in to upload a profile photo.");
+      return;
+    }
+
+    if (isUploadingPhoto) {
+      return;
+    }
+
+    setLocalPhotoUri(asset.uri);
+    setIsUploadingPhoto(true);
+
+    void (async () => {
+      try {
+        const photoUrl = await uploadImageFromUri({
+          path: profileImageStoragePath(user.uid),
+          uri: asset.uri,
+        });
+        await updateUserProfile(user.uid, { photoUrl });
+        patchProfile({ photoUrl });
+        setLocalPhotoUri(null);
+        void refreshProfile({ silent: true });
+      } catch (error) {
+        setLocalPhotoUri(null);
+        const message =
+          error instanceof Error ? error.message : "Failed to upload photo.";
+        Alert.alert("Upload failed", message);
+      } finally {
+        setIsUploadingPhoto(false);
+      }
+    })();
   };
 
   const takePhoto = async () => {
@@ -192,6 +229,7 @@ export default function ProfileScreen() {
           onPress={openPhotoOptions}
           accessibilityRole="button"
           accessibilityLabel="Upload profile photo"
+          disabled={isUploadingPhoto}
         >
           <View style={globalStyles.profileAvatarPlus}>
             <View style={globalStyles.profileAvatarPlusBarHorizontal} />
@@ -213,7 +251,9 @@ export default function ProfileScreen() {
               )}
             </View>
             <View style={globalStyles.profileUploadLabels}>
-              <Text style={globalStyles.profileUploadPhotoText}>UPLOAD PHOTO</Text>
+              <Text style={globalStyles.profileUploadPhotoText}>
+                {isUploadingPhoto ? "UPLOADING…" : "UPLOAD PHOTO"}
+              </Text>
               <Text style={globalStyles.profileUploadHintText}>JPG/PNG, UP TO 10MB</Text>
             </View>
           </View>

@@ -1,13 +1,14 @@
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useCallback } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { WorkoutGlassCard } from "@/components/app/workout-glass-card";
-import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-icon";
-import { PROGRESS_METRIC_DETAIL_HREF } from "@/components/app/progress-metric-detail-screen";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
-import { colors, globalStyles, sizes, spacing } from "@/styles/global";
+import { useUserBodyMetrics } from "@/features/users/user-body-metrics";
+import type { BodyMetricEntry } from "@/features/users/types";
+import { globalStyles, sizes, spacing } from "@/styles/global";
 
 type ProgressMetric = "weight" | "height";
 
@@ -15,21 +16,35 @@ const METRIC_CONFIG: Record<
   ProgressMetric,
   {
     title: string;
-    valueLabel: string;
   }
 > = {
   weight: {
     title: "WEIGHT",
-    valueLabel: "XXX KGS",
   },
   height: {
     title: "HEIGHT",
-    valueLabel: "XXX CM",
   },
 };
 
 function parseProgressMetric(value: string | undefined): ProgressMetric {
   return value === "height" ? "height" : "weight";
+}
+
+function formatMetricDate(entry: BodyMetricEntry) {
+  if (entry.recordedAt == null) {
+    return "";
+  }
+
+  return new Date(entry.recordedAt).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatMetricValue(entry: BodyMetricEntry) {
+  const unit = entry.unit.trim().toUpperCase();
+  return unit ? `${entry.value} ${unit}` : String(entry.value);
 }
 
 export function ProgressMetricScreen() {
@@ -40,12 +55,20 @@ export function ProgressMetricScreen() {
   }>();
   const metric = parseProgressMetric(readSearchParam(params.metric));
   const config = METRIC_CONFIG[metric];
+  const { entries, isLoading, error, refresh } = useUserBodyMetrics(metric);
 
-  function openMetricDetail() {
-    router.push({
-      pathname: PROGRESS_METRIC_DETAIL_HREF,
-      params: { metric },
-    } as Href);
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
+
+  function openRecordSheet() {
+    const href =
+      metric === "height"
+        ? ("/workout/height-sheet?source=progress" as Href)
+        : ("/workout/weight-sheet?source=progress" as Href);
+    router.push(href);
   }
 
   return (
@@ -91,24 +114,40 @@ export function ProgressMetricScreen() {
 
         <View style={globalStyles.progressMetricHistoryBlock}>
           <View style={globalStyles.progressMetricHistoryDivider} />
-          <Pressable
-            style={globalStyles.progressMetricHistoryRow}
-            onPress={openMetricDetail}
-            accessibilityRole="button"
-            accessibilityLabel={`${config.valueLabel}, Jul 2, 2025`}
-          >
-            <Text style={globalStyles.progressMetricHistoryDate}>Jul 2, 2025</Text>
-            <View style={globalStyles.progressMetricHistoryValueWrap}>
-              <Text style={globalStyles.progressMetricHistoryValue}>{config.valueLabel}</Text>
-              <WorkoutExternalLinkIcon color={colors.backArrow} />
-            </View>
-          </Pressable>
-          <View style={globalStyles.progressMetricHistoryDivider} />
+          {isLoading ? (
+            <Text style={globalStyles.workoutMyPrograms}>Loading history…</Text>
+          ) : null}
+          {error ? <Text style={globalStyles.workoutMyPrograms}>{error}</Text> : null}
+          {!isLoading && !error && entries.length === 0 ? (
+            <Text style={globalStyles.workoutMyPrograms}>No records yet</Text>
+          ) : null}
+          {entries.map((entry) => {
+            const dateLabel = formatMetricDate(entry);
+            const valueLabel = formatMetricValue(entry);
+
+            return (
+              <View key={entry.id}>
+                <View
+                  style={globalStyles.progressMetricHistoryRow}
+                  accessibilityLabel={`${valueLabel}${dateLabel ? `, ${dateLabel}` : ""}`}
+                >
+                  <Text style={globalStyles.progressMetricHistoryDate}>{dateLabel}</Text>
+                  <View style={globalStyles.progressMetricHistoryValueWrap}>
+                    <Text style={globalStyles.progressMetricHistoryValue}>{valueLabel}</Text>
+                  </View>
+                </View>
+                <View style={globalStyles.progressMetricHistoryDivider} />
+              </View>
+            );
+          })}
+          {entries.length === 0 ? (
+            <View style={globalStyles.progressMetricHistoryDivider} />
+          ) : null}
         </View>
 
         <Pressable
           style={globalStyles.progressMetricRecordButton}
-          onPress={openMetricDetail}
+          onPress={openRecordSheet}
           accessibilityRole="button"
           accessibilityLabel="Record"
         >

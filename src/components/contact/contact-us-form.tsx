@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import { AppButton } from "@/components/app-button";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { AuthResultWrenchIcon } from "@/components/auth/auth-result-wrench-icon";
+import { useAuth } from "@/features/auth/auth-context";
+import { createSupportTicket } from "@/features/support/support-repository";
 import { colors, globalStyles, spacing } from "@/styles/global";
 
 type ContactUsField = "email" | "description";
@@ -11,6 +13,7 @@ type ContactUsField = "email" | "description";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function ContactUsForm() {
+  const { user, profile } = useAuth();
   const params = useLocalSearchParams<{ returnTo?: string | string[] }>();
   const rawReturnTo = params.returnTo;
   const returnTo = Array.isArray(rawReturnTo) ? rawReturnTo[0] : rawReturnTo;
@@ -19,6 +22,14 @@ export function ContactUsForm() {
   const [description, setDescription] = useState("");
   const [showFieldErrors, setShowFieldErrors] = useState(false);
   const [focusedField, setFocusedField] = useState<ContactUsField | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const profileEmail = profile?.email?.trim();
+    if (profileEmail) {
+      setEmail(profileEmail);
+    }
+  }, [profile?.email]);
 
   const trimmedEmail = email.trim();
   const trimmedDescription = description.trim();
@@ -41,17 +52,38 @@ export function ContactUsForm() {
     return null;
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setShowFieldErrors(true);
 
-    if (emailInvalid || descriptionEmpty) {
+    if (emailInvalid || descriptionEmpty || isSubmitting) {
       return;
     }
 
-    router.push({
-      pathname: "/support-submitted",
-      params: returnTo ? { returnTo } : undefined,
-    });
+    if (!user) {
+      router.push("/support-error" as Href);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await createSupportTicket({
+        ownerId: user.uid,
+        email: trimmedEmail,
+        description: trimmedDescription,
+      });
+      router.push({
+        pathname: "/support-submitted",
+        params: returnTo ? { returnTo } : undefined,
+      });
+    } catch {
+      router.push({
+        pathname: "/support-error",
+        params: returnTo ? { returnTo } : undefined,
+      } as Href);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -97,6 +129,7 @@ export function ContactUsForm() {
                 textContentType="emailAddress"
                 value={email}
                 onChangeText={setEmail}
+                editable={!isSubmitting}
                 onFocus={() => {
                   setFocusedField("email");
                 }}
@@ -124,6 +157,7 @@ export function ContactUsForm() {
                 textAlignVertical="top"
                 value={description}
                 onChangeText={setDescription}
+                editable={!isSubmitting}
                 onFocus={() => {
                   setFocusedField("description");
                 }}
@@ -140,8 +174,11 @@ export function ContactUsForm() {
 
       <View style={globalStyles.contactUsFormContent}>
         <AppButton
-          title="Submit"
-          onPress={handleSubmit}
+          title={isSubmitting ? "Submitting…" : "Submit"}
+          onPress={() => {
+            void handleSubmit();
+          }}
+          disabled={isSubmitting}
           borderColor={colors.supportHeader}
           textColor={colors.supportHeader}
           pressFillColor={colors.supportHeader}
