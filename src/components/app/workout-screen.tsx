@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { Alert, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { ChevronDownIcon } from "@/components/app/chevron-down-icon";
@@ -12,23 +12,35 @@ import { SaveExerciseOverlay } from "@/components/app/save-exercise-overlay";
 import { SaveIcon } from "@/components/app/save-icon";
 import { StopwatchIcon } from "@/components/app/stopwatch-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
-import { useRecordedDropSets } from "@/features/workout/recorded-drop-sets";
-import { useRecordedWorkingSets } from "@/features/workout/recorded-working-sets";
+import { useAuth } from "@/features/auth/auth-context";
+import {
+  clearRecordedDropSets,
+  useRecordedDropSets,
+} from "@/features/workout/recorded-drop-sets";
+import {
+  clearRecordedWorkingSets,
+  useRecordedWorkingSets,
+} from "@/features/workout/recorded-working-sets";
+import { createCompletedSession } from "@/features/workout/session-repository";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 export function WorkoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user, refreshProfile } = useAuth();
   const [saveWorkoutVisible, setSaveWorkoutVisible] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const params = useLocalSearchParams<{
     exerciseName?: string | string[];
     dayName?: string | string[];
+    programId?: string | string[];
     programName?: string | string[];
     showEdit?: string | string[];
     fromHistory?: string | string[];
   }>();
   const exerciseName = readSearchParam(params.exerciseName);
   const dayName = readSearchParam(params.dayName);
+  const programId = readSearchParam(params.programId);
   const programName = readSearchParam(params.programName);
   const showEdit = readSearchParam(params.showEdit) === "1";
   const fromHistory = readSearchParam(params.fromHistory) === "1";
@@ -36,9 +48,9 @@ export function WorkoutScreen() {
   const workingSets = useRecordedWorkingSets();
   const hasSetRows = workingSets.length > 0 || dropSets.length > 0;
 
-  function finishWorkout() {
-    setSaveWorkoutVisible(false);
+  function navigateAfterFinish() {
     const query = new URLSearchParams({
+      ...(programId ? { programId } : {}),
       ...(programName ? { programName } : {}),
       ...(dayName ? { dayName } : {}),
       ...(showEdit ? { showEdit: "1" } : {}),
@@ -49,6 +61,57 @@ export function WorkoutScreen() {
         ? `/workout/program-day-exercise?${query}`
         : "/workout/program-day-exercise") as Href,
     );
+  }
+
+  async function finishWorkout() {
+    if (isSaving) {
+      return;
+    }
+
+    setSaveWorkoutVisible(false);
+
+    if (fromHistory || !hasSetRows) {
+      clearRecordedWorkingSets();
+      clearRecordedDropSets();
+      navigateAfterFinish();
+      return;
+    }
+
+    if (!user) {
+      Alert.alert("Sign in required", "Sign in to save your workout.");
+      return;
+    }
+
+    if (!programName || !dayName || !exerciseName) {
+      Alert.alert(
+        "Missing workout details",
+        "Program, day, and exercise are required to save.",
+      );
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      await createCompletedSession(user.uid, {
+        programId,
+        programName,
+        dayName,
+        exerciseName,
+        workingSets,
+        dropSets,
+      });
+      clearRecordedWorkingSets();
+      clearRecordedDropSets();
+      await refreshProfile({ silent: true });
+      navigateAfterFinish();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to save workout.";
+      Alert.alert("Save failed", message);
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -202,6 +265,7 @@ export function WorkoutScreen() {
           title="ADD SET"
           onPress={() => {
             const query = new URLSearchParams({
+              ...(programId ? { programId } : {}),
               ...(programName ? { programName } : {}),
               ...(dayName ? { dayName } : {}),
               ...(exerciseName ? { exerciseName } : {}),

@@ -11,10 +11,12 @@ export function ProgramDayScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
+    programId?: string | string[];
     programName?: string | string[];
     showEdit?: string | string[];
     fromHistory?: string | string[];
   }>();
+  const programId = readSearchParam(params.programId);
   const programName = readSearchParam(params.programName);
   const showEdit = readSearchParam(params.showEdit) === "1";
   const fromHistory = readSearchParam(params.fromHistory) === "1";
@@ -23,6 +25,7 @@ export function ProgramDayScreen() {
   function openDay(day: number) {
     const query = new URLSearchParams({
       dayName: `Day ${day}`,
+      ...(programId ? { programId } : {}),
       ...(programName ? { programName } : {}),
       ...(showEdit ? { showEdit: "1" } : {}),
       ...(fromHistory ? { fromHistory: "1" } : {}),

@@ -7,6 +7,7 @@ import { WeekCalendar } from "@/components/WeekCalendar/WeekCalendar";
 import { useAuth } from "@/features/auth/auth-context";
 import { formatProfileFullName } from "@/features/users/profile-display";
 import { useUserPrograms } from "@/features/workout/user-programs";
+import { useUserSessions } from "@/features/workout/user-sessions";
 import { colors, globalStyles, sizes } from "@/styles/global";
 import { useFocusEffect, useRouter, type Href } from "expo-router";
 import { useCallback, useState } from "react";
@@ -24,7 +25,25 @@ export function WorkoutTabScreen() {
   const insets = useSafeAreaInsets();
   const { profile } = useAuth();
   const { programs, isLoading, error, refresh } = useUserPrograms();
+  const {
+    activityDates,
+    refresh: refreshSessions,
+  } = useUserSessions();
   const fullName = formatProfileFullName(profile);
+  let trainingDaysCount = 0;
+  if (profile && profile.stats && typeof profile.stats.trainingDaysCount === "number") {
+    trainingDaysCount = profile.stats.trainingDaysCount;
+  }
+  let weightValue = "—";
+  if (profile && typeof profile.weight === "number") {
+    weightValue = String(profile.weight);
+  }
+  let weightUnit = "";
+  if (profile && profile.weightUnit === "lb") {
+    weightUnit = "LB";
+  } else if (profile && profile.weightUnit === "kg") {
+    weightUnit = "KG";
+  }
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [startTrainingSelection, setStartTrainingSelection] =
     useState<StartTrainingSelection | null>(null);
@@ -32,7 +51,8 @@ export function WorkoutTabScreen() {
   useFocusEffect(
     useCallback(() => {
       void refresh();
-    }, [refresh]),
+      void refreshSessions();
+    }, [refresh, refreshSessions]),
   );
 
   const programSelected = startTrainingSelection === "program";
@@ -66,14 +86,17 @@ export function WorkoutTabScreen() {
         <View style={globalStyles.workoutGlassCardsRow}>
           <WorkoutGlassCard style={globalStyles.workoutGlassCard}>
             <View style={globalStyles.workoutGlassCardContent}>
-              <Text style={globalStyles.workoutGlassCardValue}>19</Text>
+              <Text style={globalStyles.workoutGlassCardValue}>{trainingDaysCount}</Text>
               <Text style={globalStyles.workoutGlassCardLabel}>TRAINING DAYS</Text>
             </View>
           </WorkoutGlassCard>
           <WorkoutGlassCard style={globalStyles.workoutGlassCard}>
             <View style={globalStyles.workoutGlassCardContent}>
               <Text style={globalStyles.workoutGlassCardValue}>
-                37<Text style={globalStyles.workoutGlassCardLabel}>KG</Text>
+                {weightValue}
+                {weightUnit ? (
+                  <Text style={globalStyles.workoutGlassCardLabel}>{weightUnit}</Text>
+                ) : null}
               </Text>
               <Text style={globalStyles.workoutGlassCardLabel}>CURRENT WEIGHT</Text>
             </View>
@@ -83,7 +106,11 @@ export function WorkoutTabScreen() {
           <WorkoutGlassCard style={globalStyles.workoutGlassCardWide} />
         </View>
         <View style={globalStyles.workoutWeekCalendarWrap}>
-          <WeekCalendar selectedDate={selectedDate} onDateChange={setSelectedDate} />
+          <WeekCalendar
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+            activityDates={activityDates}
+          />
         </View>
         <View style={globalStyles.workoutStartTrainingLabel}>
           <Text style={globalStyles.workoutGlassCardLabel}>START TRAINING</Text>
