@@ -23,11 +23,13 @@ export function ProgramDayExerciseScreen() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     dayName?: string | string[];
+    programId?: string | string[];
     programName?: string | string[];
     showEdit?: string | string[];
     fromHistory?: string | string[];
   }>();
   const dayName = readSearchParam(params.dayName);
+  const programId = readSearchParam(params.programId);
   const programName = readSearchParam(params.programName);
   const showEdit = readSearchParam(params.showEdit) === "1";
   const fromHistory = readSearchParam(params.fromHistory) === "1";
@@ -41,6 +43,7 @@ export function ProgramDayExerciseScreen() {
 
   function openWorkout(exerciseName?: string) {
     const params = new URLSearchParams({
+      ...(programId ? { programId } : {}),
       ...(programName ? { programName } : {}),
       ...(dayName ? { dayName } : {}),
       ...(exerciseName ? { exerciseName } : {}),

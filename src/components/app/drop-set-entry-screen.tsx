@@ -30,20 +30,28 @@ export function DropSetEntryScreen() {
   const params = useLocalSearchParams<{
     exerciseName?: string | string[];
     dayName?: string | string[];
+    programId?: string | string[];
     programName?: string | string[];
     showEdit?: string | string[];
     fromHistory?: string | string[];
   }>();
   const exerciseName = readSearchParam(params.exerciseName);
   const dayName = readSearchParam(params.dayName);
+  const programId = readSearchParam(params.programId);
   const programName = readSearchParam(params.programName);
   const showEdit = readSearchParam(params.showEdit) === "1";
   const fromHistory = readSearchParam(params.fromHistory) === "1";
 
   function finishExercise() {
-    setRecordedDropSets(drops);
+    setRecordedDropSets(
+      drops.map((drop) => ({
+        ...drop,
+        feeling: dropSetFeeling,
+      })),
+    );
     setSaveExerciseVisible(false);
     const query = new URLSearchParams({
+      ...(programId ? { programId } : {}),
       ...(programName ? { programName } : {}),
       ...(dayName ? { dayName } : {}),
       ...(exerciseName ? { exerciseName } : {}),

@@ -1,55 +1,47 @@
-import { useRouter, type Href } from "expo-router";
+import { useFocusEffect, useRouter, type Href } from "expo-router";
+import { useCallback } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
-import { useUserPrograms } from "@/features/workout/user-programs";
-import type { Program } from "@/features/workout/types";
+import { useUserSessions } from "@/features/workout/user-sessions";
+import type { WorkoutSession } from "@/features/workout/types";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
-const HISTORY_DATE = "JUL 11, 2025";
-
-type HistoryEntry = {
-  programName: string;
-  dayName: string;
-  date: string;
-};
-
-const FALLBACK_HISTORY: HistoryEntry[] = [
-  { programName: "PROGRAM'S NAME", dayName: "DAY NAME", date: HISTORY_DATE },
-  { programName: "PROGRAM'S NAME", dayName: "DAY NAME", date: HISTORY_DATE },
-  { programName: "PROGRAM'S NAME", dayName: "DAY NAME", date: HISTORY_DATE },
-  { programName: "PROGRAM'S NAME", dayName: "DAY NAME", date: HISTORY_DATE },
-];
-
-function historyEntriesFromPrograms(programs: Program[]): HistoryEntry[] {
-  if (programs.length === 0) {
-    return FALLBACK_HISTORY;
+function formatHistoryDate(session: WorkoutSession) {
+  if (session.performedAt) {
+    return new Date(session.performedAt)
+      .toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+      .toUpperCase();
   }
 
-  return programs.flatMap((program) => {
-    const dayNames =
-      program.days.length > 0
-        ? program.days.map((day) => day.name)
-        : ["DAY NAME"];
-    return dayNames.map((dayName) => ({
-      programName: program.name,
-      dayName,
-      date: HISTORY_DATE,
-    }));
-  });
+  if (session.date) {
+    return session.date;
+  }
+
+  return "";
 }
 
 export function HistoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { programs } = useUserPrograms();
-  const historyEntries = historyEntriesFromPrograms(programs);
+  const { sessions, isLoading, error, refresh } = useUserSessions();
 
-  function openProgram(programName: string, dayName: string) {
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
+
+  function openSession(session: WorkoutSession) {
     const query = new URLSearchParams({
-      programName,
-      dayName,
+      ...(session.programId ? { programId: session.programId } : {}),
+      programName: session.programName,
+      dayName: session.dayName,
       fromHistory: "1",
     }).toString();
     router.push(`/workout/program-day-exercise?${query}` as Href);
@@ -88,15 +80,23 @@ export function HistoryScreen() {
         contentContainerStyle={globalStyles.historyButtons}
         showsVerticalScrollIndicator={false}
       >
-        {historyEntries.map((entry, index) => {
-          const title = `${entry.programName} | ${entry.dayName}`;
+        {isLoading ? (
+          <Text style={globalStyles.workoutMyPrograms}>Loading history…</Text>
+        ) : null}
+        {error ? <Text style={globalStyles.workoutMyPrograms}>{error}</Text> : null}
+        {!isLoading && !error && sessions.length === 0 ? (
+          <Text style={globalStyles.workoutMyPrograms}>No workouts yet</Text>
+        ) : null}
+        {sessions.map((session) => {
+          const title = `${session.programName} | ${session.dayName}`;
+          const dateLabel = formatHistoryDate(session);
 
           return (
             <AppButton
-              key={`${entry.programName}-${entry.dayName}-${index}`}
+              key={session.id}
               title={title}
               onPress={() => {
-                openProgram(entry.programName, entry.dayName);
+                openSession(session);
               }}
               borderColor={colors.white}
               borderWidth={sizes.workoutProgramThinBorderWidth}
@@ -104,8 +104,12 @@ export function HistoryScreen() {
               textStyle={globalStyles.historyButtonText}
               style={globalStyles.historyButton}
               pressAccentColor={colors.backArrow}
-              rightIcon={<Text style={globalStyles.historyButtonText}>{entry.date}</Text>}
-              accessibilityLabel={`${title} ${entry.date}`}
+              rightIcon={
+                dateLabel ? (
+                  <Text style={globalStyles.historyButtonText}>{dateLabel}</Text>
+                ) : undefined
+              }
+              accessibilityLabel={`${title} ${dateLabel}`.trim()}
             />
           );
         })}
