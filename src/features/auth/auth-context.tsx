@@ -16,6 +16,7 @@ import {
 import {
   configureAuthProviders,
   confirmEmailVerification,
+  deleteAccount,
   isAppleSignInAvailable,
   refreshCurrentUser,
   resendEmailVerification,
@@ -56,6 +57,7 @@ type AuthContextValue = {
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -192,6 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithGoogle,
       signInWithApple,
       signOut,
+      deleteAccount,
     }),
     [
       user,

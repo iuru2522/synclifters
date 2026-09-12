@@ -60,10 +60,12 @@ type ConnectorId = (typeof CONNECTORS)[number]["id"];
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, profile, patchProfile, refreshProfile, signOut } = useAuth();
+  const { user, profile, patchProfile, refreshProfile, signOut, deleteAccount } =
+    useAuth();
   const insets = useSafeAreaInsets();
   const [localPhotoUri, setLocalPhotoUri] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [connectors, setConnectors] = useState<Record<ConnectorId, boolean>>({
     appleHealth: false,
     appleWatch: false,
@@ -181,20 +183,44 @@ export default function ProfileScreen() {
     }
 
     Alert.alert("Upload photo", undefined, [
-      {
-        text: "Take Photo",
-        onPress: () => {
-          void takePhoto();
-        },
-      },
-      {
-        text: "Choose from Library",
-        onPress: () => {
-          void chooseFromLibrary();
-        },
-      },
+      { text: "Take Photo", onPress: () => void takePhoto() },
+      { text: "Choose from Library", onPress: () => void chooseFromLibrary() },
       { text: "Cancel", style: "cancel" },
     ]);
+  };
+
+  const confirmDeleteAccount = () => {
+    if (isDeletingAccount) {
+      return;
+    }
+
+    Alert.alert(
+      "Delete account?",
+      "This permanently deletes your profile, programs, workouts, and photos. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            void (async () => {
+              setIsDeletingAccount(true);
+              try {
+                await deleteAccount();
+              } catch (error) {
+                const message =
+                  error instanceof Error
+                    ? error.message
+                    : "Failed to delete account.";
+                Alert.alert("Delete failed", message);
+              } finally {
+                setIsDeletingAccount(false);
+              }
+            })();
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -372,18 +398,25 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
         </View>
-        <Text
-          style={[
-            globalStyles.profileDeleteAccountText,
-            {
-              paddingBottom:
-                spacing.profileDeleteAccountBottom +
-                Math.max(insets.bottom, spacing.safeAreaBottomMin),
-            },
-          ]}
+        <Pressable
+          onPress={confirmDeleteAccount}
+          disabled={isDeletingAccount}
+          accessibilityRole="button"
+          accessibilityLabel="Delete Account"
         >
-          Delete Account
-        </Text>
+          <Text
+            style={[
+              globalStyles.profileDeleteAccountText,
+              {
+                paddingBottom:
+                  spacing.profileDeleteAccountBottom +
+                  Math.max(insets.bottom, spacing.safeAreaBottomMin),
+              },
+            ]}
+          >
+            {isDeletingAccount ? "Deleting…" : "Delete Account"}
+          </Text>
+        </Pressable>
       </ScrollView>
     </View>
   );
