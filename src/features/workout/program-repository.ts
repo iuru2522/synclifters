@@ -6,6 +6,7 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { getFirebaseFirestore, getFirebaseSetupMessage } from "@/lib/firebase";
 import { coerceToMillis } from "@/lib/firestore-timestamps";
@@ -237,10 +238,43 @@ export async function setProgramFavorite(
     throw new Error("Missing program.");
   }
 
-  await updateDoc(doc(programsCollection(uid), trimmedId), {
-    isFavorite,
-    updatedAt: serverTimestamp(),
-  });
+  const db = getFirebaseFirestore();
+  if (!db) {
+    throw new Error(getFirebaseSetupMessage());
+  }
+
+  const targetRef = doc(programsCollection(uid), trimmedId);
+
+  if (!isFavorite) {
+    await updateDoc(targetRef, {
+      isFavorite: false,
+      updatedAt: serverTimestamp(),
+    });
+    return;
+  }
+
+  const snapshot = await getDocs(programsCollection(uid));
+  const batch = writeBatch(db);
+
+  for (const item of snapshot.docs) {
+    const currentlyFavorite = item.data().isFavorite === true;
+    if (item.id === trimmedId) {
+      batch.update(item.ref, {
+        isFavorite: true,
+        updatedAt: serverTimestamp(),
+      });
+      continue;
+    }
+
+    if (currentlyFavorite) {
+      batch.update(item.ref, {
+        isFavorite: false,
+        updatedAt: serverTimestamp(),
+      });
+    }
+  }
+
+  await batch.commit();
 }
 
 export async function listPrograms(uid: string): Promise<Program[]> {

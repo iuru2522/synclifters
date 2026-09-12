@@ -47,6 +47,10 @@ export function WorkoutTabScreen() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [startTrainingSelection, setStartTrainingSelection] =
     useState<StartTrainingSelection | null>(null);
+  const favoriteProgram = programs.find((program) => program.isFavorite) ?? null;
+  const favoriteDay = favoriteProgram?.days[0] ?? null;
+  const selectedProgramTitle = favoriteProgram?.name ?? "No program selected";
+  const selectedDayTitle = favoriteDay?.name ?? "No day selected";
 
   useFocusEffect(
     useCallback(() => {
@@ -57,6 +61,35 @@ export function WorkoutTabScreen() {
 
   const programSelected = startTrainingSelection === "program";
   const daySelected = startTrainingSelection === "day";
+
+  function openFavoriteProgram() {
+    if (!favoriteProgram) {
+      router.push(START_WORKOUT_HREF);
+      return;
+    }
+
+    setStartTrainingSelection("program");
+    const query = new URLSearchParams({
+      programId: favoriteProgram.id,
+      programName: favoriteProgram.name,
+    }).toString();
+    router.push(`/workout/program-day?${query}` as Href);
+  }
+
+  function openFavoriteDay() {
+    if (!favoriteProgram || !favoriteDay) {
+      router.push(START_WORKOUT_HREF);
+      return;
+    }
+
+    setStartTrainingSelection("day");
+    const query = new URLSearchParams({
+      programId: favoriteProgram.id,
+      programName: favoriteProgram.name,
+      dayName: favoriteDay.name,
+    }).toString();
+    router.push(`/workout/program-day-exercise?${query}` as Href);
+  }
 
   return (
     <View style={[globalStyles.workoutScreen, { paddingTop: insets.top }]}>
@@ -118,10 +151,8 @@ export function WorkoutTabScreen() {
         <Text style={globalStyles.workoutMyPrograms}>Selected Program</Text>
         <View style={globalStyles.workoutSelectedProgramButtonWrap}>
           <AppButton
-            title="Full Body Strength"
-            onPress={() => {
-              setStartTrainingSelection("program");
-            }}
+            title={selectedProgramTitle}
+            onPress={openFavoriteProgram}
             borderColor={colors.backArrow}
             borderWidth={sizes.workoutProgramThinBorderWidth}
             textColor={programSelected ? colors.inputText : colors.inputFill}
@@ -140,10 +171,8 @@ export function WorkoutTabScreen() {
         <Text style={globalStyles.workoutStartTrainingDay}>Day</Text>
         <View style={globalStyles.workoutSelectedProgramButtonWrap}>
           <AppButton
-            title="Day 1"
-            onPress={() => {
-              setStartTrainingSelection("day");
-            }}
+            title={selectedDayTitle}
+            onPress={openFavoriteDay}
             borderColor={colors.backArrow}
             borderWidth={sizes.workoutProgramThinBorderWidth}
             textColor={daySelected ? colors.inputText : colors.inputFill}
@@ -190,14 +219,18 @@ export function WorkoutTabScreen() {
                   programId: program.id,
                   programName: program.name,
                 }).toString();
-                router.push(`/workout/start-workout?${query}` as Href);
+                router.push(`/workout/program-day?${query}` as Href);
               }}
               borderColor={colors.backArrow}
               textColor={colors.inputText}
               textStyle={globalStyles.workoutProgramFilledButtonText}
               style={globalStyles.workoutProgramFilledButton}
               leftIcon={<WorkoutExternalLinkIcon />}
-              rightIcon={<WorkoutStartIcon variant="filled" />}
+              rightIcon={
+                <WorkoutStartIcon
+                  variant={program.isFavorite ? "filled" : "outline"}
+                />
+              }
             />
           ))}
           <AppButton

@@ -92,28 +92,24 @@ export function useUserPrograms(): UserProgramsState {
       }
 
       const nextFavorite = !current.isFavorite;
-      setPrograms((prev) =>
+      const previous = programs;
+      setPrograms(
         sortProgramsLocal(
-          prev.map((program) =>
-            program.id === programId
-              ? { ...program, isFavorite: nextFavorite }
-              : program,
-          ),
+          previous.map((program) => ({
+            ...program,
+            isFavorite: nextFavorite
+              ? program.id === programId
+              : program.id === programId
+                ? false
+                : program.isFavorite,
+          })),
         ),
       );
 
       try {
         await setProgramFavorite(user.uid, programId, nextFavorite);
       } catch (err) {
-        setPrograms((prev) =>
-          sortProgramsLocal(
-            prev.map((program) =>
-              program.id === programId
-                ? { ...program, isFavorite: current.isFavorite }
-                : program,
-            ),
-          ),
-        );
+        setPrograms(sortProgramsLocal(previous));
         throw err;
       }
     },
