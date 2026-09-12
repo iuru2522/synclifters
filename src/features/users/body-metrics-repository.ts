@@ -2,7 +2,6 @@ import {
   addDoc,
   collection,
   getDocs,
-  orderBy,
   query,
   serverTimestamp,
   where,
@@ -114,18 +113,15 @@ export async function listBodyMetrics(
   type: BodyMetricType,
 ): Promise<BodyMetricEntry[]> {
   const snapshot = await getDocs(
-    query(
-      bodyMetricsCollection(uid),
-      where("type", "==", type),
-      orderBy("recordedAt", "desc"),
-    ),
+    query(bodyMetricsCollection(uid), where("type", "==", type)),
   );
 
   return snapshot.docs
     .map((item) =>
       parseBodyMetric(item.id, item.data() as Record<string, unknown>),
     )
-    .filter((item): item is BodyMetricEntry => item != null);
+    .filter((item): item is BodyMetricEntry => item != null)
+    .sort((a, b) => (b.recordedAt ?? 0) - (a.recordedAt ?? 0));
 }
 
 export async function saveWeightWithHistory(

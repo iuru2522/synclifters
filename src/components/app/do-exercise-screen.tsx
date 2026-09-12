@@ -4,16 +4,28 @@ import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { readSearchParam } from "@/components/app/program-day-params";
+import { SaveExerciseOverlay } from "@/components/app/save-exercise-overlay";
 import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { useAuth } from "@/features/auth/auth-context";
 import { listCatalogExercisesForMuscle } from "@/features/workout/catalog-repository";
+import {
+  MUSCLE_GROUP_OPTIONS,
+  setSelectedMuscleGroup,
+  type MuscleGroup,
+} from "@/features/workout/custom-exercise-muscle";
 import { addExerciseToDay, catalogExerciseId } from "@/features/workout/day-exercises";
 import type { CatalogExercise } from "@/features/workout/exercise-catalog";
 import { catalogExercisesForMuscle } from "@/features/workout/exercise-catalog";
 import { addExerciseToProgramDay } from "@/features/workout/program-repository";
 import type { ProgramExercise } from "@/features/workout/types";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
+
+function asMuscleGroup(value: string): MuscleGroup | null {
+  return (MUSCLE_GROUP_OPTIONS as readonly string[]).includes(value)
+    ? (value as MuscleGroup)
+    : null;
+}
 
 export function DoExerciseScreen() {
   const router = useRouter();
@@ -36,6 +48,7 @@ export function DoExerciseScreen() {
     catalogExercisesForMuscle(muscleGroup),
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -147,17 +160,7 @@ export function DoExerciseScreen() {
           <Pressable
             style={globalStyles.createDayHeaderMenu}
             onPress={() => {
-              const query = new URLSearchParams({
-                ...(programId ? { programId } : {}),
-                ...(programName ? { programName } : {}),
-                ...(dayName ? { dayName } : {}),
-                ...(dayNames ? { dayNames } : {}),
-              }).toString();
-              router.push(
-                (query
-                  ? `/workout/custom-exercise?${query}`
-                  : "/workout/custom-exercise") as Href,
-              );
+              setMenuVisible(true);
             }}
             hitSlop={sizes.backArrowHitSlop}
             accessibilityRole="button"
@@ -212,6 +215,35 @@ export function DoExerciseScreen() {
           ))}
         </ScrollView>
       </View>
+      <SaveExerciseOverlay
+        visible={menuVisible}
+        finishTitle="Create Custom Exercise"
+        onFinish={() => {
+          const muscle = asMuscleGroup(muscleGroup);
+          if (muscle) {
+            setSelectedMuscleGroup(muscle);
+          }
+
+          const query = new URLSearchParams({
+            ...(programId ? { programId } : {}),
+            ...(programName ? { programName } : {}),
+            ...(dayName ? { dayName } : {}),
+            ...(dayNames ? { dayNames } : {}),
+            ...(muscleGroup ? { muscleGroup } : {}),
+          }).toString();
+          const href = (
+            query
+              ? `/workout/custom-exercise?${query}`
+              : "/workout/custom-exercise"
+          ) as Href;
+
+          setMenuVisible(false);
+          router.push(href);
+        }}
+        onCancel={() => {
+          setMenuVisible(false);
+        }}
+      />
     </View>
   );
 }
