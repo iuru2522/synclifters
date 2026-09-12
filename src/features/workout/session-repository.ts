@@ -1,11 +1,13 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
   runTransaction,
   serverTimestamp,
+  where,
 } from "firebase/firestore";
 import { getFirebaseFirestore, getFirebaseSetupMessage } from "@/lib/firebase";
 import { coerceToMillis, toDateKey } from "@/lib/firestore-timestamps";
@@ -25,6 +27,7 @@ export type CreateCompletedSessionInput = {
   programName: string;
   dayId?: string | null;
   dayName: string;
+  exerciseId?: string | null;
   exerciseName: string;
   muscleGroup?: string | null;
   workingSets: RecordedWorkingSet[];
@@ -259,7 +262,8 @@ export async function createCompletedSession(
 
   const performedAt = input.performedAt ?? new Date();
   const dateKey = toDateKey(performedAt);
-  const exerciseId = catalogExerciseId(exerciseName);
+  const exerciseId =
+    input.exerciseId?.trim() || catalogExerciseId(exerciseName);
   const exercise: SessionExercise = {
     exerciseId,
     name: exerciseName,
@@ -353,6 +357,41 @@ export async function createCompletedSession(
 export async function listSessions(uid: string): Promise<WorkoutSession[]> {
   const snapshot = await getDocs(
     query(sessionsCollection(uid), orderBy("performedAt", "desc")),
+  );
+
+  return snapshot.docs
+    .map((item) => parseSession(item.id, item.data() as Record<string, unknown>))
+    .filter((item): item is WorkoutSession => item != null);
+}
+
+export async function getSession(
+  uid: string,
+  sessionId: string,
+): Promise<WorkoutSession | null> {
+  const snapshot = await getDoc(doc(sessionsCollection(uid), sessionId));
+
+  if (!snapshot.exists()) {
+    return null;
+  }
+
+  return parseSession(snapshot.id, snapshot.data() as Record<string, unknown>);
+}
+
+export async function listSessionsForExercise(
+  uid: string,
+  exerciseId: string,
+): Promise<WorkoutSession[]> {
+  const trimmed = exerciseId.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  const snapshot = await getDocs(
+    query(
+      sessionsCollection(uid),
+      where("exerciseIds", "array-contains", trimmed),
+      orderBy("performedAt", "desc"),
+    ),
   );
 
   return snapshot.docs

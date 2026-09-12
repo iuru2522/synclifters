@@ -48,7 +48,6 @@ export default function WorkoutLayout() {
       <Stack.Screen name="sports-experience-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="metrics-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="exercise-name-sheet" options={fieldSheetOptions} />
-      <Stack.Screen name="history-exercise-name-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="muscle-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="measure-sheet" options={fieldSheetOptions} />
       <Stack.Screen name="week-day-sheet" options={fieldSheetOptions} />

@@ -1,13 +1,15 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useCallback, useMemo } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { ProfileActionArrow } from "@/components/app/profile-action-arrow";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import { useUserProgressExercises } from "@/features/workout/user-progress-exercises";
 import { globalStyles, sizes, spacing } from "@/styles/global";
 
-const TRICEPS_EXERCISES = Array.from({ length: 11 }, () => "BARBELL BENCH PRESS");
+const PROGRESS_METRIC_DETAIL_HREF = "/workout/progress-metric-detail" as Href;
 
 export function ProgressMuscleScreen() {
   const router = useRouter();
@@ -15,7 +17,18 @@ export function ProgressMuscleScreen() {
   const params = useLocalSearchParams<{
     muscleGroup?: string | string[];
   }>();
-  const muscleGroup = readSearchParam(params.muscleGroup) ?? "Triceps";
+  const muscleGroup = readSearchParam(params.muscleGroup) ?? "";
+  const { isLoading, error, refresh, exercisesForMuscle } = useUserProgressExercises();
+  const exercises = useMemo(
+    () => (muscleGroup ? exercisesForMuscle(muscleGroup) : []),
+    [exercisesForMuscle, muscleGroup],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
 
   return (
     <View
@@ -36,7 +49,7 @@ export function ProgressMuscleScreen() {
           />
         </View>
         <Text style={globalStyles.createDayHeaderTitle} numberOfLines={1}>
-          {muscleGroup.toUpperCase()}
+          {muscleGroup ? muscleGroup.toUpperCase() : "MUSCLE"}
         </Text>
         <Pressable
           style={globalStyles.createDayHeaderMenu}
@@ -55,17 +68,32 @@ export function ProgressMuscleScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={globalStyles.progressMuscleExerciseList}>
-          {TRICEPS_EXERCISES.map((exerciseName, index) => (
-            <View key={`${exerciseName}-${index}`} style={globalStyles.doExerciseItem}>
+          {isLoading ? (
+            <Text style={globalStyles.workoutMyPrograms}>Loading exercises…</Text>
+          ) : null}
+          {error ? <Text style={globalStyles.workoutMyPrograms}>{error}</Text> : null}
+          {!isLoading && !error && exercises.length === 0 ? (
+            <Text style={globalStyles.workoutMyPrograms}>No exercises yet</Text>
+          ) : null}
+          {exercises.map((exercise) => (
+            <View key={exercise.exerciseId} style={globalStyles.doExerciseItem}>
               <Pressable
                 style={globalStyles.doExerciseSelectTarget}
-                onPress={() => {}}
+                onPress={() => {
+                  router.push({
+                    pathname: PROGRESS_METRIC_DETAIL_HREF,
+                    params: {
+                      exerciseId: exercise.exerciseId,
+                      exerciseName: exercise.name,
+                    },
+                  } as Href);
+                }}
                 accessibilityRole="button"
-                accessibilityLabel={exerciseName}
+                accessibilityLabel={exercise.name}
               >
                 <View style={globalStyles.doExerciseCircle} />
                 <Text style={globalStyles.doExerciseName} numberOfLines={1}>
-                  {exerciseName}
+                  {exercise.name.toUpperCase()}
                 </Text>
               </Pressable>
               <ProfileActionArrow />

@@ -1,21 +1,23 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback } from "react";
 import { Image, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import { catalogExerciseId } from "@/features/workout/day-exercises";
+import {
+  findSessionExercise,
+  formatSessionDate,
+  formatSessionProgramLabel,
+  formatSetsSummary,
+  formatVolumeLabel,
+} from "@/features/workout/session-display";
+import { useExerciseSessionHistory } from "@/features/workout/user-exercise-history";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 const exerciseImage = require("../../../assets/images/exercise.png");
-
-const historyEntries = [
-  "Jul 11, 2025",
-  "Jun 28, 2025",
-  "May 3, 2025",
-  "Apr 19, 2025",
-  "Mar 7, 2025",
-] as const;
 
 export function ExerciseHistoryScreen() {
   const router = useRouter();
@@ -23,10 +25,21 @@ export function ExerciseHistoryScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const params = useLocalSearchParams<{
     exerciseName?: string | string[];
+    exerciseId?: string | string[];
   }>();
   const exerciseName = readSearchParam(params.exerciseName) ?? "";
+  const exerciseId =
+    readSearchParam(params.exerciseId) ||
+    (exerciseName ? catalogExerciseId(exerciseName) : "");
+  const { sessions, isLoading, error, refresh } = useExerciseSessionHistory(exerciseId);
   const imageHeight =
     (windowWidth * sizes.exerciseHistoryImageHeight) / sizes.exerciseHistoryImageWidth;
+
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
 
   return (
     <View
@@ -75,40 +88,57 @@ export function ExerciseHistoryScreen() {
           accessibilityIgnoresInvertColors
         />
         <Text style={globalStyles.exerciseHistoryLabel}>HISTORY</Text>
+        {isLoading ? (
+          <Text style={globalStyles.workoutMyPrograms}>Loading history…</Text>
+        ) : null}
+        {error ? <Text style={globalStyles.workoutMyPrograms}>{error}</Text> : null}
+        {!isLoading && !error && sessions.length === 0 ? (
+          <Text style={globalStyles.workoutMyPrograms}>No history yet</Text>
+        ) : null}
         <View style={globalStyles.exerciseHistoryButtonsRow}>
-          {historyEntries.map((date) => (
-            <AppButton
-              key={date}
-              title=""
-              onPress={() => {}}
-              borderColor={colors.backArrow}
-              borderWidth={sizes.workoutProgramThinBorderWidth}
-              textColor={colors.inputFill}
-              pressAccentColor={colors.backArrow}
-              textStyle={globalStyles.exerciseHistoryButtonSpacer}
-              leftIcon={
-                <View style={globalStyles.exerciseHistoryButtonContent}>
-                  <View style={globalStyles.exerciseHistoryButtonRow}>
-                    <Text style={globalStyles.exerciseHistoryButtonDate}>{date}</Text>
-                    <Text style={globalStyles.exerciseHistoryButtonProgram}>
-                      DAY NAME - PROGRAM'S NAME
-                    </Text>
+          {sessions.map((session) => {
+            const exercise = findSessionExercise(session, exerciseId);
+            const dateLabel = formatSessionDate(session);
+            const programLabel = formatSessionProgramLabel(session);
+            const setsLabel = exercise ? formatSetsSummary(exercise.sets) : "";
+            const volumeLabel = exercise
+              ? formatVolumeLabel(exercise.totalVolume)
+              : "";
+
+            return (
+              <AppButton
+                key={session.id}
+                title=""
+                onPress={() => {}}
+                borderColor={colors.backArrow}
+                borderWidth={sizes.workoutProgramThinBorderWidth}
+                textColor={colors.inputFill}
+                pressAccentColor={colors.backArrow}
+                textStyle={globalStyles.exerciseHistoryButtonSpacer}
+                leftIcon={
+                  <View style={globalStyles.exerciseHistoryButtonContent}>
+                    <View style={globalStyles.exerciseHistoryButtonRow}>
+                      <Text style={globalStyles.exerciseHistoryButtonDate}>{dateLabel}</Text>
+                      <Text style={globalStyles.exerciseHistoryButtonProgram}>
+                        {programLabel}
+                      </Text>
+                    </View>
+                    <View style={globalStyles.exerciseHistoryButtonRow}>
+                      <Text style={globalStyles.exerciseHistoryButtonDate}>{setsLabel}</Text>
+                      <Text style={globalStyles.exerciseHistoryButtonWeight}>
+                        {volumeLabel}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={globalStyles.exerciseHistoryButtonRow}>
-                    <Text style={globalStyles.exerciseHistoryButtonDate}>
-                      25X10, 35X6, 45X4, 59X7, 59X8
-                    </Text>
-                    <Text style={globalStyles.exerciseHistoryButtonWeight}>1200 Kgs</Text>
-                  </View>
-                </View>
-              }
-              style={[
-                globalStyles.workoutCreateProgramThinBorder,
-                globalStyles.exerciseHistoryButton,
-              ]}
-              accessibilityLabel={`${date}, 25X10, 35X6, 45X4, 59X7, 59X8, DAY NAME - PROGRAM'S NAME, 1200 Kgs`}
-            />
-          ))}
+                }
+                style={[
+                  globalStyles.workoutCreateProgramThinBorder,
+                  globalStyles.exerciseHistoryButton,
+                ]}
+                accessibilityLabel={`${dateLabel}, ${setsLabel}, ${programLabel}, ${volumeLabel}`}
+              />
+            );
+          })}
         </View>
       </ScrollView>
     </View>

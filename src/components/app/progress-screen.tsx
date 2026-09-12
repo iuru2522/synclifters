@@ -1,9 +1,11 @@
-import { useRouter, type Href } from "expo-router";
+import { useFocusEffect, useRouter, type Href } from "expo-router";
+import { useCallback } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { ProfileActionArrow } from "@/components/app/profile-action-arrow";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import { useUserProgressExercises } from "@/features/workout/user-progress-exercises";
 import { globalStyles, sizes, spacing } from "@/styles/global";
 
 const PROGRESS_MUSCLE_HREF = "/workout/progress-muscle" as Href;
@@ -13,12 +15,6 @@ const METRIC_ROWS = [
   { id: "weight", label: "Weight", metric: "weight" },
   { id: "height", label: "Height", metric: "height" },
 ] as const;
-
-const EXERCISE_ROWS = Array.from({ length: 10 }, (_, index) => ({
-  id: `triceps-${index}`,
-  label: "Triceps",
-  muscleGroup: "Triceps",
-}));
 
 function ProgressRow({
   label,
@@ -45,6 +41,13 @@ function ProgressRow({
 export function ProgressScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { muscleGroups, isLoading, error, refresh } = useUserProgressExercises();
+
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
 
   return (
     <View
@@ -102,14 +105,21 @@ export function ProgressScreen() {
         <View style={globalStyles.progressSection}>
           <Text style={globalStyles.progressSectionLabel}>EXERCIES</Text>
           <View style={globalStyles.progressRowList}>
-            {EXERCISE_ROWS.map((row) => (
+            {isLoading ? (
+              <Text style={globalStyles.workoutMyPrograms}>Loading exercises…</Text>
+            ) : null}
+            {error ? <Text style={globalStyles.workoutMyPrograms}>{error}</Text> : null}
+            {!isLoading && !error && muscleGroups.length === 0 ? (
+              <Text style={globalStyles.workoutMyPrograms}>No exercises yet</Text>
+            ) : null}
+            {muscleGroups.map((muscleGroup) => (
               <ProgressRow
-                key={row.id}
-                label={row.label}
+                key={muscleGroup}
+                label={muscleGroup}
                 onPress={() => {
                   router.push({
                     pathname: PROGRESS_MUSCLE_HREF,
-                    params: { muscleGroup: row.muscleGroup },
+                    params: { muscleGroup },
                   } as Href);
                 }}
               />
