@@ -39,6 +39,7 @@ export function HistoryScreen() {
 
   function openSession(session: WorkoutSession) {
     const query = new URLSearchParams({
+      sessionId: session.id,
       ...(session.programId ? { programId: session.programId } : {}),
       programName: session.programName,
       dayName: session.dayName,

@@ -32,16 +32,22 @@ export function WorkoutScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const params = useLocalSearchParams<{
     exerciseName?: string | string[];
+    exerciseId?: string | string[];
+    muscleGroup?: string | string[];
     dayName?: string | string[];
     programId?: string | string[];
     programName?: string | string[];
+    sessionId?: string | string[];
     showEdit?: string | string[];
     fromHistory?: string | string[];
   }>();
   const exerciseName = readSearchParam(params.exerciseName);
+  const exerciseId = readSearchParam(params.exerciseId);
+  const muscleGroup = readSearchParam(params.muscleGroup);
   const dayName = readSearchParam(params.dayName);
   const programId = readSearchParam(params.programId);
   const programName = readSearchParam(params.programName);
+  const sessionId = readSearchParam(params.sessionId);
   const showEdit = readSearchParam(params.showEdit) === "1";
   const fromHistory = readSearchParam(params.fromHistory) === "1";
   const dropSets = useRecordedDropSets();
@@ -53,6 +59,7 @@ export function WorkoutScreen() {
       ...(programId ? { programId } : {}),
       ...(programName ? { programName } : {}),
       ...(dayName ? { dayName } : {}),
+      ...(sessionId ? { sessionId } : {}),
       ...(showEdit ? { showEdit: "1" } : {}),
       ...(fromHistory ? { fromHistory: "1" } : {}),
     }).toString();
@@ -97,7 +104,9 @@ export function WorkoutScreen() {
         programId,
         programName,
         dayName,
+        exerciseId,
         exerciseName,
+        muscleGroup,
         workingSets,
         dropSets,
       });

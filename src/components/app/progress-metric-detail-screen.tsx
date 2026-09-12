@@ -1,61 +1,42 @@
-import { useRouter, type Href } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useCallback } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { WorkoutGlassCard } from "@/components/app/workout-glass-card";
+import { readSearchParam } from "@/components/app/program-day-params";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import { catalogExerciseId } from "@/features/workout/day-exercises";
+import {
+  findSessionExercise,
+  formatSessionDate,
+  formatSessionProgramLabel,
+  formatSetsSummary,
+  formatVolumeLabel,
+} from "@/features/workout/session-display";
+import { useExerciseSessionHistory } from "@/features/workout/user-exercise-history";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
-
-const HISTORY_ENTRIES = [
-  {
-    date: "Jul 11, 2025",
-    program: "DAY NAME - PROGRAM'S NAME",
-    sets: "25X10, 35X6, 45X4, 59X7, 59X8",
-    weight: "1200 Kgs",
-  },
-  {
-    date: "Jul 2, 2025",
-    program: "DAY NAME - PROGRAM'S NAME",
-    sets: "25X10, 35X6, 45X4, 59X7, 59X8",
-    weight: "1100 Kgs",
-  },
-  {
-    date: "Jul 2, 2025",
-    program: "DAY NAME - PROGRAM'S NAME",
-    sets: "25X10, 35X6, 45X4, 59X7, 59X8",
-    weight: "1100 Kgs",
-  },
-  {
-    date: "Jul 2, 2025",
-    program: "DAY NAME - PROGRAM'S NAME",
-    sets: "25X10, 35X6, 45X4, 59X7, 59X8",
-    weight: "1100 Kgs",
-  },
-  {
-    date: "Jul 2, 2025",
-    program: "DAY NAME - PROGRAM'S NAME",
-    sets: "25X10, 35X6, 45X4, 59X7, 59X8",
-    weight: "1100 Kgs",
-  },
-  {
-    date: "Jul 2, 2025",
-    program: "DAY NAME - PROGRAM'S NAME",
-    sets: "25X10, 35X6, 45X4, 59X7, 59X8",
-    weight: "1100 Kgs",
-  },
-  {
-    date: "Jul 2, 2025",
-    program: "DAY NAME - PROGRAM'S NAME",
-    sets: "25X10, 35X6, 45X4, 59X7, 59X8",
-    weight: "1100 Kgs",
-  },
-] as const;
 
 export function ProgressMetricDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const title = "BARBELL BENCH PRESS";
+  const params = useLocalSearchParams<{
+    exerciseId?: string | string[];
+    exerciseName?: string | string[];
+  }>();
+  const exerciseName = readSearchParam(params.exerciseName) ?? "";
+  const exerciseId =
+    readSearchParam(params.exerciseId) ||
+    (exerciseName ? catalogExerciseId(exerciseName) : "");
+  const title = exerciseName ? exerciseName.toUpperCase() : "EXERCISE";
+  const { sessions, isLoading, error, refresh } = useExerciseSessionHistory(exerciseId);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
 
   return (
     <View
@@ -101,36 +82,61 @@ export function ProgressMetricDetailScreen() {
         </View>
 
         <Text style={globalStyles.exerciseHistoryLabel}>HISTORY</Text>
+        {isLoading ? (
+          <Text style={globalStyles.workoutMyPrograms}>Loading history…</Text>
+        ) : null}
+        {error ? <Text style={globalStyles.workoutMyPrograms}>{error}</Text> : null}
+        {!isLoading && !error && sessions.length === 0 ? (
+          <Text style={globalStyles.workoutMyPrograms}>No history yet</Text>
+        ) : null}
         <View style={globalStyles.exerciseHistoryButtonsRow}>
-          {HISTORY_ENTRIES.map((entry, index) => (
-            <AppButton
-              key={`${entry.date}-${index}`}
-              title=""
-              onPress={() => {}}
-              borderColor={colors.backArrow}
-              borderWidth={sizes.workoutProgramThinBorderWidth}
-              textColor={colors.inputFill}
-              pressAccentColor={colors.backArrow}
-              textStyle={globalStyles.exerciseHistoryButtonSpacer}
-              leftIcon={
-                <View style={globalStyles.exerciseHistoryButtonContent}>
-                  <View style={globalStyles.exerciseHistoryButtonRow}>
-                    <Text style={globalStyles.exerciseHistoryButtonDate}>{entry.date}</Text>
-                    <Text style={globalStyles.exerciseHistoryButtonProgram}>{entry.program}</Text>
+          {sessions.map((session) => {
+            const exercise = findSessionExercise(session, exerciseId);
+            const dateLabel = formatSessionDate(session);
+            const programLabel = formatSessionProgramLabel(session);
+            const setsLabel = exercise ? formatSetsSummary(exercise.sets) : "";
+            const volumeLabel = exercise
+              ? formatVolumeLabel(exercise.totalVolume)
+              : "";
+
+            return (
+              <AppButton
+                key={session.id}
+                title=""
+                onPress={() => {}}
+                borderColor={colors.backArrow}
+                borderWidth={sizes.workoutProgramThinBorderWidth}
+                textColor={colors.inputFill}
+                pressAccentColor={colors.backArrow}
+                textStyle={globalStyles.exerciseHistoryButtonSpacer}
+                leftIcon={
+                  <View style={globalStyles.exerciseHistoryButtonContent}>
+                    <View style={globalStyles.exerciseHistoryButtonRow}>
+                      <Text style={globalStyles.exerciseHistoryButtonDate}>
+                        {dateLabel}
+                      </Text>
+                      <Text style={globalStyles.exerciseHistoryButtonProgram}>
+                        {programLabel}
+                      </Text>
+                    </View>
+                    <View style={globalStyles.exerciseHistoryButtonRow}>
+                      <Text style={globalStyles.exerciseHistoryButtonDate}>
+                        {setsLabel}
+                      </Text>
+                      <Text style={globalStyles.exerciseHistoryButtonWeight}>
+                        {volumeLabel}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={globalStyles.exerciseHistoryButtonRow}>
-                    <Text style={globalStyles.exerciseHistoryButtonDate}>{entry.sets}</Text>
-                    <Text style={globalStyles.exerciseHistoryButtonWeight}>{entry.weight}</Text>
-                  </View>
-                </View>
-              }
-              style={[
-                globalStyles.workoutCreateProgramThinBorder,
-                globalStyles.exerciseHistoryButton,
-              ]}
-              accessibilityLabel={`${entry.date}, ${entry.sets}, ${entry.program}, ${entry.weight}`}
-            />
-          ))}
+                }
+                style={[
+                  globalStyles.workoutCreateProgramThinBorder,
+                  globalStyles.exerciseHistoryButton,
+                ]}
+                accessibilityLabel={`${dateLabel}, ${setsLabel}, ${programLabel}, ${volumeLabel}`}
+              />
+            );
+          })}
         </View>
       </ScrollView>
     </View>
