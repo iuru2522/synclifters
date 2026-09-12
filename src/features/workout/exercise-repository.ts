@@ -50,7 +50,7 @@ function parseRepType(value: unknown): RepType | null {
   return null;
 }
 
-function parseCustomExercise(
+export function parseCustomExercise(
   id: string,
   data: Record<string, unknown>,
 ): CustomExercise | null {

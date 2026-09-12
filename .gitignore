@@ -31,6 +31,9 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 pnpm-debug.log*
+firestore-debug.log
+firebase-debug.log
+ui-debug.log
 
 # macOS
 .DS_Store

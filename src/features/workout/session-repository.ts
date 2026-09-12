@@ -129,7 +129,7 @@ function parseSessionExercise(value: unknown): SessionExercise | null {
   };
 }
 
-function parseSession(id: string, data: Record<string, unknown>): WorkoutSession | null {
+export function parseSession(id: string, data: Record<string, unknown>): WorkoutSession | null {
   const programName =
     typeof data.programName === "string" ? data.programName.trim() : "";
   const dayName = typeof data.dayName === "string" ? data.dayName.trim() : "";
