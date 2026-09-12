@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useCallback, useState } from "react";
-import { Text, View } from "react-native";
+import { Alert, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { readSearchParam } from "@/components/app/program-day-params";
@@ -37,16 +37,22 @@ function ProgramButton({
   title,
   selected,
   onPress,
+  favorite,
+  onToggleFavorite,
   subtitle,
   subtitleMeta,
 }: {
   title: string;
   selected: boolean;
   onPress: () => void;
+  favorite?: boolean;
+  onToggleFavorite?: () => void;
   subtitle?: string;
   subtitleMeta?: string;
 }) {
   const accent = selected ? colors.backArrow : colors.white;
+  const starFilled = favorite ?? selected;
+  const starColor = favorite ? colors.backArrow : accent;
 
   return (
     <AppButton
@@ -63,7 +69,30 @@ function ProgramButton({
       style={globalStyles.startWorkoutProgramButton}
       leftIcon={<WorkoutExternalLinkIcon color={accent} />}
       rightIcon={
-        <WorkoutStartIcon variant={selected ? "filled" : "outline"} color={accent} />
+        onToggleFavorite ? (
+          <Pressable
+            onPress={(event) => {
+              event.stopPropagation?.();
+              onToggleFavorite();
+            }}
+            hitSlop={sizes.backArrowHitSlop}
+            accessibilityRole="button"
+            accessibilityLabel={
+              favorite ? `Unfavorite ${title}` : `Favorite ${title}`
+            }
+            accessibilityState={{ selected: Boolean(favorite) }}
+          >
+            <WorkoutStartIcon
+              variant={starFilled ? "filled" : "outline"}
+              color={starColor}
+            />
+          </Pressable>
+        ) : (
+          <WorkoutStartIcon
+            variant={starFilled ? "filled" : "outline"}
+            color={starColor}
+          />
+        )
       }
     />
   );
@@ -74,7 +103,8 @@ export function StartWorkoutScreen() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ showEdit?: string | string[] }>();
   const showEdit = readSearchParam(params.showEdit) === "1";
-  const { programs, isLoading, error, refresh } = useUserPrograms();
+  const { programs, isLoading, error, refresh, toggleProgramFavorite } =
+    useUserPrograms();
   const [selectedButton, setSelectedButton] = useState<ProgramButtonSelection | null>(
     null,
   );
@@ -102,6 +132,17 @@ export function StartWorkoutScreen() {
       ...(showEdit ? { showEdit: "1" } : {}),
     }).toString();
     router.push(`/workout/program-day?${query}` as Href);
+  }
+
+  async function handleToggleFavorite(programId: string) {
+    try {
+      await toggleProgramFavorite(programId);
+    } catch (err) {
+      Alert.alert(
+        "Favorite failed",
+        err instanceof Error ? err.message : "Could not update favorite.",
+      );
+    }
   }
 
   return (
@@ -143,6 +184,10 @@ export function StartWorkoutScreen() {
             key={program.id}
             title={program.name}
             selected={isYourSelection(selectedButton, program.id)}
+            favorite={program.isFavorite}
+            onToggleFavorite={() => {
+              void handleToggleFavorite(program.id);
+            }}
             onPress={() => {
               selectYourProgram(program.id, program.name);
             }}

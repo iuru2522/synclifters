@@ -5,6 +5,7 @@ import {
   getDocs,
   serverTimestamp,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { getFirebaseFirestore, getFirebaseSetupMessage } from "@/lib/firebase";
 import { coerceToMillis } from "@/lib/firestore-timestamps";
@@ -146,6 +147,7 @@ export function parseProgram(id: string, data: Record<string, unknown>): Program
   return {
     id,
     name,
+    isFavorite: data.isFavorite === true,
     createdAt: coerceToMillis(data.createdAt),
     updatedAt: coerceToMillis(data.updatedAt),
     days,
@@ -165,6 +167,16 @@ function serializeExercise(exercise: ProgramExercise): Record<string, unknown> {
     supersetExerciseName: exercise.supersetExerciseName,
     imageUrl: exercise.imageUrl,
   };
+}
+
+function sortPrograms(programs: Program[]): Program[] {
+  return [...programs].sort((a, b) => {
+    if (a.isFavorite !== b.isFavorite) {
+      return a.isFavorite ? -1 : 1;
+    }
+
+    return (b.createdAt ?? 0) - (a.createdAt ?? 0);
+  });
 }
 
 export async function createProgram(
@@ -194,6 +206,7 @@ export async function createProgram(
 
   await setDoc(programRef, {
     name: trimmedName,
+    isFavorite: false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     days: days.map((day) => ({
@@ -207,19 +220,37 @@ export async function createProgram(
   return {
     id: programRef.id,
     name: trimmedName,
+    isFavorite: false,
     createdAt: Date.now(),
     updatedAt: Date.now(),
     days,
   };
 }
 
+export async function setProgramFavorite(
+  uid: string,
+  programId: string,
+  isFavorite: boolean,
+): Promise<void> {
+  const trimmedId = programId.trim();
+  if (!trimmedId) {
+    throw new Error("Missing program.");
+  }
+
+  await updateDoc(doc(programsCollection(uid), trimmedId), {
+    isFavorite,
+    updatedAt: serverTimestamp(),
+  });
+}
+
 export async function listPrograms(uid: string): Promise<Program[]> {
   const snapshot = await getDocs(programsCollection(uid));
 
-  return snapshot.docs
-    .map((item) => parseProgram(item.id, item.data() as Record<string, unknown>))
-    .filter((item): item is Program => item != null)
-    .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+  return sortPrograms(
+    snapshot.docs
+      .map((item) => parseProgram(item.id, item.data() as Record<string, unknown>))
+      .filter((item): item is Program => item != null),
+  );
 }
 
 export async function getProgram(
