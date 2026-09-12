@@ -45,7 +45,7 @@ function parseSource(value: unknown): BodyMetricSource {
   return value === "progress" ? "progress" : "profile";
 }
 
-function parseBodyMetric(
+export function parseBodyMetric(
   id: string,
   data: Record<string, unknown>,
 ): BodyMetricEntry | null {

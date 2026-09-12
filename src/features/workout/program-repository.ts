@@ -20,10 +20,10 @@ import type { RepType } from "@/features/workout/rep-type-selection";
 
 export type CreateProgramInput = {
   name: string;
-  days: Array<{
+  days: {
     name: string;
     exercises: ProgramExercise[];
-  }>;
+  }[];
 };
 
 function requireFirestore() {
@@ -130,7 +130,7 @@ function parseProgramDay(value: unknown, index: number): ProgramDay | null {
   };
 }
 
-function parseProgram(id: string, data: Record<string, unknown>): Program | null {
+export function parseProgram(id: string, data: Record<string, unknown>): Program | null {
   const name = typeof data.name === "string" ? data.name.trim() : "";
 
   if (!name) {

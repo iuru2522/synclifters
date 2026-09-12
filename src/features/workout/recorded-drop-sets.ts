@@ -32,7 +32,7 @@ export function getRecordedDropSets() {
 }
 
 export function setRecordedDropSets(
-  drops: Array<{ weight: string; reps: string; feeling?: SetFeeling | null }>,
+  drops: { weight: string; reps: string; feeling?: SetFeeling | null }[],
 ) {
   recordedDropSets = drops.map((drop) => ({
     weight: drop.weight,

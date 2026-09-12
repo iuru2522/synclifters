@@ -5,12 +5,11 @@ import { useOnboarding } from "@/features/onboarding/onboarding-context";
 import { globalStyles, spacing } from "@/styles/global";
 import { AuthBackButton } from "./auth-back-button";
 import { HeightRulerPicker } from "./height-ruler-picker";
-import { convertHeight, getHeightRulerConfig } from "./height-ruler-units";
+import { convertHeight } from "./height-ruler-units";
 
 export function HeightForm() {
   const { unit } = useMeasurementUnit();
   const { height, setHeight } = useOnboarding();
-  const config = getHeightRulerConfig(unit);
   const prevUnitRef = useRef(unit);
 
   useEffect(() => {
