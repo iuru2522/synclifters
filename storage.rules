@@ -13,12 +13,14 @@ service firebase.storage {
 
     match /users/{userId}/profile.jpg {
       allow read: if isOwner(userId);
-      allow write: if isOwner(userId) && isValidImage();
+      allow create, update: if isOwner(userId) && isValidImage();
+      allow delete: if isOwner(userId);
     }
 
     match /users/{userId}/exercises/{fileName} {
       allow read: if isOwner(userId);
-      allow write: if isOwner(userId) && isValidImage();
+      allow create, update: if isOwner(userId) && isValidImage();
+      allow delete: if isOwner(userId);
     }
   }
 }

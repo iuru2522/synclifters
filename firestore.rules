@@ -65,7 +65,7 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(userUpdatableKeys())
         && request.resource.data.createdAt == resource.data.createdAt;
 
-      allow delete: if false;
+      allow delete: if isOwner(userId);
 
       match /programs/{programId} {
         allow read, create, update, delete: if isOwner(userId);

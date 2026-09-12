@@ -6,6 +6,7 @@ import {
   Auth,
   confirmPasswordReset,
   createUserWithEmailAndPassword,
+  deleteUser,
   GoogleAuthProvider,
   OAuthProvider,
   sendEmailVerification,
@@ -18,7 +19,11 @@ import {
   type User,
 } from "firebase/auth";
 import { getFirebaseAuth, getFirebaseSetupMessage } from "@/lib/firebase";
+import { deleteUserOwnedData } from "@/features/users/delete-account";
 import { createUserProfile } from "@/features/users/user-profile";
+import { clearExercisesByDay } from "@/features/workout/day-exercises";
+import { clearRecordedDropSets } from "@/features/workout/recorded-drop-sets";
+import { clearRecordedWorkingSets } from "@/features/workout/recorded-working-sets";
 
 export type AuthMode = "signin" | "register";
 
@@ -377,6 +382,12 @@ export async function refreshCurrentUser(): Promise<User | null> {
   return auth.currentUser;
 }
 
+function clearLocalWorkoutDrafts(): void {
+  clearExercisesByDay();
+  clearRecordedWorkingSets();
+  clearRecordedDropSets();
+}
+
 export async function signOut(): Promise<void> {
   try {
     await GoogleSignin.signOut();
@@ -384,5 +395,50 @@ export async function signOut(): Promise<void> {
     // Ignore if the user was not signed in with Google.
   }
 
+  clearLocalWorkoutDrafts();
   await getFirebaseAuth()?.signOut();
+}
+
+/**
+ * Deletes owned Firestore data + Storage media, then the Auth user.
+ * Support tickets are left in place (client delete denied by rules).
+ */
+export async function deleteAccount(): Promise<void> {
+  const auth = requireAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new AuthServiceError("Sign in to delete your account.", "NOT_SIGNED_IN");
+  }
+
+  try {
+    await deleteUserOwnedData(user.uid);
+    await deleteUser(user);
+  } catch (error: unknown) {
+    if (error instanceof AuthServiceError) {
+      throw error;
+    }
+
+    const authError = error as { code?: string; message?: string };
+
+    if (authError.code === "auth/requires-recent-login") {
+      throw new AuthServiceError(
+        "For security, sign in again before deleting your account.",
+        authError.code,
+      );
+    }
+
+    throw new AuthServiceError(
+      authError.message ?? "Failed to delete account.",
+      authError.code,
+    );
+  }
+
+  try {
+    await GoogleSignin.signOut();
+  } catch {
+    // Ignore if the user was not signed in with Google.
+  }
+
+  clearLocalWorkoutDrafts();
 }
