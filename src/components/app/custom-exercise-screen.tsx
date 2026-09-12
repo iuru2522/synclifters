@@ -47,6 +47,7 @@ import {
 } from "@/features/workout/custom-exercise-superset-exercise";
 import { addExerciseToDay } from "@/features/workout/day-exercises";
 import { createCustomExercise } from "@/features/workout/exercise-repository";
+import { addExerciseToProgramDay } from "@/features/workout/program-repository";
 import {
   formatRepTypeLabel,
   setSelectedRepType,
@@ -76,10 +77,12 @@ export function CustomExerciseScreen() {
   const insets = useSafeAreaInsets();
   const { profile, user } = useAuth();
   const params = useLocalSearchParams<{
+    programId?: string | string[];
     programName?: string | string[];
     dayName?: string | string[];
     dayNames?: string | string[];
   }>();
+  const programId = readSearchParam(params.programId);
   const programName = readSearchParam(params.programName);
   const dayName = readSearchParam(params.dayName);
   const dayNames = readSearchParam(params.dayNames);
@@ -147,18 +150,24 @@ export function CustomExerciseScreen() {
         imageUri: selectedImageUri,
       });
 
-      addExerciseToDay(dayName, {
+      const exercise = {
         id: `pe_${created.id}`,
         exerciseId: created.id,
         name: created.name,
-        source: "custom",
+        source: "custom" as const,
         muscleGroup: created.muscleGroup,
         measure: created.measure,
         repType: created.repType,
         dropsetLvls: created.dropsetLvls,
         supersetExerciseName: created.supersetExerciseName,
         imageUrl: created.imageUrl,
-      });
+      };
+
+      if (programId) {
+        await addExerciseToProgramDay(user.uid, programId, dayName, exercise);
+      } else {
+        addExerciseToDay(dayName, exercise);
+      }
 
       setSelectedExerciseName(null);
       setSelectedMuscleGroup(null);
@@ -167,6 +176,16 @@ export function CustomExerciseScreen() {
       setSelectedDropsetLvls(null);
       setSelectedSupersetExercise(null);
       setSelectedExerciseImageUri(null);
+
+      if (programId) {
+        const query = new URLSearchParams({
+          programId,
+          dayName,
+          ...(programName ? { programName } : {}),
+        }).toString();
+        router.dismissTo(`/workout/program-day-exercise?${query}` as Href);
+        return;
+      }
 
       const query = new URLSearchParams({
         ...(programName ? { programName } : {}),

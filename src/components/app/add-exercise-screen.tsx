@@ -25,10 +25,12 @@ export function AddExerciseScreen() {
   const insets = useSafeAreaInsets();
   const { profile } = useAuth();
   const params = useLocalSearchParams<{
+    programId?: string | string[];
     programName?: string | string[];
     dayName?: string | string[];
     dayNames?: string | string[];
   }>();
+  const programId = readSearchParam(params.programId);
   const programName = readSearchParam(params.programName);
   const dayName = readSearchParam(params.dayName);
   const dayNames = parseDayNames(params.dayNames);
@@ -80,6 +82,7 @@ export function AddExerciseScreen() {
                   router.push({
                     pathname: "/workout/exercise",
                     params: {
+                      ...(programId ? { programId } : {}),
                       ...(programName ? { programName } : {}),
                       ...(dayName ? { dayName } : {}),
                       dayNames: serializeDayNames(dayNames),

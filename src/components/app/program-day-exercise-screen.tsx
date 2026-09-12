@@ -5,7 +5,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { ClockIcon } from "@/components/app/clock-icon";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
-import { readSearchParam } from "@/components/app/program-day-params";
+import {
+  readSearchParam,
+  serializeDayNames,
+} from "@/components/app/program-day-params";
 import { SaveIcon } from "@/components/app/save-icon";
 import { StopwatchIcon } from "@/components/app/stopwatch-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
@@ -69,6 +72,20 @@ export function ProgramDayExerciseScreen() {
       exerciseId: exercise.exerciseId,
     }).toString();
     router.push(`/workout/exercise-history?${query}` as Href);
+  }
+
+  function openAddExercise() {
+    if (!dayName || !programId) {
+      return;
+    }
+
+    const query = new URLSearchParams({
+      dayName,
+      dayNames: serializeDayNames([dayName]),
+      programId,
+      ...(programName ? { programName } : {}),
+    }).toString();
+    router.push(`/workout/add-exercise?${query}` as Href);
   }
 
   return (
@@ -172,9 +189,17 @@ export function ProgramDayExerciseScreen() {
           />
         </View>
       ) : null}
-      <View style={globalStyles.addExerciseDayRecordLink}>
-        <Text style={globalStyles.addExerciseDayRecordLabel}>ADD EXERCISE</Text>
-      </View>
+      {fromHistory ? null : (
+        <Pressable
+          style={globalStyles.addExerciseDayRecordLink}
+          onPress={openAddExercise}
+          disabled={!dayName || !programId}
+          accessibilityRole="button"
+          accessibilityLabel="Add exercise"
+        >
+          <Text style={globalStyles.addExerciseDayRecordLabel}>ADD EXERCISE</Text>
+        </Pressable>
+      )}
       <View
         style={[
           globalStyles.programDayExerciseTimers,

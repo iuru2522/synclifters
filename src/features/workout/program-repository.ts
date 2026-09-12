@@ -265,3 +265,71 @@ export async function getProgram(
 
   return parseProgram(snapshot.id, snapshot.data() as Record<string, unknown>);
 }
+
+export async function addExerciseToProgramDay(
+  uid: string,
+  programId: string,
+  dayName: string,
+  exercise: ProgramExercise,
+): Promise<Program> {
+  const trimmedProgramId = programId.trim();
+  const trimmedDayName = dayName.trim();
+
+  if (!trimmedProgramId) {
+    throw new Error("Missing program.");
+  }
+
+  if (!trimmedDayName) {
+    throw new Error("Missing day.");
+  }
+
+  const program = await getProgram(uid, trimmedProgramId);
+  if (!program) {
+    throw new Error("Program not found.");
+  }
+
+  const dayIndex = program.days.findIndex(
+    (day) => day.name.trim().toLowerCase() === trimmedDayName.toLowerCase(),
+  );
+
+  if (dayIndex < 0) {
+    throw new Error("Day not found on this program.");
+  }
+
+  const day = program.days[dayIndex]!;
+  const alreadyAdded = day.exercises.some(
+    (item) =>
+      item.exerciseId === exercise.exerciseId || item.name === exercise.name,
+  );
+
+  if (alreadyAdded) {
+    return program;
+  }
+
+  const nextExercise: ProgramExercise = {
+    ...exercise,
+    id: exercise.id || `pe_${Date.now()}`,
+  };
+
+  const nextDays = program.days.map((item, index) =>
+    index === dayIndex
+      ? { ...item, exercises: [...item.exercises, nextExercise] }
+      : item,
+  );
+
+  await updateDoc(doc(programsCollection(uid), trimmedProgramId), {
+    days: nextDays.map((item) => ({
+      id: item.id,
+      name: item.name,
+      order: item.order,
+      exercises: item.exercises.map(serializeExercise),
+    })),
+    updatedAt: serverTimestamp(),
+  });
+
+  return {
+    ...program,
+    updatedAt: Date.now(),
+    days: nextDays,
+  };
+}
