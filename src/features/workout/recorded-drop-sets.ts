@@ -7,7 +7,9 @@ export type RecordedDropSet = {
   feeling: SetFeeling | null;
 };
 
-let recordedDropSets: RecordedDropSet[] = [];
+const EMPTY_SETS: RecordedDropSet[] = [];
+
+let recordedDropSetsByExercise: Record<string, RecordedDropSet[]> = {};
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -23,34 +25,66 @@ function subscribe(listener: () => void) {
   };
 }
 
-function getSnapshot() {
-  return recordedDropSets;
+function normalizeKey(exerciseKey: string) {
+  return exerciseKey.trim();
 }
 
-export function getRecordedDropSets() {
-  return recordedDropSets;
+export function getRecordedDropSets(exerciseKey: string) {
+  const key = normalizeKey(exerciseKey);
+  if (!key) {
+    return EMPTY_SETS;
+  }
+
+  return recordedDropSetsByExercise[key] ?? EMPTY_SETS;
 }
 
 export function setRecordedDropSets(
+  exerciseKey: string,
   drops: { weight: string; reps: string; feeling?: SetFeeling | null }[],
 ) {
-  recordedDropSets = drops.map((drop) => ({
-    weight: drop.weight,
-    reps: drop.reps,
-    feeling: drop.feeling ?? null,
-  }));
-  emit();
-}
-
-export function clearRecordedDropSets() {
-  if (recordedDropSets.length === 0) {
+  const key = normalizeKey(exerciseKey);
+  if (!key) {
     return;
   }
 
-  recordedDropSets = [];
+  recordedDropSetsByExercise = {
+    ...recordedDropSetsByExercise,
+    [key]: drops.map((drop) => ({
+      weight: drop.weight,
+      reps: drop.reps,
+      feeling: drop.feeling ?? null,
+    })),
+  };
   emit();
 }
 
-export function useRecordedDropSets() {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+export function clearRecordedDropSets(exerciseKey?: string) {
+  const key = exerciseKey == null ? "" : normalizeKey(exerciseKey);
+
+  if (!key) {
+    if (Object.keys(recordedDropSetsByExercise).length === 0) {
+      return;
+    }
+    recordedDropSetsByExercise = {};
+    emit();
+    return;
+  }
+
+  if (!(key in recordedDropSetsByExercise)) {
+    return;
+  }
+
+  const next = { ...recordedDropSetsByExercise };
+  delete next[key];
+  recordedDropSetsByExercise = next;
+  emit();
+}
+
+export function useRecordedDropSets(exerciseKey: string) {
+  const key = normalizeKey(exerciseKey);
+  return useSyncExternalStore(
+    subscribe,
+    () => getRecordedDropSets(key),
+    () => getRecordedDropSets(key),
+  );
 }

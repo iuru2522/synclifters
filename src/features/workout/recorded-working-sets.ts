@@ -8,7 +8,9 @@ export type RecordedWorkingSet = {
   feeling: SetFeeling | null;
 };
 
-let recordedWorkingSets: RecordedWorkingSet[] = [];
+const EMPTY_SETS: RecordedWorkingSet[] = [];
+
+let recordedWorkingSetsByExercise: Record<string, RecordedWorkingSet[]> = {};
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -24,40 +26,75 @@ function subscribe(listener: () => void) {
   };
 }
 
-function getSnapshot() {
-  return recordedWorkingSets;
+function normalizeKey(exerciseKey: string) {
+  return exerciseKey.trim();
 }
 
-export function getRecordedWorkingSets() {
-  return recordedWorkingSets;
+export function getRecordedWorkingSets(exerciseKey: string) {
+  const key = normalizeKey(exerciseKey);
+  if (!key) {
+    return EMPTY_SETS;
+  }
+
+  return recordedWorkingSetsByExercise[key] ?? EMPTY_SETS;
 }
 
-export function addRecordedWorkingSet(set: {
-  weight: string;
-  reps: string;
-  feeling?: SetFeeling | null;
-}) {
-  recordedWorkingSets = [
-    ...recordedWorkingSets,
-    {
-      label: String(recordedWorkingSets.length + 1),
-      weight: set.weight,
-      reps: set.reps,
-      feeling: set.feeling ?? null,
-    },
-  ];
-  emit();
-}
-
-export function clearRecordedWorkingSets() {
-  if (recordedWorkingSets.length === 0) {
+export function addRecordedWorkingSet(
+  exerciseKey: string,
+  set: {
+    weight: string;
+    reps: string;
+    feeling?: SetFeeling | null;
+  },
+) {
+  const key = normalizeKey(exerciseKey);
+  if (!key) {
     return;
   }
 
-  recordedWorkingSets = [];
+  const current = recordedWorkingSetsByExercise[key] ?? [];
+  recordedWorkingSetsByExercise = {
+    ...recordedWorkingSetsByExercise,
+    [key]: [
+      ...current,
+      {
+        label: String(current.length + 1),
+        weight: set.weight,
+        reps: set.reps,
+        feeling: set.feeling ?? null,
+      },
+    ],
+  };
   emit();
 }
 
-export function useRecordedWorkingSets() {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+export function clearRecordedWorkingSets(exerciseKey?: string) {
+  const key = exerciseKey == null ? "" : normalizeKey(exerciseKey);
+
+  if (!key) {
+    if (Object.keys(recordedWorkingSetsByExercise).length === 0) {
+      return;
+    }
+    recordedWorkingSetsByExercise = {};
+    emit();
+    return;
+  }
+
+  if (!(key in recordedWorkingSetsByExercise)) {
+    return;
+  }
+
+  const next = { ...recordedWorkingSetsByExercise };
+  delete next[key];
+  recordedWorkingSetsByExercise = next;
+  emit();
+}
+
+export function useRecordedWorkingSets(exerciseKey: string) {
+  const key = normalizeKey(exerciseKey);
+  return useSyncExternalStore(
+    subscribe,
+    () => getRecordedWorkingSets(key),
+    () => getRecordedWorkingSets(key),
+  );
 }
