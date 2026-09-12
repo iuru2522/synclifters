@@ -1,23 +1,19 @@
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { useState } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
+import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useCallback, useState } from "react";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { useAuth } from "@/features/auth/auth-context";
+import { listCatalogExercisesForMuscle } from "@/features/workout/catalog-repository";
 import { addExerciseToDay, catalogExerciseId } from "@/features/workout/day-exercises";
+import type { CatalogExercise } from "@/features/workout/exercise-catalog";
+import { catalogExercisesForMuscle } from "@/features/workout/exercise-catalog";
 import { addExerciseToProgramDay } from "@/features/workout/program-repository";
 import type { ProgramExercise } from "@/features/workout/types";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
-
-const TRICEPS_EXERCISES = [
-  "Tricep Pushdown",
-  "Skull Crushers",
-  "Close Grip Bench Press",
-  "Overhead Tricep Extension",
-] as const;
 
 export function DoExerciseScreen() {
   const router = useRouter();
@@ -36,19 +32,46 @@ export function DoExerciseScreen() {
   const dayName = readSearchParam(params.dayName);
   const dayNames = readSearchParam(params.dayNames);
   const [isSaving, setIsSaving] = useState(false);
+  const [exercises, setExercises] = useState<CatalogExercise[]>(() =>
+    catalogExercisesForMuscle(muscleGroup),
+  );
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleSelectExercise = async (exerciseName: string) => {
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      void (async () => {
+        setIsLoading(true);
+        try {
+          const next = await listCatalogExercisesForMuscle(muscleGroup);
+          if (active) {
+            setExercises(next);
+          }
+        } finally {
+          if (active) {
+            setIsLoading(false);
+          }
+        }
+      })();
+
+      return () => {
+        active = false;
+      };
+    }, [muscleGroup]),
+  );
+
+  const handleSelectExercise = async (exercise: CatalogExercise) => {
     if (isSaving) {
       return;
     }
 
-    const exerciseId = catalogExerciseId(exerciseName);
-    const exercise: ProgramExercise = {
-      id: `pe_${exerciseId}`,
-      exerciseId,
-      name: exerciseName,
+    const programExercise: ProgramExercise = {
+      id: `pe_${exercise.id}`,
+      exerciseId: exercise.id || catalogExerciseId(exercise.name),
+      name: exercise.name,
       source: "catalog",
-      muscleGroup: muscleGroup || "Triceps",
+      muscleGroup: muscleGroup || exercise.muscleGroup,
       measure: null,
       repType: "regular",
       dropsetLvls: null,
@@ -69,7 +92,7 @@ export function DoExerciseScreen() {
 
       setIsSaving(true);
       try {
-        await addExerciseToProgramDay(user.uid, programId, dayName, exercise);
+        await addExerciseToProgramDay(user.uid, programId, dayName, programExercise);
         const query = new URLSearchParams({
           programId,
           dayName,
@@ -87,16 +110,18 @@ export function DoExerciseScreen() {
     }
 
     if (dayName) {
-      addExerciseToDay(dayName, exercise);
+      addExerciseToDay(dayName, programExercise);
     }
 
-    router.dismissTo({
-      pathname: "/workout/add-exercise-to-day",
-      params: {
-        ...(programName ? { programName } : {}),
-        ...(dayNames ? { dayNames } : {}),
-      },
-    } as Href);
+    const query = new URLSearchParams({
+      ...(programName ? { programName } : {}),
+      ...(dayNames ? { dayNames } : {}),
+    }).toString();
+    router.dismissTo(
+      (query
+        ? `/workout/add-exercise-to-day?${query}`
+        : "/workout/add-exercise-to-day") as Href,
+    );
   };
 
   return (
@@ -104,6 +129,7 @@ export function DoExerciseScreen() {
       <View
         style={{
           paddingTop: Math.max(insets.top, spacing.safeAreaTopMin) + spacing.safeAreaTopExtra,
+          flex: 1,
         }}
       >
         <View style={globalStyles.createDayHeader}>
@@ -121,15 +147,17 @@ export function DoExerciseScreen() {
           <Pressable
             style={globalStyles.createDayHeaderMenu}
             onPress={() => {
-              router.push({
-                pathname: "/workout/custom-exercise",
-                params: {
-                  ...(programId ? { programId } : {}),
-                  ...(programName ? { programName } : {}),
-                  ...(dayName ? { dayName } : {}),
-                  ...(dayNames ? { dayNames } : {}),
-                },
-              } as Href);
+              const query = new URLSearchParams({
+                ...(programId ? { programId } : {}),
+                ...(programName ? { programName } : {}),
+                ...(dayName ? { dayName } : {}),
+                ...(dayNames ? { dayNames } : {}),
+              }).toString();
+              router.push(
+                (query
+                  ? `/workout/custom-exercise?${query}`
+                  : "/workout/custom-exercise") as Href,
+              );
             }}
             hitSlop={sizes.backArrowHitSlop}
             accessibilityRole="button"
@@ -139,39 +167,50 @@ export function DoExerciseScreen() {
           </Pressable>
         </View>
 
-        <View style={globalStyles.doExerciseCirclesRow}>
-          {TRICEPS_EXERCISES.map((name) => (
-            <View key={name} style={globalStyles.doExerciseItem}>
+        <ScrollView
+          style={globalStyles.addExerciseScreenScroll}
+          contentContainerStyle={globalStyles.doExerciseCirclesRow}
+          showsVerticalScrollIndicator={false}
+        >
+          {isLoading && exercises.length === 0 ? (
+            <Text style={globalStyles.workoutMyPrograms}>Loading exercises…</Text>
+          ) : null}
+          {!isLoading && exercises.length === 0 ? (
+            <Text style={globalStyles.workoutMyPrograms}>No exercises yet</Text>
+          ) : null}
+          {exercises.map((exercise) => (
+            <View key={exercise.id} style={globalStyles.doExerciseItem}>
               <Pressable
                 style={globalStyles.doExerciseSelectTarget}
                 onPress={() => {
-                  void handleSelectExercise(name);
+                  void handleSelectExercise(exercise);
                 }}
                 disabled={isSaving}
                 accessibilityRole="button"
-                accessibilityLabel={name}
+                accessibilityLabel={exercise.name}
               >
                 <View style={globalStyles.doExerciseCircle} />
                 <Text style={globalStyles.doExerciseName} numberOfLines={1}>
-                  {name}
+                  {exercise.name}
                 </Text>
               </Pressable>
               <Pressable
                 onPress={() => {
-                  router.push({
-                    pathname: "/workout/exercise-history",
-                    params: { exerciseName: name },
-                  } as Href);
+                  const query = new URLSearchParams({
+                    exerciseName: exercise.name,
+                    exerciseId: exercise.id,
+                  }).toString();
+                  router.push(`/workout/exercise-history?${query}` as Href);
                 }}
                 hitSlop={sizes.backArrowHitSlop}
                 accessibilityRole="button"
-                accessibilityLabel={`${name} history`}
+                accessibilityLabel={`${exercise.name} history`}
               >
                 <WorkoutExternalLinkIcon color={colors.backArrow} />
               </Pressable>
             </View>
           ))}
-        </View>
+        </ScrollView>
       </View>
     </View>
   );

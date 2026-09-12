@@ -6,7 +6,8 @@ import {
 } from "@/features/workout/custom-exercise-superset-exercise";
 
 export default function SupersetExerciseSheetScreen() {
-  const initialValue = getSelectedSupersetExercise() ?? SUPERSET_EXERCISE_OPTIONS[0];
+  const initialValue =
+    getSelectedSupersetExercise() ?? SUPERSET_EXERCISE_OPTIONS[0] ?? "Barbell Bench Press";
 
   return (
     <CustomExerciseSupersetExerciseSheet

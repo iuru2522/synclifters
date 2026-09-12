@@ -1,0 +1,67 @@
+[
+  { "name": "Barbell Bench Press", "muscleGroup": "Chest" },
+  { "name": "Incline Dumbbell Press", "muscleGroup": "Chest" },
+  { "name": "Cable Fly", "muscleGroup": "Chest" },
+  { "name": "Push-Up", "muscleGroup": "Chest" },
+  { "name": "Dumbbell Pullover", "muscleGroup": "Chest" },
+
+  { "name": "Barbell Row", "muscleGroup": "Back" },
+  { "name": "Lat Pulldown", "muscleGroup": "Back" },
+  { "name": "Seated Cable Row", "muscleGroup": "Back" },
+  { "name": "Pull-Up", "muscleGroup": "Back" },
+  { "name": "Deadlift", "muscleGroup": "Back" },
+
+  { "name": "Overhead Press", "muscleGroup": "Shoulders" },
+  { "name": "Lateral Raise", "muscleGroup": "Shoulders" },
+  { "name": "Front Raise", "muscleGroup": "Shoulders" },
+  { "name": "Rear Delt Fly", "muscleGroup": "Shoulders" },
+  { "name": "Arnold Press", "muscleGroup": "Shoulders" },
+
+  { "name": "Barbell Curl", "muscleGroup": "Biceps" },
+  { "name": "Dumbbell Curl", "muscleGroup": "Biceps" },
+  { "name": "Hammer Curl", "muscleGroup": "Biceps" },
+  { "name": "Preacher Curl", "muscleGroup": "Biceps" },
+  { "name": "Cable Curl", "muscleGroup": "Biceps" },
+
+  { "name": "Tricep Pushdown", "muscleGroup": "Triceps" },
+  { "name": "Skull Crushers", "muscleGroup": "Triceps" },
+  { "name": "Close Grip Bench Press", "muscleGroup": "Triceps" },
+  { "name": "Overhead Tricep Extension", "muscleGroup": "Triceps" },
+  { "name": "Dip", "muscleGroup": "Triceps" },
+
+  { "name": "Wrist Curl", "muscleGroup": "Forearms" },
+  { "name": "Reverse Wrist Curl", "muscleGroup": "Forearms" },
+  { "name": "Farmer Carry", "muscleGroup": "Forearms" },
+  { "name": "Reverse Curl", "muscleGroup": "Forearms" },
+
+  { "name": "Crunch", "muscleGroup": "Abs" },
+  { "name": "Hanging Leg Raise", "muscleGroup": "Abs" },
+  { "name": "Cable Woodchop", "muscleGroup": "Abs" },
+  { "name": "Plank", "muscleGroup": "Abs" },
+  { "name": "Russian Twist", "muscleGroup": "Abs" },
+
+  { "name": "Back Squat", "muscleGroup": "Quads" },
+  { "name": "Front Squat", "muscleGroup": "Quads" },
+  { "name": "Leg Press", "muscleGroup": "Quads" },
+  { "name": "Walking Lunge", "muscleGroup": "Quads" },
+  { "name": "Leg Extension", "muscleGroup": "Quads" },
+
+  { "name": "Romanian Deadlift", "muscleGroup": "Hamstrings" },
+  { "name": "Lying Leg Curl", "muscleGroup": "Hamstrings" },
+  { "name": "Seated Leg Curl", "muscleGroup": "Hamstrings" },
+  { "name": "Good Morning", "muscleGroup": "Hamstrings" },
+
+  { "name": "Hip Thrust", "muscleGroup": "Glutes" },
+  { "name": "Bulgarian Split Squat", "muscleGroup": "Glutes" },
+  { "name": "Cable Kickback", "muscleGroup": "Glutes" },
+  { "name": "Glute Bridge", "muscleGroup": "Glutes" },
+
+  { "name": "Standing Calf Raise", "muscleGroup": "Calves" },
+  { "name": "Seated Calf Raise", "muscleGroup": "Calves" },
+  { "name": "Donkey Calf Raise", "muscleGroup": "Calves" },
+
+  { "name": "Burpee", "muscleGroup": "Full Body" },
+  { "name": "Kettlebell Swing", "muscleGroup": "Full Body" },
+  { "name": "Thruster", "muscleGroup": "Full Body" },
+  { "name": "Clean and Press", "muscleGroup": "Full Body" }
+]
