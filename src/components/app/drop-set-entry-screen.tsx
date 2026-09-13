@@ -11,6 +11,7 @@ import { SetFeelingBar, type SetFeeling } from "@/components/app/set-feeling-bar
 import { SetNumericInput } from "@/components/app/set-numeric-input";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { setRecordedDropSets } from "@/features/workout/recorded-drop-sets";
+import { workoutExerciseKey } from "@/features/workout/workout-exercise-key";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 type DropSetRow = {
@@ -29,6 +30,8 @@ export function DropSetEntryScreen() {
   const [saveExerciseVisible, setSaveExerciseVisible] = useState(false);
   const params = useLocalSearchParams<{
     exerciseName?: string | string[];
+    exerciseId?: string | string[];
+    muscleGroup?: string | string[];
     dayName?: string | string[];
     programId?: string | string[];
     programName?: string | string[];
@@ -36,14 +39,18 @@ export function DropSetEntryScreen() {
     fromHistory?: string | string[];
   }>();
   const exerciseName = readSearchParam(params.exerciseName);
+  const exerciseId = readSearchParam(params.exerciseId);
+  const muscleGroup = readSearchParam(params.muscleGroup);
   const dayName = readSearchParam(params.dayName);
   const programId = readSearchParam(params.programId);
   const programName = readSearchParam(params.programName);
   const showEdit = readSearchParam(params.showEdit) === "1";
   const fromHistory = readSearchParam(params.fromHistory) === "1";
+  const exerciseKey = workoutExerciseKey(exerciseId, exerciseName);
 
   function finishExercise() {
     setRecordedDropSets(
+      exerciseKey,
       drops.map((drop) => ({
         ...drop,
         feeling: dropSetFeeling,
@@ -55,6 +62,8 @@ export function DropSetEntryScreen() {
       ...(programName ? { programName } : {}),
       ...(dayName ? { dayName } : {}),
       ...(exerciseName ? { exerciseName } : {}),
+      ...(exerciseId ? { exerciseId } : {}),
+      ...(muscleGroup ? { muscleGroup } : {}),
       ...(showEdit ? { showEdit: "1" } : {}),
       ...(fromHistory ? { fromHistory: "1" } : {}),
     }).toString();

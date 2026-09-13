@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/features/auth/auth-context";
 import { listSessionsForExercise } from "@/features/workout/session-repository";
 import type { WorkoutSession } from "@/features/workout/types";
@@ -15,8 +15,9 @@ export function useExerciseSessionHistory(
 ): ExerciseSessionHistoryState {
   const { user } = useAuth();
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
   const trimmedId = exerciseId?.trim() || "";
 
   const refresh = useCallback(async () => {
@@ -24,10 +25,13 @@ export function useExerciseSessionHistory(
       setSessions([]);
       setError(null);
       setIsLoading(false);
+      hasLoadedRef.current = true;
       return;
     }
 
-    setIsLoading(true);
+    if (!hasLoadedRef.current) {
+      setIsLoading(true);
+    }
     setError(null);
 
     try {
@@ -40,11 +44,16 @@ export function useExerciseSessionHistory(
           : "Failed to load exercise history.",
       );
     } finally {
+      hasLoadedRef.current = true;
       setIsLoading(false);
     }
   }, [trimmedId, user]);
 
   useEffect(() => {
+    hasLoadedRef.current = false;
+    setSessions([]);
+    setError(null);
+    setIsLoading(Boolean(user && trimmedId));
     void refresh();
   }, [refresh]);
 

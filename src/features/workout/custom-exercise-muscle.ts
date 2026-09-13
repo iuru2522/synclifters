@@ -1,13 +1,10 @@
 import { useSyncExternalStore } from "react";
+import {
+  MUSCLE_GROUP_OPTIONS,
+  type MuscleGroup,
+} from "@/features/workout/exercise-catalog";
 
-export const MUSCLE_GROUP_OPTIONS = [
-  "Triceps",
-  "Biceps",
-  "Chest",
-  "Back",
-] as const;
-
-export type MuscleGroup = (typeof MUSCLE_GROUP_OPTIONS)[number];
+export { MUSCLE_GROUP_OPTIONS, type MuscleGroup };
 
 let selectedMuscleGroup: MuscleGroup | null = null;
 const listeners = new Set<() => void>();

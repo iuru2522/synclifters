@@ -28,6 +28,7 @@ export type ProgramDay = {
 export type Program = {
   id: string;
   name: string;
+  isFavorite: boolean;
   createdAt: EpochMillis | null;
   updatedAt: EpochMillis | null;
   days: ProgramDay[];

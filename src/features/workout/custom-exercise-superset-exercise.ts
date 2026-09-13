@@ -1,13 +1,9 @@
 import { useSyncExternalStore } from "react";
+import { catalogExerciseNames } from "@/features/workout/exercise-catalog";
 
-export const SUPERSET_EXERCISE_OPTIONS = [
-  "Tricep Pushdown",
-  "Skull Crushers",
-  "Close Grip Bench Press",
-  "Overhead Tricep Extension",
-] as const;
+export const SUPERSET_EXERCISE_OPTIONS = catalogExerciseNames();
 
-export type SupersetExerciseOption = (typeof SUPERSET_EXERCISE_OPTIONS)[number];
+export type SupersetExerciseOption = string;
 
 let selectedSupersetExercise: SupersetExerciseOption | null = null;
 const listeners = new Set<() => void>();

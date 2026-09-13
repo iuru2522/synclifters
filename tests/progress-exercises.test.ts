@@ -9,6 +9,7 @@ import type { CustomExercise, Program, WorkoutSession } from "@/features/workout
 const program: Program = {
   id: "prog1",
   name: "Push",
+  isFavorite: false,
   createdAt: null,
   updatedAt: null,
   days: [

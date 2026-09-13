@@ -7,6 +7,7 @@ import {
 import {
   createProgram,
   listPrograms,
+  setProgramFavorite,
 } from "@/features/workout/program-repository";
 import type { Program } from "@/features/workout/types";
 
@@ -15,7 +16,18 @@ export type UserProgramsState = {
   isLoading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
+  toggleProgramFavorite: (programId: string) => Promise<void>;
 };
+
+function sortProgramsLocal(programs: Program[]): Program[] {
+  return [...programs].sort((a, b) => {
+    if (a.isFavorite !== b.isFavorite) {
+      return a.isFavorite ? -1 : 1;
+    }
+
+    return (b.createdAt ?? 0) - (a.createdAt ?? 0);
+  });
+}
 
 export async function saveUserProgram(input: {
   uid: string;
@@ -53,8 +65,7 @@ export function useUserPrograms(): UserProgramsState {
     setError(null);
 
     try {
-      const next = await listPrograms(user.uid);
-      setPrograms(next);
+      setPrograms(await listPrograms(user.uid));
     } catch (err) {
       setPrograms([]);
       setError(
@@ -69,10 +80,47 @@ export function useUserPrograms(): UserProgramsState {
     void refresh();
   }, [refresh]);
 
+  const toggleProgramFavorite = useCallback(
+    async (programId: string) => {
+      if (!user) {
+        throw new Error("Sign in to favorite a program.");
+      }
+
+      const current = programs.find((program) => program.id === programId);
+      if (!current) {
+        return;
+      }
+
+      const nextFavorite = !current.isFavorite;
+      const previous = programs;
+      setPrograms(
+        sortProgramsLocal(
+          previous.map((program) => ({
+            ...program,
+            isFavorite: nextFavorite
+              ? program.id === programId
+              : program.id === programId
+                ? false
+                : program.isFavorite,
+          })),
+        ),
+      );
+
+      try {
+        await setProgramFavorite(user.uid, programId, nextFavorite);
+      } catch (err) {
+        setPrograms(sortProgramsLocal(previous));
+        throw err;
+      }
+    },
+    [programs, user],
+  );
+
   return {
     programs,
     isLoading,
     error,
     refresh,
+    toggleProgramFavorite,
   };
 }

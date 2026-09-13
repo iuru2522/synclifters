@@ -22,6 +22,7 @@ import {
   useRecordedWorkingSets,
 } from "@/features/workout/recorded-working-sets";
 import { createCompletedSession } from "@/features/workout/session-repository";
+import { workoutExerciseKey } from "@/features/workout/workout-exercise-key";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 export function WorkoutScreen() {
@@ -50,8 +51,9 @@ export function WorkoutScreen() {
   const sessionId = readSearchParam(params.sessionId);
   const showEdit = readSearchParam(params.showEdit) === "1";
   const fromHistory = readSearchParam(params.fromHistory) === "1";
-  const dropSets = useRecordedDropSets();
-  const workingSets = useRecordedWorkingSets();
+  const exerciseKey = workoutExerciseKey(exerciseId, exerciseName);
+  const dropSets = useRecordedDropSets(exerciseKey);
+  const workingSets = useRecordedWorkingSets(exerciseKey);
   const hasSetRows = workingSets.length > 0 || dropSets.length > 0;
 
   function navigateAfterFinish() {
@@ -78,8 +80,8 @@ export function WorkoutScreen() {
     setSaveWorkoutVisible(false);
 
     if (fromHistory || !hasSetRows) {
-      clearRecordedWorkingSets();
-      clearRecordedDropSets();
+      clearRecordedWorkingSets(exerciseKey);
+      clearRecordedDropSets(exerciseKey);
       navigateAfterFinish();
       return;
     }
@@ -110,8 +112,8 @@ export function WorkoutScreen() {
         workingSets,
         dropSets,
       });
-      clearRecordedWorkingSets();
-      clearRecordedDropSets();
+      clearRecordedWorkingSets(exerciseKey);
+      clearRecordedDropSets(exerciseKey);
       await refreshProfile({ silent: true });
       navigateAfterFinish();
     } catch (error) {
@@ -278,6 +280,8 @@ export function WorkoutScreen() {
               ...(programName ? { programName } : {}),
               ...(dayName ? { dayName } : {}),
               ...(exerciseName ? { exerciseName } : {}),
+              ...(exerciseId ? { exerciseId } : {}),
+              ...(muscleGroup ? { muscleGroup } : {}),
               ...(showEdit ? { showEdit: "1" } : {}),
               ...(fromHistory ? { fromHistory: "1" } : {}),
             }).toString();

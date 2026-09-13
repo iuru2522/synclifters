@@ -114,5 +114,18 @@ service cloud.firestore {
         && request.resource.data.status == 'open';
       allow update, delete: if false;
     }
+
+    match /catalogExercises/{exerciseId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn()
+        && request.resource.data.keys().hasAll(['id', 'name', 'muscleGroup'])
+        && request.resource.data.keys().hasOnly(['id', 'name', 'muscleGroup'])
+        && request.resource.data.id == exerciseId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.muscleGroup is string
+        && request.resource.data.muscleGroup.size() > 0;
+      allow delete: if false;
+    }
   }
 }

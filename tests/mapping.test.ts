@@ -71,7 +71,17 @@ describe("parseProgram", () => {
     });
 
     expect(program?.name).toBe("Full Body");
+    expect(program?.isFavorite).toBe(false);
     expect(program?.days[0]?.exercises[0]?.exerciseId).toBe("catalog:squat");
+  });
+
+  it("maps isFavorite when present", () => {
+    const program = parseProgram("p2", {
+      name: "Push",
+      isFavorite: true,
+      days: [],
+    });
+    expect(program?.isFavorite).toBe(true);
   });
 });
 

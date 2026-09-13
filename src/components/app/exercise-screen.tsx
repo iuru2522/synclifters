@@ -16,10 +16,12 @@ export function ExerciseScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
+    programId?: string | string[];
     programName?: string | string[];
     dayName?: string | string[];
     dayNames?: string | string[];
   }>();
+  const programId = readSearchParam(params.programId);
   const programName = readSearchParam(params.programName);
   const dayName = readSearchParam(params.dayName);
   const dayNames = parseDayNames(params.dayNames);
@@ -60,15 +62,14 @@ export function ExerciseScreen() {
               key={label}
               style={globalStyles.exerciseMuscleGroupButton}
               onPress={() => {
-                router.push({
-                  pathname: "/workout/do-exercise",
-                  params: {
-                    muscleGroup: label,
-                    ...(programName ? { programName } : {}),
-                    ...(dayName ? { dayName } : {}),
-                    dayNames: serializeDayNames(dayNames),
-                  },
-                } as Href);
+                const query = new URLSearchParams({
+                  muscleGroup: label,
+                  dayNames: serializeDayNames(dayNames),
+                  ...(programId ? { programId } : {}),
+                  ...(programName ? { programName } : {}),
+                  ...(dayName ? { dayName } : {}),
+                }).toString();
+                router.push(`/workout/do-exercise?${query}` as Href);
               }}
               accessibilityRole="button"
               accessibilityLabel={label}

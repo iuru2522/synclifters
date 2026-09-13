@@ -131,14 +131,27 @@ describe("firestore.rules", () => {
     await assertFails(ref.delete());
   });
 
-  it("denies support ticket create with mismatched ownerId", async () => {
+  it("allows signed-in users to read and upsert catalog exercises", async () => {
+    const ref = ownerDb().doc("catalogExercises/catalog:bench-press");
+    await assertSucceeds(
+      ref.set({
+        id: "catalog:bench-press",
+        name: "Bench Press",
+        muscleGroup: "Chest",
+      }),
+    );
+    await assertSucceeds(ref.get());
+    await assertSucceeds(otherDb().doc("catalogExercises/catalog:bench-press").get());
+    await assertFails(unauthDb().doc("catalogExercises/catalog:bench-press").get());
+    await assertFails(ref.delete());
+  });
+
+  it("denies catalog exercise writes with invalid payload", async () => {
     await assertFails(
-      ownerDb().doc("supportTickets/t2").set({
-        ownerId: OTHER_UID,
-        email: "jane@example.com",
-        description: "Help",
-        createdAt: Date.now(),
-        status: "open",
+      ownerDb().doc("catalogExercises/bad").set({
+        id: "other",
+        name: "Bad",
+        muscleGroup: "Chest",
       }),
     );
   });

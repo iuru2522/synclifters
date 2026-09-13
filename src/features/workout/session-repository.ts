@@ -387,16 +387,13 @@ export async function listSessionsForExercise(
   }
 
   const snapshot = await getDocs(
-    query(
-      sessionsCollection(uid),
-      where("exerciseIds", "array-contains", trimmed),
-      orderBy("performedAt", "desc"),
-    ),
+    query(sessionsCollection(uid), where("exerciseIds", "array-contains", trimmed)),
   );
 
   return snapshot.docs
     .map((item) => parseSession(item.id, item.data() as Record<string, unknown>))
-    .filter((item): item is WorkoutSession => item != null);
+    .filter((item): item is WorkoutSession => item != null)
+    .sort((a, b) => (b.performedAt ?? 0) - (a.performedAt ?? 0));
 }
 
 export async function listActivityDays(uid: string): Promise<ActivityDay[]> {

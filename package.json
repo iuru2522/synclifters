@@ -64,6 +64,7 @@
     "test": "vitest run --exclude tests/firestore.rules.test.ts",
     "test:rules": "firebase emulators:exec --only firestore --project demo-synclifters \"pnpm exec vitest run tests/firestore.rules.test.ts\"",
     "test:all": "pnpm test && pnpm test:rules",
+    "seed:catalog": "node ./scripts/seed-exercise-catalog.mjs",
     "apk:debug": "cd android && .\\gradlew.bat assembleDebug && cd ..",
     "apk:release": "cd android && .\\gradlew.bat assembleRelease && cd .."
   },

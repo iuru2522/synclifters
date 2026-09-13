@@ -13,6 +13,7 @@ import { SetNumericInput } from "@/components/app/set-numeric-input";
 import { StopwatchIcon } from "@/components/app/stopwatch-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { addRecordedWorkingSet } from "@/features/workout/recorded-working-sets";
+import { workoutExerciseKey } from "@/features/workout/workout-exercise-key";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 export function SetScreen() {
@@ -24,6 +25,8 @@ export function SetScreen() {
   const [saveExerciseVisible, setSaveExerciseVisible] = useState(false);
   const params = useLocalSearchParams<{
     exerciseName?: string | string[];
+    exerciseId?: string | string[];
+    muscleGroup?: string | string[];
     dayName?: string | string[];
     programId?: string | string[];
     programName?: string | string[];
@@ -31,23 +34,32 @@ export function SetScreen() {
     fromHistory?: string | string[];
   }>();
   const exerciseName = readSearchParam(params.exerciseName);
+  const exerciseId = readSearchParam(params.exerciseId);
+  const muscleGroup = readSearchParam(params.muscleGroup);
   const dayName = readSearchParam(params.dayName);
   const programId = readSearchParam(params.programId);
   const programName = readSearchParam(params.programName);
   const showEdit = readSearchParam(params.showEdit) === "1";
   const fromHistory = readSearchParam(params.fromHistory) === "1";
+  const exerciseKey = workoutExerciseKey(exerciseId, exerciseName);
 
-  function finishExercise() {
-    addRecordedWorkingSet({ weight, reps, feeling: setFeeling });
-    setSaveExerciseVisible(false);
-    const query = new URLSearchParams({
+  function workoutQuery() {
+    return new URLSearchParams({
       ...(programId ? { programId } : {}),
       ...(programName ? { programName } : {}),
       ...(dayName ? { dayName } : {}),
       ...(exerciseName ? { exerciseName } : {}),
+      ...(exerciseId ? { exerciseId } : {}),
+      ...(muscleGroup ? { muscleGroup } : {}),
       ...(showEdit ? { showEdit: "1" } : {}),
       ...(fromHistory ? { fromHistory: "1" } : {}),
     }).toString();
+  }
+
+  function finishExercise() {
+    addRecordedWorkingSet(exerciseKey, { weight, reps, feeling: setFeeling });
+    setSaveExerciseVisible(false);
+    const query = workoutQuery();
     router.replace(
       (query ? `/workout/workout-screen?${query}` : "/workout/workout-screen") as Href,
     );
@@ -131,14 +143,7 @@ export function SetScreen() {
         <Pressable
           style={globalStyles.setScreenDropSetLink}
           onPress={() => {
-            const query = new URLSearchParams({
-              ...(programId ? { programId } : {}),
-              ...(programName ? { programName } : {}),
-              ...(dayName ? { dayName } : {}),
-              ...(exerciseName ? { exerciseName } : {}),
-              ...(showEdit ? { showEdit: "1" } : {}),
-              ...(fromHistory ? { fromHistory: "1" } : {}),
-            }).toString();
+            const query = workoutQuery();
             router.push(
               (query ? `/workout/drop-set-entry?${query}` : "/workout/drop-set-entry") as Href,
             );

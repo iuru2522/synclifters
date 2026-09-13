@@ -5,7 +5,7 @@ import { colors, globalStyles, sizes } from "@/styles/global";
 
 type SaveExerciseOverlayProps = {
   visible: boolean;
-  finishTitle?: "FINISH EXERCISE" | "FINISH WORKOUT";
+  finishTitle?: string;
   onFinish: () => void;
   onCancel: () => void;
 };

@@ -5,6 +5,8 @@ import {
   getDocs,
   serverTimestamp,
   setDoc,
+  updateDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { getFirebaseFirestore, getFirebaseSetupMessage } from "@/lib/firebase";
 import { coerceToMillis } from "@/lib/firestore-timestamps";
@@ -146,6 +148,7 @@ export function parseProgram(id: string, data: Record<string, unknown>): Program
   return {
     id,
     name,
+    isFavorite: data.isFavorite === true,
     createdAt: coerceToMillis(data.createdAt),
     updatedAt: coerceToMillis(data.updatedAt),
     days,
@@ -165,6 +168,16 @@ function serializeExercise(exercise: ProgramExercise): Record<string, unknown> {
     supersetExerciseName: exercise.supersetExerciseName,
     imageUrl: exercise.imageUrl,
   };
+}
+
+function sortPrograms(programs: Program[]): Program[] {
+  return [...programs].sort((a, b) => {
+    if (a.isFavorite !== b.isFavorite) {
+      return a.isFavorite ? -1 : 1;
+    }
+
+    return (b.createdAt ?? 0) - (a.createdAt ?? 0);
+  });
 }
 
 export async function createProgram(
@@ -194,6 +207,7 @@ export async function createProgram(
 
   await setDoc(programRef, {
     name: trimmedName,
+    isFavorite: false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     days: days.map((day) => ({
@@ -207,19 +221,70 @@ export async function createProgram(
   return {
     id: programRef.id,
     name: trimmedName,
+    isFavorite: false,
     createdAt: Date.now(),
     updatedAt: Date.now(),
     days,
   };
 }
 
+export async function setProgramFavorite(
+  uid: string,
+  programId: string,
+  isFavorite: boolean,
+): Promise<void> {
+  const trimmedId = programId.trim();
+  if (!trimmedId) {
+    throw new Error("Missing program.");
+  }
+
+  const db = getFirebaseFirestore();
+  if (!db) {
+    throw new Error(getFirebaseSetupMessage());
+  }
+
+  const targetRef = doc(programsCollection(uid), trimmedId);
+
+  if (!isFavorite) {
+    await updateDoc(targetRef, {
+      isFavorite: false,
+      updatedAt: serverTimestamp(),
+    });
+    return;
+  }
+
+  const snapshot = await getDocs(programsCollection(uid));
+  const batch = writeBatch(db);
+
+  for (const item of snapshot.docs) {
+    const currentlyFavorite = item.data().isFavorite === true;
+    if (item.id === trimmedId) {
+      batch.update(item.ref, {
+        isFavorite: true,
+        updatedAt: serverTimestamp(),
+      });
+      continue;
+    }
+
+    if (currentlyFavorite) {
+      batch.update(item.ref, {
+        isFavorite: false,
+        updatedAt: serverTimestamp(),
+      });
+    }
+  }
+
+  await batch.commit();
+}
+
 export async function listPrograms(uid: string): Promise<Program[]> {
   const snapshot = await getDocs(programsCollection(uid));
 
-  return snapshot.docs
-    .map((item) => parseProgram(item.id, item.data() as Record<string, unknown>))
-    .filter((item): item is Program => item != null)
-    .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+  return sortPrograms(
+    snapshot.docs
+      .map((item) => parseProgram(item.id, item.data() as Record<string, unknown>))
+      .filter((item): item is Program => item != null),
+  );
 }
 
 export async function getProgram(
@@ -233,4 +298,72 @@ export async function getProgram(
   }
 
   return parseProgram(snapshot.id, snapshot.data() as Record<string, unknown>);
+}
+
+export async function addExerciseToProgramDay(
+  uid: string,
+  programId: string,
+  dayName: string,
+  exercise: ProgramExercise,
+): Promise<Program> {
+  const trimmedProgramId = programId.trim();
+  const trimmedDayName = dayName.trim();
+
+  if (!trimmedProgramId) {
+    throw new Error("Missing program.");
+  }
+
+  if (!trimmedDayName) {
+    throw new Error("Missing day.");
+  }
+
+  const program = await getProgram(uid, trimmedProgramId);
+  if (!program) {
+    throw new Error("Program not found.");
+  }
+
+  const dayIndex = program.days.findIndex(
+    (day) => day.name.trim().toLowerCase() === trimmedDayName.toLowerCase(),
+  );
+
+  if (dayIndex < 0) {
+    throw new Error("Day not found on this program.");
+  }
+
+  const day = program.days[dayIndex]!;
+  const alreadyAdded = day.exercises.some(
+    (item) =>
+      item.exerciseId === exercise.exerciseId || item.name === exercise.name,
+  );
+
+  if (alreadyAdded) {
+    return program;
+  }
+
+  const nextExercise: ProgramExercise = {
+    ...exercise,
+    id: exercise.id || `pe_${Date.now()}`,
+  };
+
+  const nextDays = program.days.map((item, index) =>
+    index === dayIndex
+      ? { ...item, exercises: [...item.exercises, nextExercise] }
+      : item,
+  );
+
+  await updateDoc(doc(programsCollection(uid), trimmedProgramId), {
+    days: nextDays.map((item) => ({
+      id: item.id,
+      name: item.name,
+      order: item.order,
+      exercises: item.exercises.map(serializeExercise),
+    })),
+    updatedAt: serverTimestamp(),
+  });
+
+  return {
+    ...program,
+    updatedAt: Date.now(),
+    days: nextDays,
+  };
 }
