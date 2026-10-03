@@ -11,6 +11,7 @@ export const colors = {
   accent: "#C6F54B",
   buttonText: "#ACDB60",
   backArrow: "#ADDC60",
+  workoutStartTrainingBar: "#73923F",
   tabBarInactive: "#749340",
   resetButtonBorder: "#FF0001",
   profileDeleteAccount: "rgba(173, 220, 96, 0.15)",
@@ -158,6 +159,7 @@ export const spacing = {
   programDayEditTop: 41,
   programDayExerciseHeaderToCircle: 30,
   programDayExerciseSelectDaySide: 69,
+  programDayExerciseAddToSelectDay: 46,
   startWorkoutProgramButtonTitleToSubtitle: 4,
   startWorkoutProgramButtonLinkLeft: 20,
   startWorkoutProgramButtonStartRight: 20,
@@ -382,6 +384,7 @@ export const sizes = {
   workoutGlassCardWideHeight: 120,
   workoutGlassCardRadius: 22,
   workoutStartTrainingBarHeight: 50,
+  workoutStartTrainingBarBorderWidth: 1,
   weekCalendarDayWidth: 43,
   weekCalendarSelectedWidth: 79,
   weekCalendarDayHeight: 60,
@@ -1418,8 +1421,20 @@ export const globalStyles = StyleSheet.create({
     marginTop: spacing.workoutSelectedProgramButtonToGreenBar,
     height: sizes.workoutStartTrainingBarHeight,
     backgroundColor: colors.backArrow,
+    borderTopWidth: 0,
+    borderBottomWidth: 0,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
     alignItems: "center",
     justifyContent: "center",
+  },
+  workoutStartTrainingGreenBarDisabled: {
+    backgroundColor: colors.surface,
+    borderTopWidth: sizes.workoutStartTrainingBarBorderWidth,
+    borderBottomWidth: sizes.workoutStartTrainingBarBorderWidth,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    borderColor: colors.workoutStartTrainingBar,
   },
   workoutStartTrainingGreenBarText: {
     ...typography.workoutStartTrainingGreenBarText,
@@ -1427,6 +1442,9 @@ export const globalStyles = StyleSheet.create({
     fontFamily: fonts.poppinsMedium,
     fontWeight: "500",
     includeFontPadding: false,
+  },
+  workoutStartTrainingGreenBarTextDisabled: {
+    color: colors.workoutStartTrainingBar,
   },
   startWorkoutScreen: {
     flex: 1,
@@ -1474,6 +1492,11 @@ export const globalStyles = StyleSheet.create({
   programDayExerciseSelectDayWrap: {
     alignSelf: "stretch",
     marginTop: spacing.workoutLastWorkoutToAddSet,
+    paddingHorizontal: spacing.programDayExerciseSelectDaySide,
+  },
+  programDayExerciseSelectDayButtonWrap: {
+    alignSelf: "stretch",
+    marginTop: spacing.programDayExerciseAddToSelectDay,
     paddingHorizontal: spacing.programDayExerciseSelectDaySide,
   },
   setScreenFooter: {

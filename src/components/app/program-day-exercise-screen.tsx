@@ -88,6 +88,19 @@ export function ProgramDayExerciseScreen() {
     router.push(`/workout/add-exercise?${query}` as Href);
   }
 
+  function openSelectDay() {
+    if (!dayName) {
+      return;
+    }
+
+    const query = new URLSearchParams({
+      dayName,
+      ...(programId ? { programId } : {}),
+      ...(programName ? { programName } : {}),
+    }).toString();
+    router.dismissTo(`/workout?${query}` as Href);
+  }
+
   return (
     <View
       style={[
@@ -199,6 +212,18 @@ export function ProgramDayExerciseScreen() {
         >
           <Text style={globalStyles.addExerciseDayRecordLabel}>ADD EXERCISE</Text>
         </Pressable>
+      )}
+      {fromHistory ? null : (
+        <View style={globalStyles.programDayExerciseSelectDayButtonWrap}>
+          <AppButton
+            title="SELECT DAY"
+            onPress={openSelectDay}
+            borderColor={colors.backArrow}
+            textColor={colors.inputFill}
+            pressAccentColor={colors.backArrow}
+            accessibilityLabel="Select day"
+          />
+        </View>
       )}
       <View
         style={[
