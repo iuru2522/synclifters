@@ -120,7 +120,7 @@ export function StartWorkoutScreen() {
     const query = new URLSearchParams({
       programId,
       programName,
-      ...(showEdit ? { showEdit: "1" } : {}),
+      ...(showEdit ? { showEdit: "1" } : { selectDay: "1" }),
     }).toString();
     router.push(`/workout/program-day?${query}` as Href);
   }
@@ -129,7 +129,7 @@ export function StartWorkoutScreen() {
     setSelectedButton({ section: "preset", index });
     const query = new URLSearchParams({
       programName,
-      ...(showEdit ? { showEdit: "1" } : {}),
+      ...(showEdit ? { showEdit: "1" } : { selectDay: "1" }),
     }).toString();
     router.push(`/workout/program-day?${query}` as Href);
   }

@@ -6,6 +6,7 @@ import { WorkoutStartIcon } from "@/components/app/workout-start-icon";
 import { WeekCalendar } from "@/components/WeekCalendar/WeekCalendar";
 import { useAuth } from "@/features/auth/auth-context";
 import { formatProfileFullName } from "@/features/users/profile-display";
+import { clearFinishedWorkoutExercises } from "@/features/workout/finished-workout-exercises";
 import { useUserPrograms } from "@/features/workout/user-programs";
 import { useUserSessions } from "@/features/workout/user-sessions";
 import { readSearchParam } from "@/components/app/program-day-params";
@@ -17,7 +18,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PROFILE_HREF = "/workout/profile" as Href;
 const CREATE_PROGRAM_HREF = "/workout/create-program" as Href;
-const START_WORKOUT_HREF = "/workout/start-workout" as Href;
 
 export function WorkoutTabScreen() {
   const router = useRouter();
@@ -91,6 +91,7 @@ export function WorkoutTabScreen() {
     const query = new URLSearchParams({
       programId: activeProgram.id,
       programName: activeProgram.name,
+      selectDay: "1",
     }).toString();
     router.push(`/workout/program-day?${query}` as Href);
   }
@@ -101,6 +102,21 @@ export function WorkoutTabScreen() {
     }
 
     setDaySelected(true);
+    const query = new URLSearchParams({
+      programId: activeProgram.id,
+      programName: activeProgram.name,
+      dayName: activeDayName,
+      selectDay: "1",
+    }).toString();
+    router.push(`/workout/program-day-exercise?${query}` as Href);
+  }
+
+  function openStartWorkout() {
+    if (startWorkoutDisabled || !activeProgram || !activeDayName) {
+      return;
+    }
+
+    clearFinishedWorkoutExercises();
     const query = new URLSearchParams({
       programId: activeProgram.id,
       programName: activeProgram.name,
@@ -213,12 +229,7 @@ export function WorkoutTabScreen() {
               ? globalStyles.workoutStartTrainingGreenBarDisabled
               : null,
           ]}
-          onPress={() => {
-            if (startWorkoutDisabled) {
-              return;
-            }
-            router.push(START_WORKOUT_HREF);
-          }}
+          onPress={openStartWorkout}
           disabled={startWorkoutDisabled}
           accessibilityRole="button"
           accessibilityState={{ disabled: startWorkoutDisabled }}
