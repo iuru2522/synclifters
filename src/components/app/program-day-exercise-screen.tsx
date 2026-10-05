@@ -1,5 +1,5 @@
 import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
@@ -9,9 +9,14 @@ import {
   readSearchParam,
   serializeDayNames,
 } from "@/components/app/program-day-params";
+import { SaveExerciseOverlay } from "@/components/app/save-exercise-overlay";
 import { SaveIcon } from "@/components/app/save-icon";
 import { StopwatchIcon } from "@/components/app/stopwatch-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import {
+  clearFinishedWorkoutExercises,
+  useHasFinishedAnyWorkoutExercise,
+} from "@/features/workout/finished-workout-exercises";
 import {
   useProgramDayExercises,
   type DayExerciseListItem,
@@ -21,6 +26,9 @@ import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 export function ProgramDayExerciseScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [saveWorkoutVisible, setSaveWorkoutVisible] = useState(false);
+  const hasFinishedAnyExercise = useHasFinishedAnyWorkoutExercise();
+  const saveDisabled = !hasFinishedAnyExercise;
   const params = useLocalSearchParams<{
     dayName?: string | string[];
     programId?: string | string[];
@@ -28,6 +36,7 @@ export function ProgramDayExerciseScreen() {
     sessionId?: string | string[];
     showEdit?: string | string[];
     fromHistory?: string | string[];
+    selectDay?: string | string[];
   }>();
   const dayName = readSearchParam(params.dayName);
   const programId = readSearchParam(params.programId);
@@ -35,6 +44,7 @@ export function ProgramDayExerciseScreen() {
   const sessionId = readSearchParam(params.sessionId);
   const showEdit = readSearchParam(params.showEdit) === "1";
   const fromHistory = readSearchParam(params.fromHistory) === "1";
+  const selectDay = readSearchParam(params.selectDay) === "1";
   const { exercises, isLoading, error, refresh } = useProgramDayExercises({
     programId,
     dayName,
@@ -88,7 +98,27 @@ export function ProgramDayExerciseScreen() {
     router.push(`/workout/add-exercise?${query}` as Href);
   }
 
+  function openSelectDay() {
+    if (!dayName) {
+      return;
+    }
+
+    const query = new URLSearchParams({
+      dayName,
+      ...(programId ? { programId } : {}),
+      ...(programName ? { programName } : {}),
+    }).toString();
+    router.dismissTo(`/workout?${query}` as Href);
+  }
+
+  function finishWorkout() {
+    setSaveWorkoutVisible(false);
+    clearFinishedWorkoutExercises();
+    router.dismissTo("/workout" as Href);
+  }
+
   return (
+    <View style={globalStyles.programDayExerciseScreen}>
     <View
       style={[
         globalStyles.programDayExerciseScreen,
@@ -121,12 +151,22 @@ export function ProgramDayExerciseScreen() {
         <View style={[globalStyles.createDayHeaderMenu, globalStyles.createDayHeaderMenuRow]}>
           {fromHistory ? null : (
             <Pressable
-              onPress={() => {}}
+              onPress={() => {
+                setSaveWorkoutVisible(true);
+              }}
+              disabled={saveDisabled}
               hitSlop={sizes.backArrowHitSlop}
               accessibilityRole="button"
+              accessibilityState={{ disabled: saveDisabled }}
               accessibilityLabel="Save"
             >
-              <SaveIcon />
+              <SaveIcon
+                color={
+                  saveDisabled
+                    ? colors.workoutStartTrainingBar
+                    : colors.backArrow
+                }
+              />
             </Pressable>
           )}
           <Pressable
@@ -200,6 +240,18 @@ export function ProgramDayExerciseScreen() {
           <Text style={globalStyles.addExerciseDayRecordLabel}>ADD EXERCISE</Text>
         </Pressable>
       )}
+      {selectDay && !fromHistory ? (
+        <View style={globalStyles.programDayExerciseSelectDayButtonWrap}>
+          <AppButton
+            title="SELECT DAY"
+            onPress={openSelectDay}
+            borderColor={colors.backArrow}
+            textColor={colors.inputFill}
+            pressAccentColor={colors.backArrow}
+            accessibilityLabel="Select day"
+          />
+        </View>
+      ) : null}
       <View
         style={[
           globalStyles.programDayExerciseTimers,
@@ -224,9 +276,20 @@ export function ProgramDayExerciseScreen() {
           ]}
         >
           <StopwatchIcon />
-          <Text style={globalStyles.programDayExerciseTimerText}>00:00</Text>
+          <Text style={globalStyles.programDayExerciseStopwatchTimerText}>
+            00:00
+          </Text>
         </View>
       </View>
+    </View>
+      <SaveExerciseOverlay
+        visible={saveWorkoutVisible}
+        finishTitle="FINISH WORKOUT"
+        onFinish={finishWorkout}
+        onCancel={() => {
+          setSaveWorkoutVisible(false);
+        }}
+      />
     </View>
   );
 }

@@ -7,7 +7,6 @@ import { ChevronDownIcon } from "@/components/app/chevron-down-icon";
 import { ClockIcon } from "@/components/app/clock-icon";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { readSearchParam } from "@/components/app/program-day-params";
-import { SaveExerciseOverlay } from "@/components/app/save-exercise-overlay";
 import { SetFeelingBar, type SetFeeling } from "@/components/app/set-feeling-bar";
 import { SetNumericInput } from "@/components/app/set-numeric-input";
 import { StopwatchIcon } from "@/components/app/stopwatch-icon";
@@ -22,7 +21,6 @@ export function SetScreen() {
   const [weight, setWeight] = useState("00.0");
   const [reps, setReps] = useState("0");
   const [setFeeling, setSetFeeling] = useState<SetFeeling>("W");
-  const [saveExerciseVisible, setSaveExerciseVisible] = useState(false);
   const params = useLocalSearchParams<{
     exerciseName?: string | string[];
     exerciseId?: string | string[];
@@ -56,9 +54,8 @@ export function SetScreen() {
     }).toString();
   }
 
-  function finishExercise() {
+  function recordSet() {
     addRecordedWorkingSet(exerciseKey, { weight, reps, feeling: setFeeling });
-    setSaveExerciseVisible(false);
     const query = workoutQuery();
     router.replace(
       (query ? `/workout/workout-screen?${query}` : "/workout/workout-screen") as Href,
@@ -132,9 +129,7 @@ export function SetScreen() {
         <View style={globalStyles.setScreenRecordWrap}>
           <AppButton
             title="RECORD"
-            onPress={() => {
-              setSaveExerciseVisible(true);
-            }}
+            onPress={recordSet}
             borderColor={colors.backArrow}
             textColor={colors.inputFill}
             pressAccentColor={colors.backArrow}
@@ -183,14 +178,6 @@ export function SetScreen() {
         </View>
       </View>
     </View>
-      <SaveExerciseOverlay
-        visible={saveExerciseVisible}
-        finishTitle="FINISH EXERCISE"
-        onFinish={finishExercise}
-        onCancel={() => {
-          setSaveExerciseVisible(false);
-        }}
-      />
     </View>
   );
 }

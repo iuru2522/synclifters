@@ -6,23 +6,30 @@ import { WorkoutStartIcon } from "@/components/app/workout-start-icon";
 import { WeekCalendar } from "@/components/WeekCalendar/WeekCalendar";
 import { useAuth } from "@/features/auth/auth-context";
 import { formatProfileFullName } from "@/features/users/profile-display";
+import { clearFinishedWorkoutExercises } from "@/features/workout/finished-workout-exercises";
 import { useUserPrograms } from "@/features/workout/user-programs";
 import { useUserSessions } from "@/features/workout/user-sessions";
+import { readSearchParam } from "@/components/app/program-day-params";
 import { colors, globalStyles, sizes } from "@/styles/global";
-import { useFocusEffect, useRouter, type Href } from "expo-router";
-import { useCallback, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PROFILE_HREF = "/workout/profile" as Href;
 const CREATE_PROGRAM_HREF = "/workout/create-program" as Href;
-const START_WORKOUT_HREF = "/workout/start-workout" as Href;
-
-type StartTrainingSelection = "program" | "day";
 
 export function WorkoutTabScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{
+    dayName?: string | string[];
+    programId?: string | string[];
+    programName?: string | string[];
+  }>();
+  const paramDayName = readSearchParam(params.dayName);
+  const paramProgramId = readSearchParam(params.programId);
+  const paramProgramName = readSearchParam(params.programName);
   const { profile } = useAuth();
   const { programs, isLoading, error, refresh } = useUserPrograms();
   const {
@@ -45,12 +52,17 @@ export function WorkoutTabScreen() {
     weightUnit = "KG";
   }
   const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const [startTrainingSelection, setStartTrainingSelection] =
-    useState<StartTrainingSelection | null>(null);
+  const [programSelected, setProgramSelected] = useState(false);
+  const [daySelected, setDaySelected] = useState(false);
   const favoriteProgram = programs.find((program) => program.isFavorite) ?? null;
+  const paramProgram =
+    programs.find((program) => program.id === paramProgramId) ?? null;
+  const activeProgram = paramProgram ?? favoriteProgram;
   const favoriteDay = favoriteProgram?.days[0] ?? null;
-  const selectedProgramTitle = favoriteProgram?.name ?? "No program selected";
-  const selectedDayTitle = favoriteDay?.name ?? "No day selected";
+  const activeDayName = paramDayName ?? favoriteDay?.name ?? null;
+  const selectedProgramTitle =
+    paramProgramName ?? activeProgram?.name ?? "No program selected";
+  const selectedDayTitle = activeDayName ?? "No day selected";
 
   useFocusEffect(
     useCallback(() => {
@@ -59,34 +71,56 @@ export function WorkoutTabScreen() {
     }, [refresh, refreshSessions]),
   );
 
-  const programSelected = startTrainingSelection === "program";
-  const daySelected = startTrainingSelection === "day";
+  useEffect(() => {
+    if (paramDayName) {
+      setDaySelected(true);
+    }
+    if (paramProgramId || paramProgramName) {
+      setProgramSelected(true);
+    }
+  }, [paramDayName, paramProgramId, paramProgramName]);
+
+  const startWorkoutDisabled = !programSelected || !daySelected;
 
   function openFavoriteProgram() {
-    if (!favoriteProgram) {
-      router.push(START_WORKOUT_HREF);
+    if (!activeProgram) {
       return;
     }
 
-    setStartTrainingSelection("program");
+    setProgramSelected(true);
     const query = new URLSearchParams({
-      programId: favoriteProgram.id,
-      programName: favoriteProgram.name,
+      programId: activeProgram.id,
+      programName: activeProgram.name,
+      selectDay: "1",
     }).toString();
     router.push(`/workout/program-day?${query}` as Href);
   }
 
   function openFavoriteDay() {
-    if (!favoriteProgram || !favoriteDay) {
-      router.push(START_WORKOUT_HREF);
+    if (!activeProgram || !activeDayName) {
       return;
     }
 
-    setStartTrainingSelection("day");
+    setDaySelected(true);
     const query = new URLSearchParams({
-      programId: favoriteProgram.id,
-      programName: favoriteProgram.name,
-      dayName: favoriteDay.name,
+      programId: activeProgram.id,
+      programName: activeProgram.name,
+      dayName: activeDayName,
+      selectDay: "1",
+    }).toString();
+    router.push(`/workout/program-day-exercise?${query}` as Href);
+  }
+
+  function openStartWorkout() {
+    if (startWorkoutDisabled || !activeProgram || !activeDayName) {
+      return;
+    }
+
+    clearFinishedWorkoutExercises();
+    const query = new URLSearchParams({
+      programId: activeProgram.id,
+      programName: activeProgram.name,
+      dayName: activeDayName,
     }).toString();
     router.push(`/workout/program-day-exercise?${query}` as Href);
   }
@@ -189,14 +223,28 @@ export function WorkoutTabScreen() {
           />
         </View>
         <Pressable
-          style={globalStyles.workoutStartTrainingGreenBar}
-          onPress={() => {
-            router.push(START_WORKOUT_HREF);
-          }}
+          style={[
+            globalStyles.workoutStartTrainingGreenBar,
+            startWorkoutDisabled
+              ? globalStyles.workoutStartTrainingGreenBarDisabled
+              : null,
+          ]}
+          onPress={openStartWorkout}
+          disabled={startWorkoutDisabled}
           accessibilityRole="button"
+          accessibilityState={{ disabled: startWorkoutDisabled }}
           accessibilityLabel="Start Workout"
         >
-          <Text style={globalStyles.workoutStartTrainingGreenBarText}>Start Workout</Text>
+          <Text
+            style={[
+              globalStyles.workoutStartTrainingGreenBarText,
+              startWorkoutDisabled
+                ? globalStyles.workoutStartTrainingGreenBarTextDisabled
+                : null,
+            ]}
+          >
+            Start Workout
+          </Text>
         </Pressable>
         <View style={globalStyles.workoutTrainingProgramsLabel}>
           <Text style={globalStyles.workoutGlassCardLabel}>TRAINING PROGRAMS</Text>

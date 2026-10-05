@@ -22,6 +22,7 @@ import { getFirebaseAuth, getFirebaseSetupMessage } from "@/lib/firebase";
 import { deleteUserOwnedData } from "@/features/users/delete-account";
 import { createUserProfile } from "@/features/users/user-profile";
 import { clearExercisesByDay } from "@/features/workout/day-exercises";
+import { clearFinishedWorkoutExercises } from "@/features/workout/finished-workout-exercises";
 import { clearRecordedDropSets } from "@/features/workout/recorded-drop-sets";
 import { clearRecordedWorkingSets } from "@/features/workout/recorded-working-sets";
 
@@ -386,6 +387,7 @@ function clearLocalWorkoutDrafts(): void {
   clearExercisesByDay();
   clearRecordedWorkingSets();
   clearRecordedDropSets();
+  clearFinishedWorkoutExercises();
 }
 
 export async function signOut(): Promise<void> {
