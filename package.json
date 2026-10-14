@@ -31,7 +31,7 @@
     "expo-symbols": "~57.0.0",
     "expo-system-ui": "~57.0.0",
     "expo-web-browser": "~57.0.0",
-    "firebase": "^12.15.0",
+    "firebase": "^13.0.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.0",
@@ -44,13 +44,13 @@
     "react-native-web": "~0.21.0"
   },
   "devDependencies": {
-    "@firebase/rules-unit-testing": "^5.0.2",
+    "@firebase/rules-unit-testing": "^6.0.0",
     "@react-native-community/cli": "latest",
     "@types/node": "^22.20.2",
     "@types/react": "~19.2.2",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~57.0.2",
-    "firebase-tools": "^15.30.0",
+    "firebase-tools": "^15.33.0",
     "typescript": "~6.0.3",
     "vitest": "^5.0.0"
   },
