@@ -21,6 +21,13 @@ updates:
       # eslint-plugin-react (via eslint-config-expo) is not ESLint 10-ready yet.
       - dependency-name: "eslint"
         versions: [">= 10"]
+      # Stay on Expo SDK 57; allow 57.x patches/minors only (no auto SDK 58+).
+      - dependency-name: "expo"
+        versions: [">= 58"]
+      - dependency-name: "expo-*"
+        versions: [">= 58"]
+      - dependency-name: "eslint-config-expo"
+        versions: [">= 58"]
     groups:
       expo-sdk:
         patterns:
