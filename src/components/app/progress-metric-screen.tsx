@@ -84,7 +84,68 @@ function EndPointBadge({ label }: { label: string }) {
   );
 }
 
+function buildMutableChartData(
+  chartModel: NonNullable<ReturnType<typeof buildProgressMetricChartModel>>,
+): lineDataItem[] {
+  "use no memo";
+  const xAxisTextStyle = { ...globalStyles.progressMetricChartXAxisText };
+
+  return chartModel.points.map((point) => {
+    if (point.isFirstRealPoint) {
+      return {
+        value: point.value,
+        label: point.label,
+        labelTextStyle: { ...xAxisTextStyle },
+        hideDataPoint: false,
+        dataPointRadius: 0,
+        dataPointColor: "transparent",
+        dataPointLabelWidth: sizes.progressMetricChartLabelWidth,
+        dataPointLabelShiftX: spacing.progressMetricChartStartBadgeShiftX,
+        dataPointLabelShiftY: spacing.progressMetricChartStartBadgeShiftY,
+        dataPointLabelComponent: () => (
+          <StartPointBadge label={point.displayValue} />
+        ),
+      };
+    }
+
+    if (point.isLastRealPoint) {
+      return {
+        value: point.value,
+        label: point.label,
+        labelTextStyle: { ...xAxisTextStyle },
+        hideDataPoint: false,
+        dataPointRadius: sizes.progressMetricChartDotRadius,
+        dataPointColor: colors.progressChartDot,
+        dataPointLabelWidth: sizes.progressMetricChartLabelWidth,
+        dataPointLabelShiftX: 0,
+        dataPointLabelShiftY: spacing.progressMetricChartEndBadgeShiftY,
+        dataPointLabelComponent: () => (
+          <EndPointBadge label={point.displayValue} />
+        ),
+      };
+    }
+
+    if (point.isTrailingProjection) {
+      return {
+        value: point.value,
+        label: "",
+        hideDataPoint: true,
+      };
+    }
+
+    return {
+      value: point.value,
+      label: point.label,
+      labelTextStyle: { ...xAxisTextStyle },
+      hideDataPoint: false,
+      dataPointRadius: 3,
+      dataPointColor: colors.white,
+    };
+  });
+}
+
 export function ProgressMetricScreen() {
+  "use no memo";
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
@@ -128,64 +189,7 @@ export function ProgressMetricScreen() {
     return Math.max(24, usableWidth / segments);
   }, [chartModel, chartWidth]);
 
-  const lineData = useMemo<lineDataItem[]>(() => {
-    if (!chartModel) {
-      return [];
-    }
-
-    return chartModel.points.map((point) => {
-      if (point.isFirstRealPoint) {
-        return {
-          value: point.value,
-          label: point.label,
-          labelTextStyle: globalStyles.progressMetricChartXAxisText,
-          hideDataPoint: false,
-          dataPointRadius: 0,
-          dataPointColor: "transparent",
-          dataPointLabelWidth: sizes.progressMetricChartLabelWidth,
-          dataPointLabelShiftX: 12,
-          dataPointLabelShiftY: -22,
-          dataPointLabelComponent: () => (
-            <StartPointBadge label={point.displayValue} />
-          ),
-        };
-      }
-
-      if (point.isLastRealPoint) {
-        return {
-          value: point.value,
-          label: point.label,
-          labelTextStyle: globalStyles.progressMetricChartXAxisText,
-          hideDataPoint: false,
-          dataPointRadius: sizes.progressMetricChartDotRadius,
-          dataPointColor: colors.progressChartDot,
-          dataPointLabelWidth: sizes.progressMetricChartLabelWidth,
-          dataPointLabelShiftX: 0,
-          dataPointLabelShiftY: -26,
-          dataPointLabelComponent: () => (
-            <EndPointBadge label={point.displayValue} />
-          ),
-        };
-      }
-
-      if (point.isTrailingProjection) {
-        return {
-          value: point.value,
-          label: "",
-          hideDataPoint: true,
-        };
-      }
-
-      return {
-        value: point.value,
-        label: point.label,
-        labelTextStyle: globalStyles.progressMetricChartXAxisText,
-        hideDataPoint: false,
-        dataPointRadius: 3,
-        dataPointColor: colors.white,
-      };
-    });
-  }, [chartModel]);
+  const lineData = chartModel ? buildMutableChartData(chartModel) : [];
 
   function handleChartBodyLayout(event: LayoutChangeEvent) {
     const nextWidth = Math.round(event.nativeEvent.layout.width);
@@ -271,6 +275,7 @@ export function ProgressMetricScreen() {
                   spacing={pointSpacing}
                   initialSpacing={spacing.progressMetricChartInitialSpacing}
                   endSpacing={spacing.progressMetricChartEndSpacing}
+                  overflowTop={spacing.progressMetricChartOverflowTop}
                   color={colors.white}
                   thickness={sizes.progressMetricChartLineThickness}
                   yAxisSide={yAxisSides.RIGHT}
