@@ -37,6 +37,7 @@ export default function WorkoutLayout() {
       <Stack.Screen name="progress-muscle" />
       <Stack.Screen name="progress-metric" />
       <Stack.Screen name="progress-metric-detail" />
+      <Stack.Screen name="calendar" />
 
       <Stack.Screen name="name-sheet" options={fieldSheetOptions} />
 
