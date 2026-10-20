@@ -302,7 +302,9 @@ export function ProgressMetricScreen() {
         <Text style={globalStyles.createDayHeaderTitle}>{config.title}</Text>
         <Pressable
           style={globalStyles.createDayHeaderMenu}
-          onPress={() => {}}
+          onPress={() => {
+            router.push("/workout/calendar" as Href);
+          }}
           hitSlop={sizes.backArrowHitSlop}
           accessibilityRole="button"
           accessibilityLabel="Menu"
