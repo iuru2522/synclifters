@@ -3,6 +3,7 @@ import { WorkoutBellIcon } from "@/components/app/workout-bell-icon";
 import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-icon";
 import { WorkoutGlassCard } from "@/components/app/workout-glass-card";
 import { WorkoutStartIcon } from "@/components/app/workout-start-icon";
+import { WorkoutWeightTrendChart } from "@/components/app/workout-weight-trend-chart";
 import { WeekCalendar } from "@/components/WeekCalendar/WeekCalendar";
 import { useAuth } from "@/features/auth/auth-context";
 import { formatProfileFullName } from "@/features/users/profile-display";
@@ -188,7 +189,7 @@ export function WorkoutTabScreen() {
           </WorkoutGlassCard>
         </View>
         <View style={globalStyles.workoutGlassCardWideWrap}>
-          <WorkoutGlassCard style={globalStyles.workoutGlassCardWide} />
+          <WorkoutWeightTrendChart />
         </View>
         <View style={globalStyles.workoutWeekCalendarWrap}>
           <WeekCalendar
