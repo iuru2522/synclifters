@@ -35,6 +35,8 @@ describe("progress-metric-chart", () => {
     expect(model?.maxValue).toBe(24);
     expect(model?.stepValue).toBe(4);
     expect(model?.noOfSections).toBe(6);
+    expect(model?.baselinePosition).toBe(70);
+    expect(model?.xAxisLabels).toEqual(["Jul 20", "Jul 24", "Jul 28"]);
     expect(model?.points).toHaveLength(3);
     expect(model?.points[0]?.isFirstRealPoint).toBe(true);
     expect(model?.points[1]?.isLastRealPoint).toBe(true);

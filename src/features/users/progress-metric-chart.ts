@@ -1,6 +1,7 @@
 import type { BodyMetricEntry, BodyMetricType } from "@/features/users/types";
 
-const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const MS_PER_WEEK = 7 * MS_PER_DAY;
 const MAX_PLOTTED_ENTRIES = 8;
 const DEFAULT_SECTIONS = 6;
 const DEFAULT_STEP_VALUE = 4;
@@ -30,6 +31,7 @@ export type ProgressMetricChartModel = {
   stepValue: number;
   noOfSections: number;
   baselinePosition: number;
+  xAxisLabels: [string, string, string];
   delta: MetricDeltaSummary;
 };
 
@@ -163,10 +165,7 @@ export function buildProgressMetricChartModel(
   const yMax = Math.ceil((maxVal + 0.8) / 2) * 2;
   const yAxisOffset = Math.max(0, yMax - totalRange);
   const maxValue = totalRange;
-  const baselinePosition = Math.max(
-    0,
-    Math.min(maxValue, Math.round(yAxisOffset + stepValue * 0.5) - yAxisOffset),
-  );
+  const baselinePosition = Math.round(yAxisOffset + stepValue * 0.5);
 
   const lastRealIndex = realEntries.length - 1;
   const middleIndex =
@@ -196,6 +195,30 @@ export function buildProgressMetricChartModel(
     isTrailingProjection: true,
   });
 
+  let xAxisLabels: [string, string, string] = ["", "", ""];
+  if (recent.length === 1) {
+    const endAt = recent[0]?.recordedAt ?? null;
+    if (endAt != null && Number.isFinite(endAt)) {
+      xAxisLabels = [
+        formatShortChartDate(endAt - 8 * MS_PER_DAY),
+        formatShortChartDate(endAt - 4 * MS_PER_DAY),
+        formatShortChartDate(endAt),
+      ];
+    }
+  } else {
+    const firstAt = recent[0]?.recordedAt ?? null;
+    const endAt = recent[recent.length - 1]?.recordedAt ?? null;
+    const midAt =
+      firstAt != null && endAt != null
+        ? Math.round((firstAt + endAt) / 2)
+        : (recent[Math.floor(recent.length / 2)]?.recordedAt ?? null);
+    xAxisLabels = [
+      formatShortChartDate(firstAt),
+      formatShortChartDate(midAt),
+      formatShortChartDate(endAt),
+    ];
+  }
+
   return {
     points,
     lastRealIndex,
@@ -204,6 +227,7 @@ export function buildProgressMetricChartModel(
     stepValue,
     noOfSections,
     baselinePosition,
+    xAxisLabels,
     delta: computePastWeekDelta(chronological, metric),
   };
 }
