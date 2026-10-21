@@ -28,6 +28,7 @@ type SwipeBackOptions =
   | {
       href?: AuthHref;
       fallbackHref?: AuthHref;
+      onBack?: () => void;
     };
 
 export function AuthScreenLayout({
@@ -54,7 +55,8 @@ export function AuthScreenLayout({
   const bottomInset = Math.max(insets.bottom, spacing.safeAreaBottomMin);
   const bottomContentPadding = bottomFooter ? null : { paddingBottom: bottomInset };
   const swipeOptions = swipeBack === true ? {} : swipeBack;
-  const handleBack = useAuthBack(swipeOptions ?? {});
+  const defaultBack = useAuthBack(swipeOptions ?? {});
+  const handleBack = swipeOptions?.onBack ?? defaultBack;
 
   const swipeGesture = Gesture.Pan()
     .enabled(Boolean(swipeBack))

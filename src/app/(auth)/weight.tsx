@@ -25,6 +25,7 @@ export default function WeightScreen() {
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to save weight.";
         Alert.alert("Could not continue", message);
+      } finally {
         setSaving(false);
       }
     });
@@ -40,6 +41,7 @@ export default function WeightScreen() {
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to continue.";
         Alert.alert("Could not continue", message);
+      } finally {
         setSaving(false);
       }
     });

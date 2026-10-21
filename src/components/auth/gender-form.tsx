@@ -8,14 +8,27 @@ export type Gender = "male" | "female";
 type GenderFormProps = {
   gender: Gender | null;
   onGenderChange: (gender: Gender) => void | Promise<void>;
+  onBackPress?: () => void;
   disabled?: boolean;
 };
 
-export function GenderForm({ gender, onGenderChange, disabled = false }: GenderFormProps) {
+export function GenderForm({
+  gender,
+  onGenderChange,
+  onBackPress,
+  disabled = false,
+}: GenderFormProps) {
+  const maleSelected = gender === "male";
+  const femaleSelected = gender === "female";
+
   return (
     <View style={globalStyles.genderScreen}>
       <View style={globalStyles.genderHeader}>
-        <AuthBackButton href="/sign-up" title="What's Your Gender?" />
+        <AuthBackButton
+          href="/sign-up"
+          title="What's Your Gender?"
+          onPress={onBackPress}
+        />
         <View style={globalStyles.genderHeaderToOptionsGap} />
         <View style={globalStyles.genderOptions}>
           <View style={globalStyles.genderOption}>
@@ -26,16 +39,17 @@ export function GenderForm({ gender, onGenderChange, disabled = false }: GenderF
               }}
               disabled={disabled}
               borderColor={colors.genderMale}
+              textColor={maleSelected ? colors.inputText : colors.inputFill}
               textStyle={[
                 globalStyles.genderOptionButtonText,
-                gender === "male" ? globalStyles.genderOptionButtonTextSelected : null,
+                maleSelected ? globalStyles.genderOptionButtonTextSelected : null,
               ]}
               style={[
                 globalStyles.genderOptionButton,
-                gender === "male" ? globalStyles.genderOptionMaleSelected : undefined,
+                maleSelected ? globalStyles.genderOptionMaleSelected : undefined,
               ]}
-              pressFillColor={colors.genderMale}
-              pressLabelColor={colors.inputText}
+              pressFillColor={maleSelected ? undefined : colors.genderMale}
+              pressLabelColor={maleSelected ? undefined : colors.inputText}
               accessibilityLabel="Male"
             />
           </View>
@@ -47,16 +61,17 @@ export function GenderForm({ gender, onGenderChange, disabled = false }: GenderF
               }}
               disabled={disabled}
               borderColor={colors.genderFemale}
+              textColor={femaleSelected ? colors.inputText : colors.inputFill}
               textStyle={[
                 globalStyles.genderOptionButtonText,
-                gender === "female" ? globalStyles.genderOptionButtonTextSelected : null,
+                femaleSelected ? globalStyles.genderOptionButtonTextSelected : null,
               ]}
               style={[
                 globalStyles.genderOptionButton,
-                gender === "female" ? globalStyles.genderOptionFemaleSelected : undefined,
+                femaleSelected ? globalStyles.genderOptionFemaleSelected : undefined,
               ]}
-              pressFillColor={colors.genderFemale}
-              pressLabelColor={colors.inputText}
+              pressFillColor={femaleSelected ? undefined : colors.genderFemale}
+              pressLabelColor={femaleSelected ? undefined : colors.inputText}
               accessibilityLabel="Female"
             />
           </View>

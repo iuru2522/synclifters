@@ -24,6 +24,8 @@ import {
 import { useMeasurementUnit } from "./measurement-unit-context";
 
 type OnboardingContextValue = {
+  gender: Gender | null;
+  setGender: Dispatch<SetStateAction<Gender | null>>;
   weight: number;
   setWeight: Dispatch<SetStateAction<number>>;
   age: number;
@@ -42,6 +44,7 @@ const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const { user, profile, refreshProfile, patchProfile } = useAuth();
   const { unit, setUnit } = useMeasurementUnit();
+  const [gender, setGender] = useState<Gender | null>(null);
   const [weight, setWeight] = useState<number>(sizes.weightRulerDefault);
   const [age, setAge] = useState<number>(sizes.ageWheelDefault);
   const [height, setHeight] = useState<number>(sizes.heightRulerDefault);
@@ -50,6 +53,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) {
       hydratedProfileUidRef.current = null;
+      setGender(null);
       return;
     }
 
@@ -58,6 +62,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
 
     hydratedProfileUidRef.current = user.uid;
+
+    if (profile.gender === "male" || profile.gender === "female") {
+      setGender(profile.gender);
+    } else if (profile.gender === null) {
+      setGender(null);
+    }
 
     if (typeof profile.weight === "number") {
       setWeight(profile.weight);
@@ -98,7 +108,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   }, [profile, refreshProfile, user]);
 
   const saveGender = useCallback(
-    async (gender: Gender | null) => {
+    async (nextGender: Gender | null) => {
       await ensureProfile();
 
       if (!user) {
@@ -106,9 +116,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       }
 
       await updateUserProfile(user.uid, {
-        gender: gender as UserGender | null,
+        gender: nextGender as UserGender | null,
       });
-      patchProfile({ gender: gender as UserGender | null });
+      setGender(nextGender);
+      patchProfile({ gender: nextGender as UserGender | null });
       void refreshProfile({ silent: true });
     },
     [ensureProfile, patchProfile, refreshProfile, user],
@@ -177,6 +188,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
+      gender,
+      setGender,
       weight,
       setWeight,
       age,
@@ -192,6 +205,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     [
       age,
       finishOnboarding,
+      gender,
       height,
       saveAge,
       saveGender,

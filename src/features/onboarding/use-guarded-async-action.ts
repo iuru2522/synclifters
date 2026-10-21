@@ -12,9 +12,8 @@ export function useGuardedAsyncAction() {
 
     try {
       await action();
-    } catch (error) {
+    } finally {
       busyRef.current = false;
-      throw error;
     }
   }, []);
 }
