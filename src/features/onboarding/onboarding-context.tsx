@@ -4,6 +4,7 @@ import type { WeightUnit } from "@/components/auth/weight-unit-toggle";
 import { useAuth } from "@/features/auth/auth-context";
 import {
   createUserProfile,
+  getUserProfile,
   updateUserProfile,
   type UserGender,
   type UserSportsExperience,
@@ -49,10 +50,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [age, setAge] = useState<number>(sizes.ageWheelDefault);
   const [height, setHeight] = useState<number>(sizes.heightRulerDefault);
   const hydratedProfileUidRef = useRef<string | null>(null);
+  const ensuredProfileUidRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) {
       hydratedProfileUidRef.current = null;
+      ensuredProfileUidRef.current = null;
       setGender(null);
       return;
     }
@@ -91,7 +94,16 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       throw new Error("You must be signed in to continue onboarding.");
     }
 
-    if (profile) {
+    if (profile || ensuredProfileUidRef.current === user.uid) {
+      ensuredProfileUidRef.current = user.uid;
+      return;
+    }
+
+    const existingProfile = await getUserProfile(user.uid);
+
+    if (existingProfile) {
+      ensuredProfileUidRef.current = user.uid;
+      await refreshProfile({ silent: true });
       return;
     }
 
@@ -104,6 +116,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       lastName,
       email: user.email ?? "",
     });
+    ensuredProfileUidRef.current = user.uid;
     await refreshProfile({ silent: true });
   }, [profile, refreshProfile, user]);
 

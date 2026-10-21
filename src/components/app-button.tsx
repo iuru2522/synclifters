@@ -1,5 +1,5 @@
 import { colors, globalStyles, sizes } from "@/styles/global";
-import { type ReactNode, useCallback } from "react";
+import { type ReactNode, useCallback, useEffect } from "react";
 import {
   Pressable,
   Text,
@@ -148,6 +148,12 @@ export function AppButton({
     [pressProgress],
   );
 
+  useEffect(() => {
+    if (disabled || (!animatePress && !animatePressAccent)) {
+      pressProgress.value = 0;
+    }
+  }, [animatePress, animatePressAccent, disabled, pressProgress]);
+
   const animatedAccentContainerStyle = useAnimatedStyle(() => {
     if (!animatePressAccent || !pressAccentColor) {
       return {};
@@ -215,9 +221,7 @@ export function AppButton({
           }
         }}
         onPressOut={() => {
-          if (!disabled) {
-            setPressed(false);
-          }
+          setPressed(false);
         }}
         disabled={disabled}
         accessibilityRole="button"
@@ -259,9 +263,7 @@ export function AppButton({
           }
         }}
         onPressOut={() => {
-          if (!disabled) {
-            setPressed(false);
-          }
+          setPressed(false);
         }}
         disabled={disabled}
         accessibilityRole="button"
