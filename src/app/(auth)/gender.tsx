@@ -5,20 +5,23 @@ import { AuthScreenLayout } from "@/components/auth/auth-screen-layout";
 import { AuthFormFooter } from "@/components/auth/auth-form-footer";
 import { FirebaseSetupCard } from "@/components/auth/firebase-setup-card";
 import { GenderForm, type Gender } from "@/components/auth/gender-form";
+import { useAuthBack } from "@/components/auth/use-auth-back";
 import { useAuth } from "@/features/auth/auth-context";
+import { AuthServiceError } from "@/features/auth/auth-service";
 import { useOnboarding } from "@/features/onboarding/onboarding-context";
 import { useGuardedAsyncAction } from "@/features/onboarding/use-guarded-async-action";
 
 export default function GenderScreen() {
-  const { isConfigured } = useAuth();
-  const { saveGender } = useOnboarding();
+  const { isConfigured, user, signOut } = useAuth();
+  const { gender, setGender, saveGender } = useOnboarding();
   const runOnce = useGuardedAsyncAction();
-  const [gender, setGender] = useState<Gender | null>(null);
+  const navigateBackToSignUp = useAuthBack({ href: "/sign-up" });
   const [saving, setSaving] = useState(false);
 
   const handleGenderChange = useCallback(
     (value: Gender) => {
       void runOnce(async () => {
+        const previousGender = gender;
         setGender(value);
         setSaving(true);
 
@@ -26,13 +29,15 @@ export default function GenderScreen() {
           await saveGender(value);
           router.push("/weight");
         } catch (error) {
+          setGender(previousGender);
           const message = error instanceof Error ? error.message : "Failed to save gender.";
           Alert.alert("Could not continue", message);
+        } finally {
           setSaving(false);
         }
       });
     },
-    [runOnce, saveGender],
+    [gender, runOnce, saveGender, setGender],
   );
 
   const handleSkip = useCallback(() => {
@@ -45,10 +50,31 @@ export default function GenderScreen() {
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to continue.";
         Alert.alert("Could not continue", message);
+      } finally {
         setSaving(false);
       }
     });
   }, [runOnce, saveGender]);
+
+  const handleBack = useCallback(() => {
+    void runOnce(async () => {
+      setSaving(true);
+
+      try {
+        if (user) {
+          await signOut();
+        }
+
+        navigateBackToSignUp();
+      } catch (error) {
+        const message =
+          error instanceof AuthServiceError ? error.message : "Could not go back.";
+        Alert.alert("Sign out failed", message);
+      } finally {
+        setSaving(false);
+      }
+    });
+  }, [navigateBackToSignUp, runOnce, signOut, user]);
 
   if (!isConfigured) {
     return (
@@ -60,7 +86,7 @@ export default function GenderScreen() {
 
   return (
     <AuthScreenLayout
-      swipeBack={{ href: "/sign-up" }}
+      swipeBack={{ href: "/sign-up", onBack: handleBack }}
       footer={
         <AuthFormFooter
           showNext={false}
@@ -71,7 +97,12 @@ export default function GenderScreen() {
         />
       }
     >
-      <GenderForm gender={gender} onGenderChange={handleGenderChange} disabled={saving} />
+      <GenderForm
+        gender={gender}
+        onGenderChange={handleGenderChange}
+        onBackPress={handleBack}
+        disabled={saving}
+      />
     </AuthScreenLayout>
   );
 }

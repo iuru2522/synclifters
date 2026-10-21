@@ -32,6 +32,7 @@ export default function SportsExperienceScreen() {
         const message =
           error instanceof Error ? error.message : "Failed to complete onboarding.";
         Alert.alert("Could not continue", message);
+      } finally {
         setSaving(false);
       }
     });

@@ -159,8 +159,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const nextUser = await refreshCurrentUser();
     setUser(nextUser);
     setIsEmailVerified(Boolean(nextUser?.emailVerified));
+    if (nextUser) {
+      void refreshProfile({ silent: true });
+    }
     return nextUser;
-  }, []);
+  }, [refreshProfile]);
 
   const handleResendEmailVerification = useCallback(async () => {
     await resendEmailVerification();
@@ -170,7 +173,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const nextUser = await confirmEmailVerification(oobCode);
     setUser(nextUser);
     setIsEmailVerified(Boolean(nextUser?.emailVerified));
-  }, []);
+    if (nextUser) {
+      void refreshProfile({ silent: true });
+    }
+  }, [refreshProfile]);
+
+  const handleSignInWithEmail = useCallback(
+    async (
+      email: string,
+      password: string,
+      mode: AuthMode,
+      options?: SignInWithEmailOptions,
+    ) => {
+      await signInWithEmail(email, password, mode, options);
+      const auth = getFirebaseAuth();
+      if (auth?.currentUser) {
+        const nextProfile = await getUserProfile(auth.currentUser.uid).catch(() => null);
+        if (nextProfile) {
+          setProfile(nextProfile);
+        }
+      }
+    },
+    [],
+  );
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -184,7 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAppleSignInAvailable: appleSignInAvailable,
       refreshProfile,
       patchProfile,
-      signInWithEmail,
+      signInWithEmail: handleSignInWithEmail,
       sendPasswordReset,
       setNewPassword,
       updateCurrentUserPassword,
@@ -205,6 +230,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       appleSignInAvailable,
       refreshProfile,
       patchProfile,
+      handleSignInWithEmail,
       handleResendEmailVerification,
       handleConfirmEmailVerification,
       refreshUser,

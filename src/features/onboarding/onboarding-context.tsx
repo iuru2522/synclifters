@@ -4,6 +4,7 @@ import type { WeightUnit } from "@/components/auth/weight-unit-toggle";
 import { useAuth } from "@/features/auth/auth-context";
 import {
   createUserProfile,
+  getUserProfile,
   updateUserProfile,
   type UserGender,
   type UserSportsExperience,
@@ -24,6 +25,8 @@ import {
 import { useMeasurementUnit } from "./measurement-unit-context";
 
 type OnboardingContextValue = {
+  gender: Gender | null;
+  setGender: Dispatch<SetStateAction<Gender | null>>;
   weight: number;
   setWeight: Dispatch<SetStateAction<number>>;
   age: number;
@@ -42,14 +45,18 @@ const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const { user, profile, refreshProfile, patchProfile } = useAuth();
   const { unit, setUnit } = useMeasurementUnit();
+  const [gender, setGender] = useState<Gender | null>(null);
   const [weight, setWeight] = useState<number>(sizes.weightRulerDefault);
   const [age, setAge] = useState<number>(sizes.ageWheelDefault);
   const [height, setHeight] = useState<number>(sizes.heightRulerDefault);
   const hydratedProfileUidRef = useRef<string | null>(null);
+  const ensuredProfileUidRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) {
       hydratedProfileUidRef.current = null;
+      ensuredProfileUidRef.current = null;
+      setGender(null);
       return;
     }
 
@@ -58,6 +65,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
 
     hydratedProfileUidRef.current = user.uid;
+
+    if (profile.gender === "male" || profile.gender === "female") {
+      setGender(profile.gender);
+    } else if (profile.gender === null) {
+      setGender(null);
+    }
 
     if (typeof profile.weight === "number") {
       setWeight(profile.weight);
@@ -81,7 +94,16 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       throw new Error("You must be signed in to continue onboarding.");
     }
 
-    if (profile) {
+    if (profile || ensuredProfileUidRef.current === user.uid) {
+      ensuredProfileUidRef.current = user.uid;
+      return;
+    }
+
+    const existingProfile = await getUserProfile(user.uid);
+
+    if (existingProfile) {
+      ensuredProfileUidRef.current = user.uid;
+      await refreshProfile({ silent: true });
       return;
     }
 
@@ -94,11 +116,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       lastName,
       email: user.email ?? "",
     });
+    ensuredProfileUidRef.current = user.uid;
     await refreshProfile({ silent: true });
   }, [profile, refreshProfile, user]);
 
   const saveGender = useCallback(
-    async (gender: Gender | null) => {
+    async (nextGender: Gender | null) => {
       await ensureProfile();
 
       if (!user) {
@@ -106,9 +129,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       }
 
       await updateUserProfile(user.uid, {
-        gender: gender as UserGender | null,
+        gender: nextGender as UserGender | null,
       });
-      patchProfile({ gender: gender as UserGender | null });
+      setGender(nextGender);
+      patchProfile({ gender: nextGender as UserGender | null });
       void refreshProfile({ silent: true });
     },
     [ensureProfile, patchProfile, refreshProfile, user],
@@ -177,6 +201,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
+      gender,
+      setGender,
       weight,
       setWeight,
       age,
@@ -192,6 +218,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     [
       age,
       finishOnboarding,
+      gender,
       height,
       saveAge,
       saveGender,

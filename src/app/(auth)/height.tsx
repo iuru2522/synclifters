@@ -25,6 +25,7 @@ export default function HeightScreen() {
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to save height.";
         Alert.alert("Could not continue", message);
+      } finally {
         setSaving(false);
       }
     });
@@ -40,6 +41,7 @@ export default function HeightScreen() {
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to continue.";
         Alert.alert("Could not continue", message);
+      } finally {
         setSaving(false);
       }
     });

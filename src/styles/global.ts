@@ -2788,10 +2788,12 @@ export const globalStyles = StyleSheet.create({
   genderOptionMaleSelected: {
     backgroundColor: colors.genderMale,
     borderColor: colors.genderMale,
+    opacity: 1,
   },
   genderOptionFemaleSelected: {
     backgroundColor: colors.genderFemale,
     borderColor: colors.genderFemale,
+    opacity: 1,
   },
   weightScreen: {
     ...authScreenBase,
