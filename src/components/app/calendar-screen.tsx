@@ -1,11 +1,12 @@
 import {
   Calendar,
   toDateId,
+  useCalendar,
   type CalendarActiveDateRange,
+  type CalendarDayMetadata,
   type CalendarOnDayPress,
-  type CalendarTheme,
 } from "@marceloterreiro/flash-calendar";
-import { differenceInCalendarWeeks, startOfWeek } from "date-fns";
+import { differenceInCalendarWeeks, format, startOfWeek } from "date-fns";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -17,39 +18,6 @@ import { useUserSessions } from "@/features/workout/user-sessions";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
-
-const calendarTheme: CalendarTheme = {
-  rowMonth: {
-    container: globalStyles.calendarMonthRowContainer,
-    content: globalStyles.calendarMonthRowTitle,
-  },
-  rowWeek: {
-    container: globalStyles.calendarHiddenWeekRow,
-  },
-  itemDayContainer: {
-    activeDayFiller: {
-      backgroundColor: "transparent",
-    },
-  },
-  itemDay: {
-    base: () => ({
-      container: globalStyles.calendarDayBaseContainer,
-      content: globalStyles.calendarDayText,
-    }),
-    idle: () => ({
-      container: globalStyles.calendarDayBaseContainer,
-      content: globalStyles.calendarDayText,
-    }),
-    today: () => ({
-      container: globalStyles.calendarDayTodayContainer,
-      content: globalStyles.calendarDayTodayText,
-    }),
-    active: () => ({
-      container: globalStyles.calendarDayActiveContainer,
-      content: globalStyles.calendarDayActiveText,
-    }),
-  },
-};
 
 function FlameStreakIcon() {
   return (
@@ -68,6 +36,107 @@ function FlameStreakIcon() {
         fill={colors.calendarFlameInner}
       />
     </Svg>
+  );
+}
+
+function dayContainerStyle(state: CalendarDayMetadata["state"]) {
+  if (state === "active") {
+    return globalStyles.calendarDayActiveContainer;
+  }
+  if (state === "today") {
+    return globalStyles.calendarDayTodayContainer;
+  }
+  return globalStyles.calendarDayBaseContainer;
+}
+
+function dayTextStyle(state: CalendarDayMetadata["state"]) {
+  if (state === "active") {
+    return globalStyles.calendarDayActiveText;
+  }
+  if (state === "today") {
+    return globalStyles.calendarDayTodayText;
+  }
+  return globalStyles.calendarDayText;
+}
+
+function CalendarTrainingDay({
+  day,
+  isTrainingDay,
+  onPress,
+}: {
+  day: CalendarDayMetadata;
+  isTrainingDay: boolean;
+  onPress: CalendarOnDayPress;
+}) {
+  const label = format(day.date, "EEEE, MMMM d");
+
+  return (
+    <Pressable
+      style={[globalStyles.calendarDayCell, dayContainerStyle(day.state)]}
+      onPress={() => {
+        onPress(day.id);
+      }}
+      accessibilityRole="button"
+      accessibilityState={{ selected: day.state === "active" }}
+      accessibilityLabel={isTrainingDay ? `${label}, training day` : label}
+    >
+      <Text style={dayTextStyle(day.state)}>{day.displayLabel}</Text>
+      {isTrainingDay ? (
+        <View style={globalStyles.calendarTrainingDot} />
+      ) : (
+        <View style={globalStyles.calendarTrainingDotSpacer} />
+      )}
+    </Pressable>
+  );
+}
+
+function TrainingCalendarMonth({
+  calendarMonthId,
+  calendarFirstDayOfWeek = "sunday",
+  calendarActiveDateRanges,
+  onCalendarDayPress,
+  trainingDateIds,
+}: {
+  calendarMonthId: string;
+  calendarFirstDayOfWeek?: "sunday" | "monday";
+  calendarActiveDateRanges?: CalendarActiveDateRange[];
+  onCalendarDayPress: CalendarOnDayPress;
+  trainingDateIds: ReadonlySet<string>;
+}) {
+  const calendarParams = useMemo(
+    () => ({
+      calendarMonthId,
+      calendarFirstDayOfWeek,
+      calendarActiveDateRanges,
+    }),
+    [calendarActiveDateRanges, calendarFirstDayOfWeek, calendarMonthId],
+  );
+  const { calendarRowMonth, weeksList } = useCalendar(calendarParams);
+  const monthTitle =
+    calendarRowMonth.charAt(0).toUpperCase() + calendarRowMonth.slice(1);
+
+  return (
+    <View>
+      <View style={[globalStyles.calendarMonthRowContainer, globalStyles.calendarMonthHeader]}>
+        <Text style={globalStyles.calendarMonthRowTitle}>{monthTitle}</Text>
+      </View>
+      {weeksList.map((week) => (
+        <View key={week[0]?.id ?? calendarMonthId} style={globalStyles.calendarWeekRow}>
+          {week.map((day) =>
+            day.isDifferentMonth ? (
+              <View key={day.id} style={globalStyles.calendarDayCell} />
+            ) : (
+              <CalendarTrainingDay
+                key={day.id}
+                day={day}
+                isTrainingDay={trainingDateIds.has(day.id)}
+                onPress={onCalendarDayPress}
+              />
+            ),
+          )}
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -125,16 +194,20 @@ export function CalendarScreen() {
 
   const weekStreak = useMemo(() => computeWeekStreak(activityDates), [activityDates]);
 
-  const calendarActiveDateRanges = useMemo<CalendarActiveDateRange[]>(() => {
+  const trainingDateIds = useMemo(() => {
     const ids = new Set<string>();
     for (const date of activityDates) {
       ids.add(toDateId(date));
     }
-    if (selectedDateId) {
-      ids.add(selectedDateId);
+    return ids;
+  }, [activityDates]);
+
+  const calendarActiveDateRanges = useMemo<CalendarActiveDateRange[]>(() => {
+    if (!selectedDateId) {
+      return [];
     }
-    return Array.from(ids).map((id) => ({ startId: id, endId: id }));
-  }, [activityDates, selectedDateId]);
+    return [{ startId: selectedDateId, endId: selectedDateId }];
+  }, [selectedDateId]);
 
   const handleDayPress = useCallback<CalendarOnDayPress>((dateId) => {
     setSelectedDateId(dateId);
@@ -211,7 +284,18 @@ export function CalendarScreen() {
           calendarSpacing={spacing.calendarMonthSpacing}
           calendarActiveDateRanges={calendarActiveDateRanges}
           onCalendarDayPress={handleDayPress}
-          theme={calendarTheme}
+          extraData={trainingDateIds}
+          renderItem={({ item }) => (
+            <View style={globalStyles.calendarMonthListItem}>
+              <TrainingCalendarMonth
+                calendarActiveDateRanges={item.calendarProps.calendarActiveDateRanges}
+                calendarFirstDayOfWeek={item.calendarProps.calendarFirstDayOfWeek}
+                calendarMonthId={item.id}
+                onCalendarDayPress={item.calendarProps.onCalendarDayPress}
+                trainingDateIds={trainingDateIds}
+              />
+            </View>
+          )}
           contentContainerStyle={globalStyles.calendarListContent}
         />
       </View>

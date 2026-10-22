@@ -275,6 +275,7 @@ export const spacing = {
   calendarStreakGap: 8,
   calendarHorizontalInset: 16,
   calendarMonthSpacing: 28,
+  calendarTrainingDotGap: 4,
   calendarMonthTitleBottom: 14,
   calendarListBottom: 32,
   profileAvatarTop: 21,
@@ -412,6 +413,7 @@ export const sizes = {
   calendarWeekHeaderHeight: 38,
   calendarMonthHeaderHeight: 44,
   calendarDayCellHeight: 54,
+  calendarTrainingDot: 6,
   calendarTodayCircleSize: 32,
   workoutBellWidth: 19,
   workoutBellHeight: 18,
@@ -2527,6 +2529,35 @@ export const globalStyles = StyleSheet.create({
     fontFamily: fonts.poppinsBold,
     fontWeight: "700",
     includeFontPadding: false,
+  },
+  calendarMonthListItem: {
+    paddingBottom: spacing.calendarMonthSpacing,
+  },
+  calendarMonthHeader: {
+    height: sizes.calendarMonthHeaderHeight,
+  },
+  calendarWeekRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+  },
+  calendarDayCell: {
+    flex: 1,
+    height: sizes.calendarDayCellHeight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  calendarTrainingDot: {
+    width: sizes.calendarTrainingDot,
+    height: sizes.calendarTrainingDot,
+    borderRadius: sizes.calendarTrainingDot / 2,
+    marginTop: spacing.calendarTrainingDotGap,
+    backgroundColor: colors.backArrow,
+  },
+  calendarTrainingDotSpacer: {
+    width: sizes.calendarTrainingDot,
+    height: sizes.calendarTrainingDot,
+    marginTop: spacing.calendarTrainingDotGap,
   },
   profileAvatar: {
     width: sizes.profileAvatar,
