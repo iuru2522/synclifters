@@ -20,6 +20,7 @@ import { useUserBodyMetrics } from "@/features/users/user-body-metrics";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 const WEIGHT_SHEET_HREF = "/workout/weight-sheet?source=workout" as Href;
+const WEIGHT_SCREEN_HREF = "/workout/progress-metric" as Href;
 
 function PointValueLabel({ label }: { label: string }) {
   return (
@@ -126,9 +127,21 @@ export function WorkoutWeightTrendChart() {
     router.push(WEIGHT_SHEET_HREF);
   }
 
+  function openWeightScreen() {
+    router.push({
+      pathname: WEIGHT_SCREEN_HREF,
+      params: { metric: "weight" },
+    } as Href);
+  }
+
   return (
     <WorkoutGlassCard style={globalStyles.workoutGlassCardWide}>
-      <View style={globalStyles.workoutWeightTrendCard}>
+      <Pressable
+        style={globalStyles.workoutWeightTrendCard}
+        onPress={openWeightScreen}
+        accessibilityRole="button"
+        accessibilityLabel="Weight trend"
+      >
         <View
           style={globalStyles.workoutWeightTrendDelta}
           accessibilityLabel={`${deltaSummary.arrowSymbol} ${deltaSummary.valueText} ${deltaSummary.unitLabel} ${deltaSummary.periodLabel}`}
@@ -250,7 +263,7 @@ export function WorkoutWeightTrendChart() {
             </Text>
           </Pressable>
         </View>
-      </View>
+      </Pressable>
     </WorkoutGlassCard>
   );
 }
