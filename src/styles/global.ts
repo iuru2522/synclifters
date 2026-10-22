@@ -2024,6 +2024,9 @@ export const globalStyles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.workoutProgramSubtitleMetaGap,
   },
+  workoutGlassCardPressable: {
+    flex: 1,
+  },
   workoutGlassCard: {
     flex: 1,
     height: sizes.workoutGlassCardHeight,
