@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PROFILE_HREF = "/workout/profile" as Href;
 const CREATE_PROGRAM_HREF = "/workout/create-program" as Href;
+const CALENDAR_HREF = "/workout/calendar" as Href;
 
 export function WorkoutTabScreen() {
   const router = useRouter();
@@ -151,12 +152,21 @@ export function WorkoutTabScreen() {
           </View>
         </View>
         <View style={globalStyles.workoutGlassCardsRow}>
-          <WorkoutGlassCard style={globalStyles.workoutGlassCard}>
-            <View style={globalStyles.workoutGlassCardContent}>
-              <Text style={globalStyles.workoutGlassCardValue}>{trainingDaysCount}</Text>
-              <Text style={globalStyles.workoutGlassCardLabel}>TRAINING DAYS</Text>
-            </View>
-          </WorkoutGlassCard>
+          <Pressable
+            style={globalStyles.workoutGlassCardPressable}
+            onPress={() => {
+              router.push(CALENDAR_HREF);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Training days"
+          >
+            <WorkoutGlassCard style={globalStyles.workoutGlassCard}>
+              <View style={globalStyles.workoutGlassCardContent}>
+                <Text style={globalStyles.workoutGlassCardValue}>{trainingDaysCount}</Text>
+                <Text style={globalStyles.workoutGlassCardLabel}>TRAINING DAYS</Text>
+              </View>
+            </WorkoutGlassCard>
+          </Pressable>
           <WorkoutGlassCard style={globalStyles.workoutGlassCard}>
             <View style={globalStyles.workoutGlassCardContent}>
               <Text style={globalStyles.workoutGlassCardValue}>
@@ -176,6 +186,9 @@ export function WorkoutTabScreen() {
           <WeekCalendar
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
+            onDayPress={() => {
+              router.push(CALENDAR_HREF);
+            }}
             activityDates={activityDates}
           />
         </View>

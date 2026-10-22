@@ -16,6 +16,7 @@ import { dateKey, useWeek } from "./useWeek";
 export function WeekCalendar({
   selectedDate,
   onDateChange,
+  onDayPress,
   weekStartsOn = 0,
   activityDates,
 }: WeekCalendarProps) {
@@ -40,11 +41,12 @@ export function WeekCalendar({
     });
   }, [selectedWeekIndex]);
 
-  const onDayPress = useCallback(
+  const handleDayPress = useCallback(
     (date: Date) => {
       onDateChange(date);
+      onDayPress?.(date);
     },
-    [onDateChange],
+    [onDateChange, onDayPress],
   );
 
   const renderWeek: ListRenderItem<WeekPage> = useCallback(
@@ -57,12 +59,12 @@ export function WeekCalendar({
             selected={isSameDay(day, selectedDate)}
             hasActivity={hasActivity(day)}
             isToday={isSameDay(day, today)}
-            onPress={onDayPress}
+            onPress={handleDayPress}
           />
         ))}
       </View>
     ),
-    [hasActivity, onDayPress, selectedDate, today, windowWidth],
+    [handleDayPress, hasActivity, selectedDate, today, windowWidth],
   );
 
   const getItemLayout = useCallback(
