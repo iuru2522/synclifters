@@ -12,7 +12,6 @@ import { useCallback, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
-import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { useUserSessions } from "@/features/workout/user-sessions";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
@@ -232,15 +231,6 @@ export function CalendarScreen() {
           />
         </View>
         <Text style={globalStyles.createDayHeaderTitle}>Calendar</Text>
-        <Pressable
-          style={globalStyles.createDayHeaderMenu}
-          onPress={() => {}}
-          hitSlop={sizes.backArrowHitSlop}
-          accessibilityRole="button"
-          accessibilityLabel="Menu"
-        >
-          <CreateDayBurgerIcon />
-        </Pressable>
       </View>
 
       <View style={globalStyles.calendarTopBar}>
