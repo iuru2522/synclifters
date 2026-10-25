@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  FlatList,
   Text,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
+import { type LegendListRef } from "@legendapp/list/react-native";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import Animated, {
   Extrapolation,
   interpolate,
   runOnJS,
-  useAnimatedScrollHandler,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   type SharedValue,
@@ -26,13 +27,15 @@ import {
 } from "./height-ruler-units";
 import type { WeightUnit } from "./weight-unit-toggle";
 
-const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<number>);
-
 type HeightRulerPickerProps = {
   value: number;
   unit: WeightUnit;
   onChange: (value: number) => void;
 };
+
+const ADJACENT_FONT_SCALE =
+  typography.weightRulerAdjacentNumber.fontSize /
+  typography.weightRulerSelectedNumber.fontSize;
 
 function formatRulerLabel(value: number) {
   return String(Math.round(value));
@@ -80,26 +83,8 @@ function RulerNumberLabel({
       [0, stepHeight * 10, stepHeight * 20],
       [
         sizes.weightRulerSelectedScale,
-        sizes.weightRulerAdjacentScale,
-        sizes.weightRulerFarScale,
-      ],
-      Extrapolation.CLAMP,
-    );
-    const fontSize = interpolate(
-      distance,
-      [0, stepHeight * 10],
-      [
-        typography.weightRulerSelectedNumber.fontSize,
-        typography.weightRulerAdjacentNumber.fontSize,
-      ],
-      Extrapolation.CLAMP,
-    );
-    const lineHeight = interpolate(
-      distance,
-      [0, stepHeight * 10],
-      [
-        typography.weightRulerSelectedNumber.lineHeight,
-        typography.weightRulerAdjacentNumber.lineHeight,
+        sizes.weightRulerAdjacentScale * ADJACENT_FONT_SCALE,
+        sizes.weightRulerFarScale * ADJACENT_FONT_SCALE,
       ],
       Extrapolation.CLAMP,
     );
@@ -115,15 +100,19 @@ function RulerNumberLabel({
 
     return {
       transform: [{ scale }],
-      fontSize,
-      lineHeight,
       color: distance < stepHeight * 0.75 ? colors.backArrow : colors.white,
       opacity: focusOpacity * edgeOpacity,
     };
   });
 
   return (
-    <Animated.Text style={[globalStyles.heightRulerNumberLabel, animatedStyle]}>
+    <Animated.Text
+      style={[
+        globalStyles.heightRulerNumberLabel,
+        typography.weightRulerSelectedNumber,
+        animatedStyle,
+      ]}
+    >
       {label}
     </Animated.Text>
   );
@@ -198,15 +187,28 @@ function RulerStep({
 }
 
 export function HeightRulerPicker({ value, unit, onChange }: HeightRulerPickerProps) {
-  const listRef = useRef<FlatList<number>>(null);
-  const scrollY = useSharedValue(0);
-  const [displayValue, setDisplayValue] = useState(value);
-  const hasScrolledToInitial = useRef(false);
-  const prevUnitRef = useRef(unit);
+  const listRef = useRef<LegendListRef>(null);
   const config = useMemo(() => getHeightRulerConfig(unit), [unit]);
 
   const stepHeight = sizes.heightRulerStepHeight;
   const stepCount = Math.round((config.max - config.min) / config.step);
+  const viewportHeight = sizes.heightRulerViewportHeight;
+  const sidePadding = Math.max(0, viewportHeight / 2 - stepHeight / 2);
+  const maxScrollOffset = stepCount * stepHeight;
+
+  const initialIndex = useMemo(
+    () => Math.max(0, Math.min(stepCount, heightToIndex(value, config))),
+    // Compute initial index per unit mount so user scrolling doesn't reset initialScrollOffset
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [config, stepCount, unit],
+  );
+  const initialOffset = initialIndex * stepHeight;
+
+  const scrollY = useSharedValue(initialOffset);
+  const sharedValues = useMemo(() => ({ scrollOffset: scrollY }), [scrollY]);
+  const [displayValue, setDisplayValue] = useState(value);
+  const isMomentumScrolling = useRef(false);
+
   const steps = useMemo(
     () => Array.from({ length: stepCount + 1 }, (_, index) => index),
     [stepCount],
@@ -215,9 +217,6 @@ export function HeightRulerPicker({ value, unit, onChange }: HeightRulerPickerPr
     sizes.heightRulerNumberColumnWidth +
     spacing.heightRulerNumberToBar +
     sizes.heightRulerBarWidth;
-  const viewportHeight = sizes.heightRulerViewportHeight;
-  const sidePadding = Math.max(0, viewportHeight / 2 - stepHeight / 2);
-  const maxScrollOffset = stepCount * stepHeight;
 
   const clampIndex = useCallback(
     (index: number) => Math.max(0, Math.min(stepCount, index)),
@@ -229,23 +228,11 @@ export function HeightRulerPicker({ value, unit, onChange }: HeightRulerPickerPr
     [maxScrollOffset],
   );
 
-  const updateDisplayFromOffset = useCallback(
-    (offset: number) => {
-      const index = clampIndex(Math.round(clampOffset(offset) / stepHeight));
-      setDisplayValue(indexToHeight(index, config));
+  const updateDisplayByIndex = useCallback(
+    (index: number) => {
+      setDisplayValue(indexToHeight(clampIndex(index), config));
     },
-    [clampIndex, clampOffset, config, stepHeight],
-  );
-
-  const scrollToValue = useCallback(
-    (nextValue: number, animated: boolean) => {
-      const index = clampIndex(heightToIndex(nextValue, config));
-      const offset = index * stepHeight;
-      listRef.current?.scrollToOffset({ offset, animated });
-      scrollY.value = offset;
-      setDisplayValue(indexToHeight(index, config));
-    },
-    [clampIndex, config, scrollY, stepHeight],
+    [clampIndex, config],
   );
 
   useEffect(() => {
@@ -253,45 +240,51 @@ export function HeightRulerPicker({ value, unit, onChange }: HeightRulerPickerPr
   }, [value]);
 
   useEffect(() => {
-    if (!hasScrolledToInitial.current) {
-      hasScrolledToInitial.current = true;
-      requestAnimationFrame(() => {
-        scrollToValue(value, false);
-      });
-    }
-  }, [scrollToValue, value]);
+    scrollY.value = initialOffset;
+  }, [initialOffset, scrollY]);
 
-  useEffect(() => {
-    if (!hasScrolledToInitial.current || prevUnitRef.current === unit) {
-      return;
-    }
-
-    prevUnitRef.current = unit;
-    requestAnimationFrame(() => {
-      scrollToValue(value, false);
-    });
-  }, [scrollToValue, unit, value]);
-
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollY.value = event.contentOffset.y;
-      runOnJS(updateDisplayFromOffset)(event.contentOffset.y);
+  useAnimatedReaction(
+    () => Math.round(scrollY.value / stepHeight),
+    (currentIndex, previousIndex) => {
+      if (previousIndex !== null && currentIndex !== previousIndex) {
+        runOnJS(updateDisplayByIndex)(currentIndex);
+      }
     },
-  });
+    [stepHeight, updateDisplayByIndex],
+  );
 
-  const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offset = clampOffset(event.nativeEvent.contentOffset.y);
-    const index = clampIndex(Math.round(offset / stepHeight));
+  const commitOffset = useCallback(
+    (rawOffset: number) => {
+      const offset = clampOffset(rawOffset);
+      const index = clampIndex(Math.round(offset / stepHeight));
+      const nextValue = indexToHeight(index, config);
+      setDisplayValue(nextValue);
+      onChange(nextValue);
+    },
+    [clampIndex, clampOffset, config, onChange, stepHeight],
+  );
 
-    if (offset !== event.nativeEvent.contentOffset.y) {
-      listRef.current?.scrollToOffset({ offset, animated: true });
-      scrollY.value = offset;
-    }
+  const handleMomentumScrollBegin = useCallback(() => {
+    isMomentumScrolling.current = true;
+  }, []);
 
-    const nextValue = indexToHeight(index, config);
-    setDisplayValue(nextValue);
-    onChange(nextValue);
-  };
+  const handleMomentumScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      isMomentumScrolling.current = false;
+      commitOffset(event.nativeEvent.contentOffset.y);
+    },
+    [commitOffset],
+  );
+
+  const handleScrollEndDrag = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const velocityY = event.nativeEvent.velocity?.y ?? 0;
+      if (Math.abs(velocityY) < 0.05 && !isMomentumScrolling.current) {
+        commitOffset(event.nativeEvent.contentOffset.y);
+      }
+    },
+    [commitOffset],
+  );
 
   const renderStep = useCallback(
     ({ item: index }: { item: number }) => (
@@ -308,14 +301,12 @@ export function HeightRulerPicker({ value, unit, onChange }: HeightRulerPickerPr
     [config, rowWidth, scrollY, sidePadding, stepHeight, viewportHeight],
   );
 
-  const getItemLayout = useCallback(
-    (_: ArrayLike<number> | null | undefined, index: number) => ({
-      length: stepHeight,
-      offset: stepHeight * index,
-      index,
-    }),
-    [stepHeight],
+  const getFixedItemSize = useCallback(() => stepHeight, [stepHeight]);
+  const getItemType = useCallback(
+    (index: number) => (index % 10 === 0 ? "major" : "tick"),
+    [],
   );
+  const keyExtractor = useCallback((index: number) => String(index), []);
 
   return (
     <View style={globalStyles.heightRulerPicker}>
@@ -337,23 +328,29 @@ export function HeightRulerPicker({ value, unit, onChange }: HeightRulerPickerPr
               pointerEvents="none"
               style={globalStyles.heightRulerBarTrack}
             />
-            <AnimatedFlatList
+            <AnimatedLegendList
               key={unit}
               ref={listRef}
               data={steps}
-              keyExtractor={(index) => String(index)}
+              keyExtractor={keyExtractor}
               renderItem={renderStep}
-              getItemLayout={getItemLayout}
+              getFixedItemSize={getFixedItemSize}
+              getItemType={getItemType}
+              estimatedItemSize={stepHeight}
+              estimatedListSize={{ width: rowWidth, height: viewportHeight }}
+              initialScrollOffset={initialOffset}
+              recycleItems
+              drawDistance={viewportHeight}
+              sharedValues={sharedValues}
               showsVerticalScrollIndicator={false}
               bounces={false}
               overScrollMode="never"
               decelerationRate="fast"
               snapToInterval={stepHeight}
-              scrollEventThrottle={16}
               style={globalStyles.heightRulerList}
-              onScroll={scrollHandler}
-              onMomentumScrollEnd={handleScrollEnd}
-              onScrollEndDrag={handleScrollEnd}
+              onMomentumScrollBegin={handleMomentumScrollBegin}
+              onMomentumScrollEnd={handleMomentumScrollEnd}
+              onScrollEndDrag={handleScrollEndDrag}
               contentContainerStyle={{ paddingVertical: sidePadding }}
             />
             <View pointerEvents="none" style={globalStyles.heightRulerNeedle} />
