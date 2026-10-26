@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  FlatList,
   Text,
   View,
   useWindowDimensions,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import Animated, {
   Extrapolation,
   interpolate,
   interpolateColor,
   runOnJS,
-  useAnimatedScrollHandler,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   type SharedValue,
@@ -20,12 +20,15 @@ import Animated, {
 import { colors, globalStyles, sizes, typography } from "@/styles/global";
 import { AuthReadoutArrow } from "./auth-readout-arrow";
 
-const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<number>);
-
 type AgeWheelPickerProps = {
   value: number;
   onChange: (value: number) => void;
 };
+
+const ADJACENT_FONT_SCALE =
+  typography.ageWheelAdjacentNumber.fontSize / typography.ageWheelSelectedNumber.fontSize;
+const FAR_FONT_SCALE =
+  typography.ageWheelFarNumber.fontSize / typography.ageWheelSelectedNumber.fontSize;
 
 function indexToAge(index: number) {
   return sizes.ageWheelMin + index;
@@ -65,7 +68,7 @@ function AgeWheelSegment({
   segmentWidth,
   segmentHeight,
 }: AgeWheelSegmentProps) {
-  const containerStyle = useAnimatedStyle(() => {
+  const animatedStyle = useAnimatedStyle(() => {
     const distance = Math.abs(index * segmentWidth - scrollX.value);
 
     return {
@@ -76,48 +79,17 @@ function AgeWheelSegment({
             [0, segmentWidth, segmentWidth * 2, segmentWidth * 3],
             [
               sizes.ageWheelSelectedScale,
-              sizes.ageWheelAdjacentScale,
-              sizes.ageWheelFarScale,
-              sizes.ageWheelFarScale * 0.9,
+              sizes.ageWheelAdjacentScale * ADJACENT_FONT_SCALE,
+              sizes.ageWheelFarScale * FAR_FONT_SCALE,
+              sizes.ageWheelFarScale * 0.9 * FAR_FONT_SCALE,
             ],
             Extrapolation.CLAMP,
           ),
         },
       ],
-    };
-  });
-
-  const labelStyle = useAnimatedStyle(() => {
-    const distance = Math.abs(index * segmentWidth - scrollX.value);
-    const styleDistance = [0, segmentWidth, segmentWidth * 2];
-
-    const fontSize = interpolate(
-      distance,
-      styleDistance,
-      [
-        typography.ageWheelSelectedNumber.fontSize,
-        typography.ageWheelAdjacentNumber.fontSize,
-        typography.ageWheelFarNumber.fontSize,
-      ],
-      Extrapolation.CLAMP,
-    );
-    const lineHeight = interpolate(
-      distance,
-      styleDistance,
-      [
-        typography.ageWheelSelectedNumber.lineHeight,
-        typography.ageWheelAdjacentNumber.lineHeight,
-        typography.ageWheelFarNumber.lineHeight,
-      ],
-      Extrapolation.CLAMP,
-    );
-
-    return {
-      fontSize,
-      lineHeight,
       opacity: interpolate(
         distance,
-        styleDistance,
+        [0, segmentWidth, segmentWidth * 2],
         [1, sizes.ageWheelAdjacentOpacity, sizes.ageWheelFarOpacity],
         Extrapolation.CLAMP,
       ),
@@ -131,52 +103,60 @@ function AgeWheelSegment({
 
   return (
     <View style={[globalStyles.ageWheelSegmentSlot, { width: segmentWidth, height: segmentHeight }]}>
-      <Animated.View style={[globalStyles.ageWheelSegmentContent, containerStyle]}>
+      <View style={globalStyles.ageWheelSegmentContent}>
         <Animated.Text
           numberOfLines={1}
-          style={[globalStyles.ageWheelSegmentLabel, labelStyle]}
+          style={[
+            globalStyles.ageWheelSegmentLabel,
+            typography.ageWheelSelectedNumber,
+            animatedStyle,
+          ]}
         >
           {age}
         </Animated.Text>
-      </Animated.View>
+      </View>
     </View>
   );
 }
 
 export function AgeWheelPicker({ value, onChange }: AgeWheelPickerProps) {
   const { width: windowWidth } = useWindowDimensions();
-  const listRef = useRef<FlatList<number>>(null);
-  const scrollX = useSharedValue(0);
-  const [displayValue, setDisplayValue] = useState(value);
-  const hasScrolledToInitial = useRef(false);
 
   const segmentWidth = sizes.ageWheelSegmentWidth;
   const selectionFrameWidth = sizes.ageWheelSelectionFrameWidth;
   const segmentHeight = sizes.ageWheelBannerHeight;
   const ageCount = sizes.ageWheelMax - sizes.ageWheelMin + 1;
+  const maxIndex = ageCount - 1;
+
+  const initialIndex = useMemo(
+    () => Math.max(0, Math.min(maxIndex, ageToIndex(value))),
+    // Compute initial index on mount so user scrolling doesn't reset initialScrollOffset
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [maxIndex],
+  );
+  const initialOffset = initialIndex * segmentWidth;
+
+  const scrollX = useSharedValue(initialOffset);
+  const sharedValues = useMemo(() => ({ scrollOffset: scrollX }), [scrollX]);
+  const [displayValue, setDisplayValue] = useState(value);
+  const isMomentumScrolling = useRef(false);
+
   const ages = useMemo(
     () => Array.from({ length: ageCount }, (_, index) => index),
     [ageCount],
   );
   const sidePadding = Math.max(0, windowWidth / 2 - segmentWidth / 2);
 
-  const updateDisplayFromOffset = useCallback(
-    (offset: number) => {
-      const index = Math.round(offset / segmentWidth);
-      setDisplayValue(indexToAge(index));
-    },
-    [segmentWidth],
+  const clampIndex = useCallback(
+    (index: number) => Math.max(0, Math.min(maxIndex, index)),
+    [maxIndex],
   );
 
-  const scrollToAge = useCallback(
-    (nextAge: number, animated: boolean) => {
-      const index = ageToIndex(nextAge);
-      const offset = index * segmentWidth;
-      listRef.current?.scrollToOffset({ offset, animated });
-      scrollX.value = offset;
-      setDisplayValue(nextAge);
+  const updateDisplayByIndex = useCallback(
+    (index: number) => {
+      setDisplayValue(indexToAge(clampIndex(index)));
     },
-    [scrollX, segmentWidth],
+    [clampIndex],
   );
 
   useEffect(() => {
@@ -184,28 +164,50 @@ export function AgeWheelPicker({ value, onChange }: AgeWheelPickerProps) {
   }, [value]);
 
   useEffect(() => {
-    if (!hasScrolledToInitial.current && windowWidth > 0) {
-      hasScrolledToInitial.current = true;
-      requestAnimationFrame(() => {
-        scrollToAge(value, false);
-      });
-    }
-  }, [scrollToAge, value, windowWidth]);
+    scrollX.value = initialOffset;
+  }, [initialOffset, scrollX]);
 
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollX.value = event.contentOffset.x;
-      runOnJS(updateDisplayFromOffset)(event.contentOffset.x);
+  useAnimatedReaction(
+    () => Math.round(scrollX.value / segmentWidth),
+    (currentIndex, previousIndex) => {
+      if (previousIndex !== null && currentIndex !== previousIndex) {
+        runOnJS(updateDisplayByIndex)(currentIndex);
+      }
     },
-  });
+    [segmentWidth, updateDisplayByIndex],
+  );
 
-  const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offset = event.nativeEvent.contentOffset.x;
-    const index = Math.round(offset / segmentWidth);
-    const nextAge = indexToAge(index);
-    setDisplayValue(nextAge);
-    onChange(nextAge);
-  };
+  const commitOffset = useCallback(
+    (offset: number) => {
+      const index = clampIndex(Math.round(offset / segmentWidth));
+      const nextAge = indexToAge(index);
+      setDisplayValue(nextAge);
+      onChange(nextAge);
+    },
+    [clampIndex, onChange, segmentWidth],
+  );
+
+  const handleMomentumScrollBegin = useCallback(() => {
+    isMomentumScrolling.current = true;
+  }, []);
+
+  const handleMomentumScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      isMomentumScrolling.current = false;
+      commitOffset(event.nativeEvent.contentOffset.x);
+    },
+    [commitOffset],
+  );
+
+  const handleScrollEndDrag = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const velocityX = event.nativeEvent.velocity?.x ?? 0;
+      if (Math.abs(velocityX) < 0.05 && !isMomentumScrolling.current) {
+        commitOffset(event.nativeEvent.contentOffset.x);
+      }
+    },
+    [commitOffset],
+  );
 
   const renderSegment = useCallback(
     ({ item: index }: { item: number }) => (
@@ -220,36 +222,39 @@ export function AgeWheelPicker({ value, onChange }: AgeWheelPickerProps) {
     [scrollX, segmentHeight, segmentWidth],
   );
 
-  const getItemLayout = useCallback(
-    (_: ArrayLike<number> | null | undefined, index: number) => ({
-      length: segmentWidth,
-      offset: segmentWidth * index,
-      index,
-    }),
-    [segmentWidth],
-  );
+  const getFixedItemSize = useCallback(() => segmentWidth, [segmentWidth]);
+  const keyExtractor = useCallback((index: number) => String(index), []);
 
   return (
     <View style={globalStyles.ageWheelPicker}>
       <AgeWheelReadout value={displayValue} />
       <View style={[globalStyles.ageWheelBanner, { width: windowWidth }]}>
-        <AnimatedFlatList
-          ref={listRef}
-          horizontal
-          data={ages}
-          keyExtractor={(index) => String(index)}
-          renderItem={renderSegment}
-          getItemLayout={getItemLayout}
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          snapToInterval={segmentWidth}
-          scrollEventThrottle={16}
-          onScroll={scrollHandler}
-          onMomentumScrollEnd={handleScrollEnd}
-          onScrollEndDrag={handleScrollEnd}
-          contentContainerStyle={{ paddingHorizontal: sidePadding }}
-        />
+        {windowWidth > 0 ? (
+          <AnimatedLegendList
+            horizontal
+            data={ages}
+            keyExtractor={keyExtractor}
+            renderItem={renderSegment}
+            getFixedItemSize={getFixedItemSize}
+            estimatedItemSize={segmentWidth}
+            estimatedListSize={{ width: windowWidth, height: segmentHeight }}
+            initialScrollOffset={initialOffset}
+            recycleItems
+            drawDistance={windowWidth}
+            sharedValues={sharedValues}
+            showsHorizontalScrollIndicator={false}
+            bounces={false}
+            overScrollMode="never"
+            decelerationRate="fast"
+            snapToInterval={segmentWidth}
+            onMomentumScrollBegin={handleMomentumScrollBegin}
+            onMomentumScrollEnd={handleMomentumScrollEnd}
+            onScrollEndDrag={handleScrollEndDrag}
+            contentContainerStyle={{ paddingHorizontal: sidePadding }}
+          />
+        ) : null}
         <View
+          pointerEvents="none"
           style={[
             globalStyles.ageWheelSelectionFrame,
             {
