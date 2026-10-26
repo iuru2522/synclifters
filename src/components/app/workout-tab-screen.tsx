@@ -12,12 +12,13 @@ import { useUserSessions } from "@/features/workout/user-sessions";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { colors, globalStyles, sizes } from "@/styles/global";
 import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PROFILE_HREF = "/workout/profile" as Href;
 const CREATE_PROGRAM_HREF = "/workout/create-program" as Href;
+const CALENDAR_HREF = "/workout/calendar" as Href;
 
 export function WorkoutTabScreen() {
   const router = useRouter();
@@ -54,6 +55,7 @@ export function WorkoutTabScreen() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [programSelected, setProgramSelected] = useState(false);
   const [daySelected, setDaySelected] = useState(false);
+  const isNavigatingToCalendarRef = useRef(false);
   const favoriteProgram = programs.find((program) => program.isFavorite) ?? null;
   const paramProgram =
     programs.find((program) => program.id === paramProgramId) ?? null;
@@ -66,10 +68,19 @@ export function WorkoutTabScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      isNavigatingToCalendarRef.current = false;
       void refresh();
       void refreshSessions();
     }, [refresh, refreshSessions]),
   );
+
+  const openCalendar = useCallback(() => {
+    if (isNavigatingToCalendarRef.current) {
+      return;
+    }
+    isNavigatingToCalendarRef.current = true;
+    router.navigate(CALENDAR_HREF);
+  }, [router]);
 
   useEffect(() => {
     if (paramDayName) {
@@ -151,12 +162,19 @@ export function WorkoutTabScreen() {
           </View>
         </View>
         <View style={globalStyles.workoutGlassCardsRow}>
-          <WorkoutGlassCard style={globalStyles.workoutGlassCard}>
-            <View style={globalStyles.workoutGlassCardContent}>
-              <Text style={globalStyles.workoutGlassCardValue}>{trainingDaysCount}</Text>
-              <Text style={globalStyles.workoutGlassCardLabel}>TRAINING DAYS</Text>
-            </View>
-          </WorkoutGlassCard>
+          <Pressable
+            style={globalStyles.workoutGlassCardPressable}
+            onPress={openCalendar}
+            accessibilityRole="button"
+            accessibilityLabel="Training days"
+          >
+            <WorkoutGlassCard style={globalStyles.workoutGlassCard}>
+              <View style={globalStyles.workoutGlassCardContent}>
+                <Text style={globalStyles.workoutGlassCardValue}>{trainingDaysCount}</Text>
+                <Text style={globalStyles.workoutGlassCardLabel}>TRAINING DAYS</Text>
+              </View>
+            </WorkoutGlassCard>
+          </Pressable>
           <WorkoutGlassCard style={globalStyles.workoutGlassCard}>
             <View style={globalStyles.workoutGlassCardContent}>
               <Text style={globalStyles.workoutGlassCardValue}>
@@ -176,6 +194,7 @@ export function WorkoutTabScreen() {
           <WeekCalendar
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
+            onDayPress={openCalendar}
             activityDates={activityDates}
           />
         </View>

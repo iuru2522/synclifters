@@ -3,6 +3,7 @@ export type WeekStartsOn = 0 | 1;
 export type WeekCalendarProps = {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
+  onDayPress?: (date: Date) => void;
   weekStartsOn?: WeekStartsOn;
   activityDates?: Date[];
 };
