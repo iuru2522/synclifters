@@ -5,7 +5,6 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
-import { type LegendListRef } from "@legendapp/list/react-native";
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import Animated, {
   Extrapolation,
@@ -187,7 +186,6 @@ function RulerStep({
 }
 
 export function HeightRulerPicker({ value, unit, onChange }: HeightRulerPickerProps) {
-  const listRef = useRef<LegendListRef>(null);
   const config = useMemo(() => getHeightRulerConfig(unit), [unit]);
 
   const stepHeight = sizes.heightRulerStepHeight;
@@ -330,7 +328,6 @@ export function HeightRulerPicker({ value, unit, onChange }: HeightRulerPickerPr
             />
             <AnimatedLegendList
               key={unit}
-              ref={listRef}
               data={steps}
               keyExtractor={keyExtractor}
               renderItem={renderStep}

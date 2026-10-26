@@ -6,7 +6,6 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
-import { type LegendListRef } from "@legendapp/list/react-native";
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import Animated, {
   Extrapolation,
@@ -122,7 +121,6 @@ function AgeWheelSegment({
 
 export function AgeWheelPicker({ value, onChange }: AgeWheelPickerProps) {
   const { width: windowWidth } = useWindowDimensions();
-  const listRef = useRef<LegendListRef>(null);
 
   const segmentWidth = sizes.ageWheelSegmentWidth;
   const selectionFrameWidth = sizes.ageWheelSelectionFrameWidth;
@@ -233,7 +231,6 @@ export function AgeWheelPicker({ value, onChange }: AgeWheelPickerProps) {
       <View style={[globalStyles.ageWheelBanner, { width: windowWidth }]}>
         {windowWidth > 0 ? (
           <AnimatedLegendList
-            ref={listRef}
             horizontal
             data={ages}
             keyExtractor={keyExtractor}

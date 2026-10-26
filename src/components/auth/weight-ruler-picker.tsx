@@ -6,7 +6,6 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
-import { type LegendListRef } from "@legendapp/list/react-native";
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import Animated, {
   Extrapolation,
@@ -37,11 +36,7 @@ const ADJACENT_FONT_SCALE =
   typography.weightRulerAdjacentNumber.fontSize /
   typography.weightRulerSelectedNumber.fontSize;
 
-function formatRulerLabel(value: number) {
-  return String(Math.round(value));
-}
-
-function formatReadoutValue(value: number) {
+function formatRulerValue(value: number) {
   return String(Math.round(value));
 }
 
@@ -59,7 +54,7 @@ function WeightRulerReadout({ value, unit }: WeightRulerReadoutProps) {
     <View style={globalStyles.weightRulerReadout}>
       <AuthReadoutArrow />
       <View style={globalStyles.weightRulerReadoutRow}>
-        <Text style={globalStyles.weightRulerReadoutValue}>{formatReadoutValue(value)}</Text>
+        <Text style={globalStyles.weightRulerReadoutValue}>{formatRulerValue(value)}</Text>
         <Text style={globalStyles.weightRulerReadoutUnit}>{formatUnitLabel(unit)}</Text>
       </View>
     </View>
@@ -163,7 +158,7 @@ function RulerStep({ index, config, scrollX, stepWidth, columnHeight }: RulerSte
         >
           <RulerNumberLabel
             index={index}
-            label={formatRulerLabel(stepValue)}
+            label={formatRulerValue(stepValue)}
             scrollX={scrollX}
             stepWidth={stepWidth}
           />
@@ -183,7 +178,6 @@ function RulerStep({ index, config, scrollX, stepWidth, columnHeight }: RulerSte
 
 export function WeightRulerPicker({ value, unit, onChange }: WeightRulerPickerProps) {
   const { width: windowWidth } = useWindowDimensions();
-  const listRef = useRef<LegendListRef>(null);
   const config = useMemo(() => getWeightRulerConfig(unit), [unit]);
 
   const stepWidth = sizes.weightRulerStepWidth;
@@ -299,7 +293,6 @@ export function WeightRulerPicker({ value, unit, onChange }: WeightRulerPickerPr
           {windowWidth > 0 ? (
             <AnimatedLegendList
               key={unit}
-              ref={listRef}
               horizontal
               data={steps}
               keyExtractor={keyExtractor}
