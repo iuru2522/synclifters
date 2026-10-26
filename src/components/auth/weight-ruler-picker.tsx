@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  FlatList,
   Text,
   View,
   useWindowDimensions,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import Animated, {
   Extrapolation,
   interpolate,
   runOnJS,
-  useAnimatedScrollHandler,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   type SharedValue,
@@ -26,19 +26,17 @@ import {
 } from "./weight-ruler-units";
 import type { WeightUnit } from "./weight-unit-toggle";
 
-const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<number>);
-
 type WeightRulerPickerProps = {
   value: number;
   unit: WeightUnit;
   onChange: (value: number) => void;
 };
 
-function formatRulerLabel(value: number) {
-  return String(Math.round(value));
-}
+const ADJACENT_FONT_SCALE =
+  typography.weightRulerAdjacentNumber.fontSize /
+  typography.weightRulerSelectedNumber.fontSize;
 
-function formatReadoutValue(value: number) {
+function formatRulerValue(value: number) {
   return String(Math.round(value));
 }
 
@@ -56,7 +54,7 @@ function WeightRulerReadout({ value, unit }: WeightRulerReadoutProps) {
     <View style={globalStyles.weightRulerReadout}>
       <AuthReadoutArrow />
       <View style={globalStyles.weightRulerReadoutRow}>
-        <Text style={globalStyles.weightRulerReadoutValue}>{formatReadoutValue(value)}</Text>
+        <Text style={globalStyles.weightRulerReadoutValue}>{formatRulerValue(value)}</Text>
         <Text style={globalStyles.weightRulerReadoutUnit}>{formatUnitLabel(unit)}</Text>
       </View>
     </View>
@@ -78,41 +76,27 @@ function RulerNumberLabel({ index, label, scrollX, stepWidth }: RulerNumberLabel
       [0, stepWidth * 10, stepWidth * 20],
       [
         sizes.weightRulerSelectedScale,
-        sizes.weightRulerAdjacentScale,
-        sizes.weightRulerFarScale,
-      ],
-      Extrapolation.CLAMP,
-    );
-    const fontSize = interpolate(
-      distance,
-      [0, stepWidth * 10],
-      [
-        typography.weightRulerSelectedNumber.fontSize,
-        typography.weightRulerAdjacentNumber.fontSize,
-      ],
-      Extrapolation.CLAMP,
-    );
-    const lineHeight = interpolate(
-      distance,
-      [0, stepWidth * 10],
-      [
-        typography.weightRulerSelectedNumber.lineHeight,
-        typography.weightRulerAdjacentNumber.lineHeight,
+        sizes.weightRulerAdjacentScale * ADJACENT_FONT_SCALE,
+        sizes.weightRulerFarScale * ADJACENT_FONT_SCALE,
       ],
       Extrapolation.CLAMP,
     );
 
     return {
       transform: [{ scale }],
-      fontSize,
-      lineHeight,
       color: distance < stepWidth * 0.75 ? colors.backArrow : colors.white,
       opacity: distance < stepWidth * 0.75 ? 1 : sizes.weightRulerAdjacentOpacity,
     };
   });
 
   return (
-    <Animated.Text style={[globalStyles.weightRulerNumberLabel, animatedStyle]}>
+    <Animated.Text
+      style={[
+        globalStyles.weightRulerNumberLabel,
+        typography.weightRulerSelectedNumber,
+        animatedStyle,
+      ]}
+    >
       {label}
     </Animated.Text>
   );
@@ -174,7 +158,7 @@ function RulerStep({ index, config, scrollX, stepWidth, columnHeight }: RulerSte
         >
           <RulerNumberLabel
             index={index}
-            label={formatRulerLabel(stepValue)}
+            label={formatRulerValue(stepValue)}
             scrollX={scrollX}
             stepWidth={stepWidth}
           />
@@ -194,15 +178,23 @@ function RulerStep({ index, config, scrollX, stepWidth, columnHeight }: RulerSte
 
 export function WeightRulerPicker({ value, unit, onChange }: WeightRulerPickerProps) {
   const { width: windowWidth } = useWindowDimensions();
-  const listRef = useRef<FlatList<number>>(null);
-  const scrollX = useSharedValue(0);
-  const [displayValue, setDisplayValue] = useState(value);
-  const hasScrolledToInitial = useRef(false);
-  const prevUnitRef = useRef(unit);
   const config = useMemo(() => getWeightRulerConfig(unit), [unit]);
 
   const stepWidth = sizes.weightRulerStepWidth;
   const stepCount = Math.round((config.max - config.min) / config.step);
+  const initialIndex = useMemo(
+    () => Math.max(0, Math.min(stepCount, weightToIndex(value, config))),
+    // Compute initial index per unit mount so user scrolling doesn't reset initialScrollOffset
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [config, stepCount, unit],
+  );
+  const initialOffset = initialIndex * stepWidth;
+
+  const scrollX = useSharedValue(initialOffset);
+  const sharedValues = useMemo(() => ({ scrollOffset: scrollX }), [scrollX]);
+  const [displayValue, setDisplayValue] = useState(value);
+  const isMomentumScrolling = useRef(false);
+
   const steps = useMemo(
     () => Array.from({ length: stepCount + 1 }, (_, index) => index),
     [stepCount],
@@ -211,23 +203,17 @@ export function WeightRulerPicker({ value, unit, onChange }: WeightRulerPickerPr
   const columnHeight =
     sizes.weightRulerNumberRowHeight + spacing.weightRulerNumberToBar + sizes.weightRulerBarHeight;
 
-  const updateDisplayFromOffset = useCallback(
-    (offset: number) => {
-      const index = Math.round(offset / stepWidth);
-      setDisplayValue(indexToWeight(index, config));
-    },
-    [config, stepWidth],
+  const clampIndex = useCallback(
+    (index: number) => Math.max(0, Math.min(stepCount, index)),
+    [stepCount],
   );
 
-  const scrollToValue = useCallback(
-    (nextValue: number, animated: boolean) => {
-      const index = weightToIndex(nextValue, config);
-      const offset = index * stepWidth;
-      listRef.current?.scrollToOffset({ offset, animated });
-      scrollX.value = offset;
-      setDisplayValue(nextValue);
+  const updateDisplayByIndex = useCallback(
+    (index: number) => {
+      const clamped = clampIndex(index);
+      setDisplayValue(indexToWeight(clamped, config));
     },
-    [config, scrollX, stepWidth],
+    [clampIndex, config],
   );
 
   useEffect(() => {
@@ -235,39 +221,50 @@ export function WeightRulerPicker({ value, unit, onChange }: WeightRulerPickerPr
   }, [value]);
 
   useEffect(() => {
-    if (!hasScrolledToInitial.current && windowWidth > 0) {
-      hasScrolledToInitial.current = true;
-      requestAnimationFrame(() => {
-        scrollToValue(value, false);
-      });
-    }
-  }, [scrollToValue, value, windowWidth]);
+    scrollX.value = initialOffset;
+  }, [initialOffset, scrollX]);
 
-  useEffect(() => {
-    if (!hasScrolledToInitial.current || windowWidth <= 0 || prevUnitRef.current === unit) {
-      return;
-    }
-
-    prevUnitRef.current = unit;
-    requestAnimationFrame(() => {
-      scrollToValue(value, false);
-    });
-  }, [scrollToValue, unit, value, windowWidth]);
-
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollX.value = event.contentOffset.x;
-      runOnJS(updateDisplayFromOffset)(event.contentOffset.x);
+  useAnimatedReaction(
+    () => Math.round(scrollX.value / stepWidth),
+    (currentIndex, previousIndex) => {
+      if (previousIndex !== null && currentIndex !== previousIndex) {
+        runOnJS(updateDisplayByIndex)(currentIndex);
+      }
     },
-  });
+    [stepWidth, updateDisplayByIndex],
+  );
 
-  const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offset = event.nativeEvent.contentOffset.x;
-    const index = Math.round(offset / stepWidth);
-    const nextValue = indexToWeight(index, config);
-    setDisplayValue(nextValue);
-    onChange(nextValue);
-  };
+  const commitOffset = useCallback(
+    (offset: number) => {
+      const index = clampIndex(Math.round(offset / stepWidth));
+      const nextValue = indexToWeight(index, config);
+      setDisplayValue(nextValue);
+      onChange(nextValue);
+    },
+    [clampIndex, config, onChange, stepWidth],
+  );
+
+  const handleMomentumScrollBegin = useCallback(() => {
+    isMomentumScrolling.current = true;
+  }, []);
+
+  const handleMomentumScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      isMomentumScrolling.current = false;
+      commitOffset(event.nativeEvent.contentOffset.x);
+    },
+    [commitOffset],
+  );
+
+  const handleScrollEndDrag = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const velocityX = event.nativeEvent.velocity?.x ?? 0;
+      if (Math.abs(velocityX) < 0.05 && !isMomentumScrolling.current) {
+        commitOffset(event.nativeEvent.contentOffset.x);
+      }
+    },
+    [commitOffset],
+  );
 
   const renderStep = useCallback(
     ({ item: index }: { item: number }) => (
@@ -282,36 +279,43 @@ export function WeightRulerPicker({ value, unit, onChange }: WeightRulerPickerPr
     [columnHeight, config, scrollX, stepWidth],
   );
 
-  const getItemLayout = useCallback(
-    (_: ArrayLike<number> | null | undefined, index: number) => ({
-      length: stepWidth,
-      offset: stepWidth * index,
-      index,
-    }),
-    [stepWidth],
+  const getFixedItemSize = useCallback(() => stepWidth, [stepWidth]);
+  const getItemType = useCallback(
+    (index: number) => (index % 10 === 0 ? "major" : "tick"),
+    [],
   );
+  const keyExtractor = useCallback((index: number) => String(index), []);
 
   return (
     <View style={globalStyles.weightRulerPicker}>
       <View style={globalStyles.weightRulerPickerBody}>
         <View style={[globalStyles.weightRulerPickerViewport, { width: windowWidth }]}>
-          <AnimatedFlatList
-            key={unit}
-            ref={listRef}
-            horizontal
-            data={steps}
-            keyExtractor={(index) => String(index)}
-            renderItem={renderStep}
-            getItemLayout={getItemLayout}
-            showsHorizontalScrollIndicator={false}
-            decelerationRate="fast"
-            snapToInterval={stepWidth}
-            scrollEventThrottle={16}
-            onScroll={scrollHandler}
-            onMomentumScrollEnd={handleScrollEnd}
-            onScrollEndDrag={handleScrollEnd}
-            contentContainerStyle={{ paddingHorizontal: sidePadding }}
-          />
+          {windowWidth > 0 ? (
+            <AnimatedLegendList
+              key={unit}
+              horizontal
+              data={steps}
+              keyExtractor={keyExtractor}
+              renderItem={renderStep}
+              getFixedItemSize={getFixedItemSize}
+              getItemType={getItemType}
+              estimatedItemSize={stepWidth}
+              estimatedListSize={{ width: windowWidth, height: columnHeight }}
+              initialScrollOffset={initialOffset}
+              recycleItems
+              drawDistance={windowWidth}
+              sharedValues={sharedValues}
+              showsHorizontalScrollIndicator={false}
+              bounces={false}
+              overScrollMode="never"
+              decelerationRate="fast"
+              snapToInterval={stepWidth}
+              onMomentumScrollBegin={handleMomentumScrollBegin}
+              onMomentumScrollEnd={handleMomentumScrollEnd}
+              onScrollEndDrag={handleScrollEndDrag}
+              contentContainerStyle={{ paddingHorizontal: sidePadding }}
+            />
+          ) : null}
           <View pointerEvents="none" style={globalStyles.weightRulerNeedle} />
         </View>
       </View>
