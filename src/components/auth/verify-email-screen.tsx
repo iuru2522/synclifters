@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Alert, AppState, Text, View } from "react-native";
+import { router } from "expo-router";
 import { AppButton } from "@/components/app-button";
 import { useAuth } from "@/features/auth/auth-context";
 import { AuthServiceError } from "@/features/auth/auth-service";
@@ -7,27 +8,45 @@ import { colors, globalStyles, spacing } from "@/styles/global";
 import { AuthBackButton } from "./auth-back-button";
 
 type VerifyEmailScreenProps = {
-  oobCode?: string;
+  verificationCode?: string;
   disabled?: boolean;
   onSubmittingChange?: (submitting: boolean) => void;
 };
 
 export function VerifyEmailScreen({
-  oobCode = "",
+  verificationCode = "",
   disabled = false,
   onSubmittingChange,
 }: VerifyEmailScreenProps) {
   const {
     user,
+    isAuthLoading,
     confirmEmailVerification,
     refreshUser,
     resendEmailVerification,
     signOut,
   } = useAuth();
   const [submitting, setSubmitting] = useState(false);
-  const appliedCodeRef = useRef<string | null>(null);
+  const [resendCooldownSec, setResendCooldownSec] = useState(0);
+  const appliedVerificationCodeRef = useRef<string | null>(null);
 
   const email = user?.email?.trim() || "your email";
+  const trimmedVerificationCode = verificationCode.trim();
+  const resendOnCooldown = resendCooldownSec > 0;
+
+  useEffect(() => {
+    if (resendCooldownSec <= 0) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setResendCooldownSec((current) => current - 1);
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [resendCooldownSec]);
 
   async function withSubmitting<T>(action: () => Promise<T>): Promise<T> {
     setSubmitting(true);
@@ -42,22 +61,23 @@ export function VerifyEmailScreen({
   }
 
   useEffect(() => {
-    const code = oobCode.trim();
-
-    if (!code || appliedCodeRef.current === code) {
+    if (
+      !trimmedVerificationCode ||
+      appliedVerificationCodeRef.current === trimmedVerificationCode
+    ) {
       return;
     }
 
-    appliedCodeRef.current = code;
+    appliedVerificationCodeRef.current = trimmedVerificationCode;
 
     void (async () => {
       setSubmitting(true);
       onSubmittingChange?.(true);
 
       try {
-        await confirmEmailVerification(code);
+        await confirmEmailVerification(trimmedVerificationCode);
       } catch (error) {
-        appliedCodeRef.current = null;
+        appliedVerificationCodeRef.current = null;
         const message =
           error instanceof AuthServiceError
             ? error.message
@@ -68,14 +88,22 @@ export function VerifyEmailScreen({
         onSubmittingChange?.(false);
       }
     })();
-  }, [oobCode, confirmEmailVerification, onSubmittingChange]);
+  }, [trimmedVerificationCode, confirmEmailVerification, onSubmittingChange]);
+
+  useEffect(() => {
+    if (isAuthLoading || trimmedVerificationCode) {
+      return;
+    }
+
+    if (!user) {
+      router.replace("/sign-in");
+    }
+  }, [trimmedVerificationCode, isAuthLoading, user]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextState) => {
       if (nextState === "active") {
-        void refreshUser().catch(() => {
-          // Ignore refresh errors while returning from the email client.
-        });
+        void refreshUser().catch(() => {});
       }
     });
 
@@ -85,12 +113,29 @@ export function VerifyEmailScreen({
   }, [refreshUser]);
 
   async function handleResend() {
+    if (!user) {
+      router.replace("/sign-in");
+      return;
+    }
+
+    if (resendOnCooldown) {
+      return;
+    }
+
     try {
       await withSubmitting(async () => {
         await resendEmailVerification();
       });
+      setResendCooldownSec(60);
       Alert.alert("Check your email", `A new verification link was sent to ${email}.`);
     } catch (error) {
+      if (
+        error instanceof AuthServiceError &&
+        error.code === "auth/too-many-requests"
+      ) {
+        setResendCooldownSec(60);
+      }
+
       const message =
         error instanceof AuthServiceError
           ? error.message
@@ -100,6 +145,11 @@ export function VerifyEmailScreen({
   }
 
   async function handleCheckVerified() {
+    if (!user) {
+      router.replace("/sign-in");
+      return;
+    }
+
     try {
       const nextUser = await withSubmitting(async () => refreshUser());
       if (!nextUser?.emailVerified) {
@@ -117,7 +167,11 @@ export function VerifyEmailScreen({
     }
   }
 
-  async function handleSignOut() {
+  async function handleBack() {
+    if (submitting) {
+      return;
+    }
+
     try {
       await withSubmitting(async () => {
         await signOut();
@@ -129,7 +183,7 @@ export function VerifyEmailScreen({
     }
   }
 
-  const isDisabled = disabled || submitting;
+  const isDisabled = disabled || submitting || !user;
 
   return (
     <View style={globalStyles.verifyEmailScreen}>
@@ -139,7 +193,7 @@ export function VerifyEmailScreen({
           title="Verify Email"
           gap={spacing.authBackTitleVerifyEmail}
           onPress={() => {
-            void handleSignOut();
+            void handleBack();
           }}
         />
 
@@ -168,11 +222,17 @@ export function VerifyEmailScreen({
         />
 
         <AppButton
-          title={submitting ? "Sending..." : "Resend Email"}
+          title={
+            submitting
+              ? "Sending..."
+              : resendOnCooldown
+                ? `Resend in ${resendCooldownSec}s`
+                : "Resend Email"
+          }
           onPress={() => {
             void handleResend();
           }}
-          disabled={isDisabled}
+          disabled={isDisabled || resendOnCooldown}
           borderColor={colors.resetButtonBorder}
           pressFillColor={colors.resetButtonBorder}
           pressLabelColor={colors.inputText}

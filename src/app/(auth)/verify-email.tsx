@@ -11,7 +11,7 @@ export default function VerifyEmailRoute() {
   const [submitting, setSubmitting] = useState(false);
 
   const rawCode = params.oobCode ?? params.code;
-  const oobCode = Array.isArray(rawCode) ? rawCode[0] : rawCode;
+  const verificationCode = Array.isArray(rawCode) ? rawCode[0] : rawCode;
 
   if (!isConfigured) {
     return (
@@ -24,7 +24,7 @@ export default function VerifyEmailRoute() {
   return (
     <AuthScreenLayout>
       <VerifyEmailScreen
-        oobCode={oobCode}
+        verificationCode={verificationCode}
         disabled={submitting}
         onSubmittingChange={setSubmitting}
       />
