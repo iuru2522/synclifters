@@ -27,10 +27,26 @@ export function VerifyEmailScreen({
     signOut,
   } = useAuth();
   const [submitting, setSubmitting] = useState(false);
+  const [resendCooldownSec, setResendCooldownSec] = useState(0);
   const appliedVerificationCodeRef = useRef<string | null>(null);
 
   const email = user?.email?.trim() || "your email";
   const trimmedVerificationCode = verificationCode.trim();
+  const resendOnCooldown = resendCooldownSec > 0;
+
+  useEffect(() => {
+    if (resendCooldownSec <= 0) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setResendCooldownSec((current) => current - 1);
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [resendCooldownSec]);
 
   async function withSubmitting<T>(action: () => Promise<T>): Promise<T> {
     setSubmitting(true);
@@ -102,12 +118,24 @@ export function VerifyEmailScreen({
       return;
     }
 
+    if (resendOnCooldown) {
+      return;
+    }
+
     try {
       await withSubmitting(async () => {
         await resendEmailVerification();
       });
+      setResendCooldownSec(60);
       Alert.alert("Check your email", `A new verification link was sent to ${email}.`);
     } catch (error) {
+      if (
+        error instanceof AuthServiceError &&
+        error.code === "auth/too-many-requests"
+      ) {
+        setResendCooldownSec(60);
+      }
+
       const message =
         error instanceof AuthServiceError
           ? error.message
@@ -194,11 +222,17 @@ export function VerifyEmailScreen({
         />
 
         <AppButton
-          title={submitting ? "Sending..." : "Resend Email"}
+          title={
+            submitting
+              ? "Sending..."
+              : resendOnCooldown
+                ? `Resend in ${resendCooldownSec}s`
+                : "Resend Email"
+          }
           onPress={() => {
             void handleResend();
           }}
-          disabled={isDisabled}
+          disabled={isDisabled || resendOnCooldown}
           borderColor={colors.resetButtonBorder}
           pressFillColor={colors.resetButtonBorder}
           pressLabelColor={colors.inputText}

@@ -112,6 +112,14 @@ export async function signInWithEmail(
     await sendEmailVerification(credential.user);
   } catch (error: unknown) {
     const authError = error as { code?: string; message?: string };
+
+    if (authError.code === "auth/too-many-requests") {
+      throw new AuthServiceError(
+        "Too many attempts. Wait a few minutes, then try again.",
+        authError.code,
+      );
+    }
+
     throw new AuthServiceError(
       authError.message ?? "Account created, but the verification email failed to send.",
       authError.code ?? "EMAIL_VERIFICATION_SEND_FAILED",
@@ -340,6 +348,14 @@ export async function resendEmailVerification(): Promise<void> {
     await sendEmailVerification(user);
   } catch (error: unknown) {
     const authError = error as { code?: string; message?: string };
+
+    if (authError.code === "auth/too-many-requests") {
+      throw new AuthServiceError(
+        "Too many attempts. Wait a few minutes, then try again.",
+        authError.code,
+      );
+    }
+
     throw new AuthServiceError(
       authError.message ?? "Failed to send verification email.",
       authError.code,
