@@ -7,8 +7,8 @@ import {
   type CalendarOnDayPress,
 } from "@marceloterreiro/flash-calendar";
 import { differenceInCalendarWeeks, format, startOfWeek } from "date-fns";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "expo-router";
+import { memo, useCallback, useMemo, useState, type ComponentProps } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
@@ -58,7 +58,7 @@ function dayTextStyle(state: CalendarDayMetadata["state"]) {
   return globalStyles.calendarDayText;
 }
 
-function CalendarTrainingDay({
+const CalendarTrainingDay = memo(function CalendarTrainingDay({
   day,
   isTrainingDay,
   onPress,
@@ -67,7 +67,7 @@ function CalendarTrainingDay({
   isTrainingDay: boolean;
   onPress: CalendarOnDayPress;
 }) {
-  const label = format(day.date, "EEEE, MMMM d");
+  const label = useMemo(() => format(day.date, "EEEE, MMMM d"), [day.date]);
 
   return (
     <Pressable
@@ -87,9 +87,9 @@ function CalendarTrainingDay({
       )}
     </Pressable>
   );
-}
+});
 
-function TrainingCalendarMonth({
+const TrainingCalendarMonth = memo(function TrainingCalendarMonth({
   calendarMonthId,
   calendarFirstDayOfWeek = "sunday",
   calendarActiveDateRanges,
@@ -137,7 +137,7 @@ function TrainingCalendarMonth({
       ))}
     </View>
   );
-}
+});
 
 function computeWeekStreak(activityDates: Date[]): number {
   if (activityDates.length === 0) {
@@ -182,14 +182,9 @@ function computeWeekStreak(activityDates: Date[]): number {
 export function CalendarScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { activityDates, refresh } = useUserSessions();
-  const [selectedDateId, setSelectedDateId] = useState<string>(() => toDateId(new Date()));
-
-  useFocusEffect(
-    useCallback(() => {
-      void refresh();
-    }, [refresh]),
-  );
+  const { activityDates } = useUserSessions();
+  const initialDateId = useMemo(() => toDateId(new Date()), []);
+  const [selectedDateId, setSelectedDateId] = useState<string>(initialDateId);
 
   const weekStreak = useMemo(() => computeWeekStreak(activityDates), [activityDates]);
 
@@ -211,6 +206,23 @@ export function CalendarScreen() {
   const handleDayPress = useCallback<CalendarOnDayPress>((dateId) => {
     setSelectedDateId(dateId);
   }, []);
+
+  const renderMonthItem = useCallback<
+    NonNullable<ComponentProps<typeof Calendar.List>["renderItem"]>
+  >(
+    ({ item }) => (
+      <View style={globalStyles.calendarMonthListItem}>
+        <TrainingCalendarMonth
+          calendarActiveDateRanges={item.calendarProps.calendarActiveDateRanges}
+          calendarFirstDayOfWeek={item.calendarProps.calendarFirstDayOfWeek}
+          calendarMonthId={item.id}
+          onCalendarDayPress={item.calendarProps.onCalendarDayPress}
+          trainingDateIds={trainingDateIds}
+        />
+      </View>
+    ),
+    [trainingDateIds],
+  );
 
   return (
     <View
@@ -261,7 +273,7 @@ export function CalendarScreen() {
 
       <View style={globalStyles.calendarListWrap}>
         <Calendar.List
-          calendarInitialMonthId={toDateId(new Date())}
+          calendarInitialMonthId={initialDateId}
           calendarFirstDayOfWeek="sunday"
           calendarColorScheme="dark"
           calendarPastScrollRangeInMonths={12}
@@ -275,17 +287,7 @@ export function CalendarScreen() {
           calendarActiveDateRanges={calendarActiveDateRanges}
           onCalendarDayPress={handleDayPress}
           extraData={trainingDateIds}
-          renderItem={({ item }) => (
-            <View style={globalStyles.calendarMonthListItem}>
-              <TrainingCalendarMonth
-                calendarActiveDateRanges={item.calendarProps.calendarActiveDateRanges}
-                calendarFirstDayOfWeek={item.calendarProps.calendarFirstDayOfWeek}
-                calendarMonthId={item.id}
-                onCalendarDayPress={item.calendarProps.onCalendarDayPress}
-                trainingDateIds={trainingDateIds}
-              />
-            </View>
-          )}
+          renderItem={renderMonthItem}
           contentContainerStyle={globalStyles.calendarListContent}
         />
       </View>

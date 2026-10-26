@@ -12,7 +12,7 @@ import { useUserSessions } from "@/features/workout/user-sessions";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { colors, globalStyles, sizes } from "@/styles/global";
 import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -55,6 +55,7 @@ export function WorkoutTabScreen() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [programSelected, setProgramSelected] = useState(false);
   const [daySelected, setDaySelected] = useState(false);
+  const isNavigatingToCalendarRef = useRef(false);
   const favoriteProgram = programs.find((program) => program.isFavorite) ?? null;
   const paramProgram =
     programs.find((program) => program.id === paramProgramId) ?? null;
@@ -67,10 +68,19 @@ export function WorkoutTabScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      isNavigatingToCalendarRef.current = false;
       void refresh();
       void refreshSessions();
     }, [refresh, refreshSessions]),
   );
+
+  const openCalendar = useCallback(() => {
+    if (isNavigatingToCalendarRef.current) {
+      return;
+    }
+    isNavigatingToCalendarRef.current = true;
+    router.navigate(CALENDAR_HREF);
+  }, [router]);
 
   useEffect(() => {
     if (paramDayName) {
@@ -154,9 +164,7 @@ export function WorkoutTabScreen() {
         <View style={globalStyles.workoutGlassCardsRow}>
           <Pressable
             style={globalStyles.workoutGlassCardPressable}
-            onPress={() => {
-              router.push(CALENDAR_HREF);
-            }}
+            onPress={openCalendar}
             accessibilityRole="button"
             accessibilityLabel="Training days"
           >
@@ -186,9 +194,7 @@ export function WorkoutTabScreen() {
           <WeekCalendar
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
-            onDayPress={() => {
-              router.push(CALENDAR_HREF);
-            }}
+            onDayPress={openCalendar}
             activityDates={activityDates}
           />
         </View>
