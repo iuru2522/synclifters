@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { createSelectionStore } from "@/features/workout/selection-store";
 
 export const MEASURE_OPTIONS = [
   "Weight and Repeats",
@@ -10,30 +10,13 @@ export const MEASURE_OPTIONS = [
 
 export type MeasureOption = (typeof MEASURE_OPTIONS)[number];
 
-let selectedMeasure: MeasureOption | null = null;
-const listeners = new Set<() => void>();
+const store = createSelectionStore<MeasureOption | null>({
+  initialValue: null,
+});
 
-function emit() {
-  listeners.forEach((listener) => {
-    listener();
-  });
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-export function getSelectedMeasure() {
-  return selectedMeasure;
-}
-
-export function setSelectedMeasure(value: MeasureOption | null) {
-  selectedMeasure = value;
-  emit();
-}
+export const getSelectedMeasure = store.get;
+export const setSelectedMeasure = store.set;
+export const useSelectedMeasure = store.useStore;
 
 export function formatMeasureLabel(value: MeasureOption | null) {
   if (!value) {
@@ -41,8 +24,4 @@ export function formatMeasureLabel(value: MeasureOption | null) {
   }
 
   return value;
-}
-
-export function useSelectedMeasure() {
-  return useSyncExternalStore(subscribe, getSelectedMeasure, getSelectedMeasure);
 }

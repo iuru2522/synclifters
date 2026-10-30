@@ -1,33 +1,16 @@
-import { useSyncExternalStore } from "react";
+import { createSelectionStore } from "@/features/workout/selection-store";
 
 export const DROPSET_LVLS_OPTIONS = [2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
 export type DropsetLvlsOption = (typeof DROPSET_LVLS_OPTIONS)[number];
 
-let selectedDropsetLvls: DropsetLvlsOption | null = null;
-const listeners = new Set<() => void>();
+const store = createSelectionStore<DropsetLvlsOption | null>({
+  initialValue: null,
+});
 
-function emit() {
-  listeners.forEach((listener) => {
-    listener();
-  });
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-export function getSelectedDropsetLvls() {
-  return selectedDropsetLvls;
-}
-
-export function setSelectedDropsetLvls(value: DropsetLvlsOption | null) {
-  selectedDropsetLvls = value;
-  emit();
-}
+export const getSelectedDropsetLvls = store.get;
+export const setSelectedDropsetLvls = store.set;
+export const useSelectedDropsetLvls = store.useStore;
 
 export function formatDropsetLvlsLabel(value: DropsetLvlsOption | null) {
   if (!value) {
@@ -35,8 +18,4 @@ export function formatDropsetLvlsLabel(value: DropsetLvlsOption | null) {
   }
 
   return String(value);
-}
-
-export function useSelectedDropsetLvls() {
-  return useSyncExternalStore(subscribe, getSelectedDropsetLvls, getSelectedDropsetLvls);
 }
