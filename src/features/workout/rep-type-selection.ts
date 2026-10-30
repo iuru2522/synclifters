@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { createSelectionStore } from "@/features/workout/selection-store";
 
 export const REP_TYPE_OPTIONS = [
   { label: "Regular", value: "regular" },
@@ -8,29 +8,15 @@ export const REP_TYPE_OPTIONS = [
 
 export type RepType = (typeof REP_TYPE_OPTIONS)[number]["value"];
 
-let selectedRepType: RepType | null = "regular";
-const listeners = new Set<() => void>();
+const store = createSelectionStore<RepType | null>({
+  initialValue: "regular",
+});
 
-function emit() {
-  listeners.forEach((listener) => {
-    listener();
-  });
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-export function getSelectedRepType() {
-  return selectedRepType;
-}
+export const getSelectedRepType = store.get;
+export const useSelectedRepType = store.useStore;
 
 export function setSelectedRepType(value: RepType) {
-  selectedRepType = value;
-  emit();
+  store.set(value);
 }
 
 export function formatRepTypeLabel(value: RepType | null) {
@@ -40,8 +26,4 @@ export function formatRepTypeLabel(value: RepType | null) {
 
   const match = REP_TYPE_OPTIONS.find((option) => option.value === value);
   return match?.label ?? "Rep type";
-}
-
-export function useSelectedRepType() {
-  return useSyncExternalStore(subscribe, getSelectedRepType, getSelectedRepType);
 }

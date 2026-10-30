@@ -1,35 +1,18 @@
-import { useSyncExternalStore } from "react";
 import {
   MUSCLE_GROUP_OPTIONS,
   type MuscleGroup,
 } from "@/features/workout/exercise-catalog";
+import { createSelectionStore } from "@/features/workout/selection-store";
 
 export { MUSCLE_GROUP_OPTIONS, type MuscleGroup };
 
-let selectedMuscleGroup: MuscleGroup | null = null;
-const listeners = new Set<() => void>();
+const store = createSelectionStore<MuscleGroup | null>({
+  initialValue: null,
+});
 
-function emit() {
-  listeners.forEach((listener) => {
-    listener();
-  });
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-export function getSelectedMuscleGroup() {
-  return selectedMuscleGroup;
-}
-
-export function setSelectedMuscleGroup(value: MuscleGroup | null) {
-  selectedMuscleGroup = value;
-  emit();
-}
+export const getSelectedMuscleGroup = store.get;
+export const setSelectedMuscleGroup = store.set;
+export const useSelectedMuscleGroup = store.useStore;
 
 export function formatMuscleGroupLabel(value: MuscleGroup | null) {
   if (!value) {
@@ -37,8 +20,4 @@ export function formatMuscleGroupLabel(value: MuscleGroup | null) {
   }
 
   return value;
-}
-
-export function useSelectedMuscleGroup() {
-  return useSyncExternalStore(subscribe, getSelectedMuscleGroup, getSelectedMuscleGroup);
 }

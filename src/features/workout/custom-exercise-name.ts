@@ -1,29 +1,13 @@
-import { useSyncExternalStore } from "react";
+import { createSelectionStore } from "@/features/workout/selection-store";
 
-let selectedExerciseName: string | null = null;
-const listeners = new Set<() => void>();
+const store = createSelectionStore<string | null>({
+  initialValue: null,
+  prepare: (value) => (value?.trim() ? value.trim() : null),
+});
 
-function emit() {
-  listeners.forEach((listener) => {
-    listener();
-  });
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-export function getSelectedExerciseName() {
-  return selectedExerciseName;
-}
-
-export function setSelectedExerciseName(value: string | null) {
-  selectedExerciseName = value?.trim() ? value.trim() : null;
-  emit();
-}
+export const getSelectedExerciseName = store.get;
+export const setSelectedExerciseName = store.set;
+export const useSelectedExerciseName = store.useStore;
 
 export function formatExerciseNameLabel(value: string | null) {
   if (!value?.trim()) {
@@ -31,8 +15,4 @@ export function formatExerciseNameLabel(value: string | null) {
   }
 
   return value.trim();
-}
-
-export function useSelectedExerciseName() {
-  return useSyncExternalStore(subscribe, getSelectedExerciseName, getSelectedExerciseName);
 }

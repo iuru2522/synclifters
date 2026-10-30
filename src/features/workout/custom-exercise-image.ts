@@ -1,30 +1,10 @@
-import { useSyncExternalStore } from "react";
+import { createSelectionStore } from "@/features/workout/selection-store";
 
-let selectedImageUri: string | null = null;
-const listeners = new Set<() => void>();
+const store = createSelectionStore<string | null>({
+  initialValue: null,
+  prepare: (value) => (value?.trim() ? value.trim() : null),
+});
 
-function emit() {
-  listeners.forEach((listener) => {
-    listener();
-  });
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-export function getSelectedExerciseImageUri() {
-  return selectedImageUri;
-}
-
-export function setSelectedExerciseImageUri(value: string | null) {
-  selectedImageUri = value?.trim() ? value.trim() : null;
-  emit();
-}
-
-export function useSelectedExerciseImageUri() {
-  return useSyncExternalStore(subscribe, getSelectedExerciseImageUri, getSelectedExerciseImageUri);
-}
+export const getSelectedExerciseImageUri = store.get;
+export const setSelectedExerciseImageUri = store.set;
+export const useSelectedExerciseImageUri = store.useStore;
