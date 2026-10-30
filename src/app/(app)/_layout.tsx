@@ -69,7 +69,6 @@ export default function AppLayout() {
       }}
     >
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="profile" />
     </Stack>
   );
 }

@@ -40,7 +40,7 @@ export default function TabsLayout() {
             History
           </NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="workout">
+        <NativeTabs.Trigger name="(home)">
           <NativeTabs.Trigger.Icon src={tabIcons.workout} renderingMode="original" />
           <NativeTabs.Trigger.Label selectedStyle={tabBarLabelActiveStyle}>
             Workout
