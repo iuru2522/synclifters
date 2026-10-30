@@ -56,7 +56,7 @@ import {
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 import { useState } from "react";
 
-const METRICS_SHEET_HREF = "/workout/metrics-sheet" as Href;
+const METRICS_SHEET_HREF = "/profile/metrics-sheet" as Href;
 const EXERCISE_NAME_SHEET_HREF = "/workout/exercise-name-sheet" as Href;
 const MUSCLE_SHEET_HREF = "/workout/muscle-sheet" as Href;
 const MEASURE_SHEET_HREF = "/workout/measure-sheet" as Href;

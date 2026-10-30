@@ -16,7 +16,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const PROFILE_HREF = "/workout/profile" as Href;
+const PROFILE_HREF = "/profile" as Href;
 const CREATE_PROGRAM_HREF = "/workout/create-program" as Href;
 const CALENDAR_HREF = "/workout/calendar" as Href;
 
