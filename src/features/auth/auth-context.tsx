@@ -88,6 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return onAuthStateChanged(auth, (nextUser) => {
       setUser(nextUser);
       setIsEmailVerified(Boolean(nextUser?.emailVerified));
+      if (nextUser) {
+        setIsProfileLoading(true);
+      } else {
+        setProfile(null);
+        setIsProfileLoading(false);
+      }
       setIsAuthLoading(false);
     });
   }, []);
