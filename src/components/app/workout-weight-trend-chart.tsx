@@ -217,13 +217,7 @@ export function WorkoutWeightTrendChart() {
               />
             </View>
             <View
-              style={[
-                globalStyles.workoutWeightTrendXAxisRow,
-                {
-                  paddingLeft: spacing.workoutWeightTrendInitialSpacing,
-                  paddingRight: spacing.workoutWeightTrendEndSpacing,
-                },
-              ]}
+              style={globalStyles.workoutWeightTrendXAxisRow}
             >
               {chartModel.xAxisLabels.map((dateLabel, idx) => (
                 <Text
