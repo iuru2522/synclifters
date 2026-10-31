@@ -87,8 +87,10 @@ export function WorkoutWeightTrendChart() {
     [chartModel, entries],
   );
 
-  const yAxisLabelWidth = 0;
-  const chartWidth = Math.max(160, bodyWidth - yAxisLabelWidth);
+  const chartWidth = Math.max(
+    160,
+    bodyWidth - sizes.workoutWeightTrendYAxisLabelWidth,
+  );
 
   const mutableChart = chartModel ? buildCompactChartData(chartModel) : null;
   const lineData = mutableChart ? mutableChart.items : [];
@@ -178,7 +180,7 @@ export function WorkoutWeightTrendChart() {
                 stepValue={chartModel.stepValue}
                 noOfSections={chartModel.noOfSections}
                 showFractionalValues={false}
-                yAxisLabelWidth={yAxisLabelWidth}
+                yAxisLabelWidth={sizes.workoutWeightTrendYAxisLabelWidth}
                 yAxisThickness={0}
                 xAxisThickness={0}
                 hideRules
@@ -210,7 +212,10 @@ export function WorkoutWeightTrendChart() {
                     80,
                     chartWidth - spacing.workoutWeightTrendEndSpacing,
                   ),
-                  labelText: "",
+                  labelText: String(chartModel.baselinePosition),
+                  labelTextStyle: {
+                    ...globalStyles.workoutWeightTrendReferenceLabelText,
+                  },
                 }}
                 disableScroll
                 disableForeignObject
