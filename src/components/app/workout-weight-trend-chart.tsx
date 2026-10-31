@@ -40,14 +40,8 @@ function buildCompactChartData(
     chartModel.points.find((point) => point.isTrailingProjection) ??
     realPoints[realPoints.length - 1];
 
-  const middleIndex =
-    realPoints.length >= 3 ? Math.floor((realPoints.length - 1) / 2) : -1;
-
-  const items: lineDataItem[] = realPoints.map((point, index) => {
-    const showLabel =
-      point.isFirstRealPoint ||
-      point.isLastRealPoint ||
-      index === middleIndex;
+  const items: lineDataItem[] = realPoints.map((point) => {
+    const showLabel = point.isLastRealPoint;
 
     return {
       value: point.value,
@@ -93,10 +87,8 @@ export function WorkoutWeightTrendChart() {
     [chartModel, entries],
   );
 
-  const chartWidth = Math.max(
-    160,
-    bodyWidth - sizes.workoutWeightTrendYAxisLabelWidth,
-  );
+  const yAxisLabelWidth = 0;
+  const chartWidth = Math.max(160, bodyWidth - yAxisLabelWidth);
 
   const mutableChart = chartModel ? buildCompactChartData(chartModel) : null;
   const lineData = mutableChart ? mutableChart.items : [];
@@ -132,7 +124,7 @@ export function WorkoutWeightTrendChart() {
   }
 
   return (
-    <WorkoutGlassCard style={globalStyles.workoutGlassCardWide}>
+    <WorkoutGlassCard style={globalStyles.workoutWeightTrendGlassCard}>
       <Pressable
         style={globalStyles.workoutWeightTrendCard}
         onPress={openWeightScreen}
@@ -140,23 +132,25 @@ export function WorkoutWeightTrendChart() {
         accessibilityLabel="Weight trend"
       >
         <View
-          style={globalStyles.workoutWeightTrendDelta}
+          style={globalStyles.workoutWeightTrendHeader}
           accessibilityLabel={`${deltaSummary.arrowSymbol} ${deltaSummary.valueText} ${deltaSummary.unitLabel} ${deltaSummary.periodLabel}`}
         >
-          <View style={globalStyles.workoutWeightTrendDeltaRow}>
-            <Text style={globalStyles.workoutWeightTrendDeltaArrow}>
-              {deltaSummary.arrowSymbol}
-            </Text>
-            <Text style={globalStyles.workoutWeightTrendDeltaValue}>
-              {deltaSummary.valueText}
-            </Text>
-            <Text style={globalStyles.workoutWeightTrendDeltaUnit}>
-              {deltaSummary.unitLabel}
+          <View style={globalStyles.workoutWeightTrendDelta}>
+            <View style={globalStyles.workoutWeightTrendDeltaRow}>
+              <Text style={globalStyles.workoutWeightTrendDeltaArrow}>
+                {deltaSummary.arrowSymbol}
+              </Text>
+              <Text style={globalStyles.workoutWeightTrendDeltaValue}>
+                {deltaSummary.valueText}
+              </Text>
+              <Text style={globalStyles.workoutWeightTrendDeltaUnit}>
+                {deltaSummary.unitLabel}
+              </Text>
+            </View>
+            <Text style={globalStyles.workoutWeightTrendDeltaPeriod}>
+              {deltaSummary.periodLabel}
             </Text>
           </View>
-          <Text style={globalStyles.workoutWeightTrendDeltaPeriod}>
-            {deltaSummary.periodLabel}
-          </Text>
         </View>
 
         {chartModel ? (
@@ -164,68 +158,70 @@ export function WorkoutWeightTrendChart() {
             style={globalStyles.workoutWeightTrendBody}
             onLayout={handleChartBodyLayout}
           >
-            <Text style={globalStyles.workoutWeightTrendTargetLabel}>
-              Target Weight
-            </Text>
-            <LineChart
-              data={lineData}
-              width={chartWidth}
-              height={sizes.workoutWeightTrendPlotHeight}
-              spacing={pointSpacing}
-              initialSpacing={spacing.workoutWeightTrendInitialSpacing}
-              endSpacing={spacing.workoutWeightTrendEndSpacing}
-              overflowTop={spacing.workoutWeightTrendOverflowTop}
-              color={colors.backArrow}
-              thickness={sizes.workoutWeightTrendLineThickness}
-              yAxisSide={yAxisSides.RIGHT}
-              yAxisOffset={chartModel.yAxisOffset}
-              maxValue={chartModel.maxValue}
-              stepValue={chartModel.stepValue}
-              noOfSections={chartModel.noOfSections}
-              showFractionalValues={false}
-              yAxisLabelWidth={sizes.workoutWeightTrendYAxisLabelWidth}
-              yAxisThickness={0}
-              xAxisThickness={0}
-              hideRules
-              yAxisTextStyle={{ ...globalStyles.workoutWeightTrendAxisText }}
-              xAxisLabelTextStyle={{ ...globalStyles.workoutWeightTrendAxisText }}
-              lineSegments={[
-                {
-                  startIndex: lastRealPointIndex,
-                  endIndex: lastRealPointIndex + 1,
-                  strokeDashArray: [3, 3],
+            <View style={globalStyles.workoutWeightTrendPlotWrap}>
+              <Text style={globalStyles.workoutWeightTrendTargetLabel}>
+                Target Weight
+              </Text>
+              <LineChart
+                data={lineData}
+                width={chartWidth}
+                height={sizes.workoutWeightTrendPlotHeight}
+                spacing={pointSpacing}
+                initialSpacing={spacing.workoutWeightTrendInitialSpacing}
+                endSpacing={spacing.workoutWeightTrendEndSpacing}
+                overflowTop={spacing.workoutWeightTrendOverflowTop}
+                color={colors.backArrow}
+                thickness={sizes.workoutWeightTrendLineThickness}
+                yAxisSide={yAxisSides.RIGHT}
+                yAxisOffset={chartModel.yAxisOffset}
+                maxValue={chartModel.maxValue}
+                stepValue={chartModel.stepValue}
+                noOfSections={chartModel.noOfSections}
+                showFractionalValues={false}
+                yAxisLabelWidth={yAxisLabelWidth}
+                yAxisThickness={0}
+                xAxisThickness={0}
+                hideRules
+                yAxisTextStyle={{
+                  ...globalStyles.workoutWeightTrendAxisText,
+                  fontSize: 0,
+                  lineHeight: 0,
+                  opacity: 0,
+                }}
+                xAxisLabelTextStyle={{ ...globalStyles.workoutWeightTrendAxisText }}
+                lineSegments={[
+                  {
+                    startIndex: lastRealPointIndex,
+                    endIndex: lastRealPointIndex + 1,
+                    strokeDashArray: [3, 3],
+                    color: colors.backArrow,
+                    thickness: sizes.workoutWeightTrendLineThickness,
+                  },
+                ]}
+                showReferenceLine1
+                referenceLine1Position={chartModel.baselinePosition}
+                referenceLine1Config={{
+                  type: "dashed",
                   color: colors.backArrow,
-                  thickness: sizes.workoutWeightTrendLineThickness,
-                },
-              ]}
-              showReferenceLine1
-              referenceLine1Position={chartModel.baselinePosition}
-              referenceLine1Config={{
-                type: "dashed",
-                color: colors.backArrow,
-                dashWidth: 3,
-                dashGap: 3,
-                thickness: 1,
-                width: Math.max(
-                  80,
-                  chartWidth - spacing.workoutWeightTrendEndSpacing,
-                ),
-                labelText: String(chartModel.baselinePosition),
-                labelTextStyle: {
-                  ...globalStyles.workoutWeightTrendReferenceLabelText,
-                },
-              }}
-              disableScroll
-              disableForeignObject
-            />
+                  dashWidth: 3,
+                  dashGap: 3,
+                  thickness: 1,
+                  width: Math.max(
+                    80,
+                    chartWidth - spacing.workoutWeightTrendEndSpacing,
+                  ),
+                  labelText: "",
+                }}
+                disableScroll
+                disableForeignObject
+              />
+            </View>
             <View
               style={[
                 globalStyles.workoutWeightTrendXAxisRow,
                 {
                   paddingLeft: spacing.workoutWeightTrendInitialSpacing,
-                  paddingRight:
-                    sizes.workoutWeightTrendYAxisLabelWidth +
-                    Math.round(pointSpacing * 0.35),
+                  paddingRight: spacing.workoutWeightTrendEndSpacing,
                 },
               ]}
             >

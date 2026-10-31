@@ -278,7 +278,7 @@ export const spacing = {
   workoutWeightTrendXAxisTop: 1,
   workoutWeightTrendFooterTop: 2,
   workoutWeightTrendTargetLabelLeft: 10,
-  workoutWeightTrendTargetLabelBottom: 28,
+  workoutWeightTrendTargetLabelBottom: 18,
   progressMetricHistoryTop: 25,
   progressMetricHistoryGap: 10,
   progressMetricHistoryInset: 40,
@@ -2107,18 +2107,25 @@ export const globalStyles = StyleSheet.create({
     backgroundColor: colors.workoutGlassCardFill,
     overflow: "hidden",
   },
+  workoutWeightTrendGlassCard: {
+    alignSelf: "stretch",
+    minHeight: sizes.workoutGlassCardWideHeight,
+    borderRadius: sizes.workoutGlassCardRadius,
+    backgroundColor: colors.workoutGlassCardFill,
+    overflow: "hidden",
+  },
   workoutWeightTrendCard: {
-    flex: 1,
     alignSelf: "stretch",
     paddingTop: spacing.workoutWeightTrendPaddingTop,
     paddingBottom: spacing.workoutWeightTrendPaddingBottom,
     paddingHorizontal: spacing.workoutWeightTrendPaddingHorizontal,
   },
+  workoutWeightTrendHeader: {
+    alignSelf: "stretch",
+    alignItems: "flex-end",
+    marginBottom: spacing.workoutWeightTrendFooterTop,
+  },
   workoutWeightTrendDelta: {
-    position: "absolute",
-    top: spacing.workoutWeightTrendPaddingTop,
-    right: spacing.workoutWeightTrendPaddingHorizontal,
-    zIndex: 2,
     alignItems: "flex-end",
   },
   workoutWeightTrendDeltaRow: {
@@ -2157,9 +2164,7 @@ export const globalStyles = StyleSheet.create({
     textTransform: "capitalize",
   },
   workoutWeightTrendBody: {
-    flex: 1,
     alignSelf: "stretch",
-    justifyContent: "flex-end",
     overflow: "visible",
   },
   workoutWeightTrendEmptyWrap: {
@@ -2189,6 +2194,10 @@ export const globalStyles = StyleSheet.create({
     includeFontPadding: false,
     width: sizes.workoutWeightTrendYAxisLabelWidth,
     textAlign: "center",
+  },
+  workoutWeightTrendPlotWrap: {
+    alignSelf: "stretch",
+    position: "relative",
   },
   workoutWeightTrendTargetLabel: {
     ...typography.workoutWeightTrendAxisText,
