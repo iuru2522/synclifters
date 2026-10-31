@@ -8,8 +8,8 @@ import { useUserProgressExercises } from "@/features/workout/user-progress-exerc
 import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { globalStyles, sizes, spacing } from "@/styles/global";
 
-const PROGRESS_MUSCLE_HREF = "/workout/progress-muscle" as Href;
-const PROGRESS_METRIC_HREF = "/workout/progress-metric" as Href;
+const PROGRESS_MUSCLE_HREF = "/progress/progress-muscle" as Href;
+const PROGRESS_METRIC_HREF = "/progress/progress-metric" as Href;
 
 const METRIC_ROWS = [
   { id: "weight", label: "Weight", metric: "weight" },

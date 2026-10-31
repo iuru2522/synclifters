@@ -10,7 +10,7 @@ import { useUserProgressExercises } from "@/features/workout/user-progress-exerc
 import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { globalStyles, sizes, spacing } from "@/styles/global";
 
-const PROGRESS_METRIC_DETAIL_HREF = "/workout/progress-metric-detail" as Href;
+const PROGRESS_METRIC_DETAIL_HREF = "/progress/progress-metric-detail" as Href;
 
 export function ProgressMuscleScreen() {
   const router = useRouter();

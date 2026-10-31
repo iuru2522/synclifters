@@ -15,6 +15,7 @@ export default function HomeLayout() {
     >
       <Stack.Screen name="workout" />
       <Stack.Screen name="profile" />
+      <Stack.Screen name="progress" />
     </Stack>
   );
 }

@@ -138,4 +138,4 @@ export function ProgressMetricDetailScreen() {
   );
 }
 
-export const PROGRESS_METRIC_DETAIL_HREF = "/workout/progress-metric-detail" as Href;
+export const PROGRESS_METRIC_DETAIL_HREF = "/progress/progress-metric-detail" as Href;
