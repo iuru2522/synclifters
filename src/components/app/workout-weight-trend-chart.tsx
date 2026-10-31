@@ -96,7 +96,10 @@ export function WorkoutWeightTrendChart() {
       1,
       Math.max(0, (val - chartModel.yAxisOffset) / chartModel.maxValue),
     );
-    return Math.round(ratio * sizes.workoutWeightTrendPlotHeight) - 6;
+    return (
+      Math.round(ratio * sizes.workoutWeightTrendPlotHeight) +
+      spacing.workoutWeightTrendRightValueVerticalOffset
+    );
   }
 
   const pointSpacing = useMemo(() => {
