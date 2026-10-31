@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,6 +23,12 @@ import {
   useRecordedWorkingSets,
 } from "@/features/workout/recorded-working-sets";
 import { createCompletedSession } from "@/features/workout/session-repository";
+import {
+  ensureWorkoutDurationStarted,
+  formatDurationClock,
+  getWorkoutElapsedMs,
+  useWorkoutElapsedLabel,
+} from "@/features/workout/workout-duration";
 import { workoutExerciseKey } from "@/features/workout/workout-exercise-key";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
@@ -42,6 +48,8 @@ export function WorkoutScreen() {
     sessionId?: string | string[];
     showEdit?: string | string[];
     fromHistory?: string | string[];
+    performedAt?: string | string[];
+    durationMs?: string | string[];
   }>();
   const exerciseName = readSearchParam(params.exerciseName);
   const exerciseId = readSearchParam(params.exerciseId);
@@ -52,7 +60,32 @@ export function WorkoutScreen() {
   const sessionId = readSearchParam(params.sessionId);
   const showEdit = readSearchParam(params.showEdit) === "1";
   const fromHistory = readSearchParam(params.fromHistory) === "1";
+  const performedAtRaw = readSearchParam(params.performedAt);
+  const performedAtMs = performedAtRaw ? Number(performedAtRaw) : NaN;
+  const durationMsRaw = readSearchParam(params.durationMs);
+  const historyDurationMs = durationMsRaw ? Number(durationMsRaw) : NaN;
+  const liveElapsedLabel = useWorkoutElapsedLabel();
+  const durationLabel =
+    fromHistory && Number.isFinite(historyDurationMs)
+      ? formatDurationClock(historyDurationMs)
+      : fromHistory
+        ? formatDurationClock(0)
+        : liveElapsedLabel;
+  const lastWorkoutLabel =
+    fromHistory && Number.isFinite(performedAtMs)
+      ? `Last Workout Was ${new Date(performedAtMs).toLocaleDateString("en-US", {
+          month: "2-digit",
+          day: "2-digit",
+          year: "2-digit",
+        })}`
+      : null;
   const exerciseKey = workoutExerciseKey(exerciseId, exerciseName);
+
+  useEffect(() => {
+    if (!fromHistory) {
+      ensureWorkoutDurationStarted();
+    }
+  }, [fromHistory]);
   const dropSets = useRecordedDropSets(exerciseKey);
   const workingSets = useRecordedWorkingSets(exerciseKey);
   const recordedSetCount = workingSets.length + dropSets.length;
@@ -84,6 +117,8 @@ export function WorkoutScreen() {
       ...(sessionId ? { sessionId } : {}),
       ...(showEdit ? { showEdit: "1" } : {}),
       ...(fromHistory ? { fromHistory: "1" } : {}),
+      ...(performedAtRaw ? { performedAt: performedAtRaw } : {}),
+      ...(durationMsRaw ? { durationMs: durationMsRaw } : {}),
     }).toString();
     router.replace(
       (query
@@ -131,6 +166,7 @@ export function WorkoutScreen() {
         muscleGroup,
         workingSets,
         dropSets,
+        durationMs: getWorkoutElapsedMs(),
       });
       markWorkoutExerciseFinished(exerciseKey);
       clearRecordedWorkingSets(exerciseKey);
@@ -294,8 +330,8 @@ export function WorkoutScreen() {
             <View style={globalStyles.workoutSetRowLine} />
           </>
         ) : null}
-        {hasSetRows ? (
-          <Text style={globalStyles.workoutLastWorkout}>Last Workout Was 06/11/25</Text>
+        {lastWorkoutLabel ? (
+          <Text style={globalStyles.workoutLastWorkout}>{lastWorkoutLabel}</Text>
         ) : null}
         <View style={globalStyles.programDayExerciseSelectDayWrap}>
           <AppButton
@@ -315,17 +351,19 @@ export function WorkoutScreen() {
           ]}
         >
           <ClockIcon />
-          <Text style={globalStyles.programDayExerciseTimerText}>00:22</Text>
+          <Text style={globalStyles.programDayExerciseTimerText}>{durationLabel}</Text>
         </View>
-        <View
-          style={[
-            globalStyles.programDayExerciseTimer,
-            globalStyles.programDayExerciseStopwatchTimer,
-          ]}
-        >
-          <StopwatchIcon />
-          <Text style={globalStyles.programDayExerciseStopwatchTimerText}>00:00</Text>
-        </View>
+        {fromHistory ? null : (
+          <View
+            style={[
+              globalStyles.programDayExerciseTimer,
+              globalStyles.programDayExerciseStopwatchTimer,
+            ]}
+          >
+            <StopwatchIcon />
+            <Text style={globalStyles.programDayExerciseStopwatchTimerText}>00:00</Text>
+          </View>
+        )}
       </View>
     </View>
       <SaveExerciseOverlay

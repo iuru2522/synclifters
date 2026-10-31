@@ -40,6 +40,12 @@ export function HistoryScreen() {
       programName: session.programName,
       dayName: session.dayName,
       fromHistory: "1",
+      ...(session.performedAt != null
+        ? { performedAt: String(session.performedAt) }
+        : {}),
+      ...(session.durationMs != null
+        ? { durationMs: String(session.durationMs) }
+        : {}),
     }).toString();
     router.push(`/workout/program-day-exercise?${query}` as Href);
   }

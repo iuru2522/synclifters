@@ -9,6 +9,7 @@ import { formatProfileFullName } from "@/features/users/profile-display";
 import { clearFinishedWorkoutExercises } from "@/features/workout/finished-workout-exercises";
 import { useUserPrograms } from "@/features/workout/user-programs";
 import { useUserSessions } from "@/features/workout/user-sessions";
+import { startWorkoutDuration } from "@/features/workout/workout-duration";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { colors, globalStyles, sizes } from "@/styles/global";
 import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
@@ -128,6 +129,7 @@ export function WorkoutTabScreen() {
     }
 
     clearFinishedWorkoutExercises();
+    startWorkoutDuration();
     const query = new URLSearchParams({
       programId: activeProgram.id,
       programName: activeProgram.name,

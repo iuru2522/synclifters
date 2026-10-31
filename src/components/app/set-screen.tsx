@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -12,6 +12,10 @@ import { SetNumericInput } from "@/components/app/set-numeric-input";
 import { StopwatchIcon } from "@/components/app/stopwatch-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { addRecordedWorkingSet } from "@/features/workout/recorded-working-sets";
+import {
+  ensureWorkoutDurationStarted,
+  useWorkoutElapsedLabel,
+} from "@/features/workout/workout-duration";
 import { workoutExerciseKey } from "@/features/workout/workout-exercise-key";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
@@ -40,6 +44,13 @@ export function SetScreen() {
   const showEdit = readSearchParam(params.showEdit) === "1";
   const fromHistory = readSearchParam(params.fromHistory) === "1";
   const exerciseKey = workoutExerciseKey(exerciseId, exerciseName);
+  const durationLabel = useWorkoutElapsedLabel();
+
+  useEffect(() => {
+    if (!fromHistory) {
+      ensureWorkoutDurationStarted();
+    }
+  }, [fromHistory]);
 
   function workoutQuery() {
     return new URLSearchParams({
@@ -165,7 +176,7 @@ export function SetScreen() {
           ]}
         >
           <ClockIcon />
-          <Text style={globalStyles.programDayExerciseTimerText}>00:22</Text>
+          <Text style={globalStyles.programDayExerciseTimerText}>{durationLabel}</Text>
         </View>
         <View
           style={[

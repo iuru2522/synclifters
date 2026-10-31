@@ -1,8 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Image, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { Image, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
-import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { catalogExerciseId } from "@/features/workout/day-exercises";
@@ -50,6 +49,7 @@ export function ExerciseHistoryScreen() {
         <View style={globalStyles.createDayHeaderBack}>
           <AuthBackButton
             title=""
+            style={globalStyles.exerciseHistoryBackButton}
             onPress={() => {
               router.back();
             }}
@@ -58,15 +58,6 @@ export function ExerciseHistoryScreen() {
         <Text style={globalStyles.createDayHeaderTitle} numberOfLines={1}>
           {exerciseName}
         </Text>
-        <Pressable
-          style={globalStyles.createDayHeaderMenu}
-          onPress={() => {}}
-          hitSlop={sizes.backArrowHitSlop}
-          accessibilityRole="button"
-          accessibilityLabel="Menu"
-        >
-          <CreateDayBurgerIcon />
-        </Pressable>
       </View>
 
       <ScrollView

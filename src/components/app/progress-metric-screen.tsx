@@ -13,7 +13,7 @@ import {
   type lineDataItem,
 } from "react-native-gifted-charts";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
+import { SlidersHIcon } from "@/components/app/sliders-h-icon";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { WorkoutGlassCard } from "@/components/app/workout-glass-card";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
@@ -273,8 +273,8 @@ export function ProgressMetricScreen() {
   function openRecordSheet() {
     const href =
       metric === "height"
-        ? ("/profile/height-sheet?source=progress" as Href)
-        : ("/profile/weight-sheet?source=progress" as Href);
+        ? ("/height-sheet?source=progress" as Href)
+        : ("/weight-sheet?source=progress" as Href);
     router.push(href);
   }
 
@@ -302,9 +302,9 @@ export function ProgressMetricScreen() {
           onPress={() => {}}
           hitSlop={sizes.backArrowHitSlop}
           accessibilityRole="button"
-          accessibilityLabel="Menu"
+          accessibilityLabel="Filters"
         >
-          <CreateDayBurgerIcon />
+          <SlidersHIcon />
         </Pressable>
       </View>
 
