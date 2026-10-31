@@ -23,40 +23,28 @@ import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 const WEIGHT_SHEET_HREF = "/weight-sheet?source=workout" as Href;
 const WEIGHT_SCREEN_HREF = "/progress/progress-metric" as Href;
 
-function PointValueLabel({ label }: { label: string }) {
-  return (
-    <View style={globalStyles.workoutWeightTrendPointLabelWrap}>
-      <Text style={globalStyles.workoutWeightTrendPointLabel}>{label}</Text>
-    </View>
-  );
-}
-
 function buildCompactChartData(
   chartModel: NonNullable<ReturnType<typeof buildProgressMetricChartModel>>,
-): { items: lineDataItem[]; lastRealPointIndex: number } {
+): {
+  items: lineDataItem[];
+  lastRealPointIndex: number;
+  lastDisplayValue: string;
+  lastValue: number;
+} {
   "use no memo";
   const realPoints = chartModel.points.filter((point) => !point.isTrailingProjection);
+  const lastRealPoint = realPoints[realPoints.length - 1];
   const trailingPoint =
     chartModel.points.find((point) => point.isTrailingProjection) ??
-    realPoints[realPoints.length - 1];
+    lastRealPoint;
 
-  const items: lineDataItem[] = realPoints.map((point) => {
-    const showLabel = point.isLastRealPoint;
-
-    return {
-      value: point.value,
-      label: "",
-      hideDataPoint: false,
-      dataPointRadius: sizes.workoutWeightTrendDotRadius,
-      dataPointColor: colors.backArrow,
-      dataPointLabelWidth: sizes.workoutWeightTrendPointLabelWidth,
-      dataPointLabelShiftX: 0,
-      dataPointLabelShiftY: spacing.workoutWeightTrendPointLabelShiftY,
-      dataPointLabelComponent: showLabel
-        ? () => <PointValueLabel label={point.displayValue} />
-        : undefined,
-    };
-  });
+  const items: lineDataItem[] = realPoints.map((point) => ({
+    value: point.value,
+    label: "",
+    hideDataPoint: false,
+    dataPointRadius: sizes.workoutWeightTrendDotRadius,
+    dataPointColor: colors.backArrow,
+  }));
 
   items.push({
     value: trailingPoint.value,
@@ -67,6 +55,8 @@ function buildCompactChartData(
   return {
     items,
     lastRealPointIndex: realPoints.length - 1,
+    lastDisplayValue: lastRealPoint?.displayValue ?? "",
+    lastValue: lastRealPoint?.value ?? trailingPoint.value,
   };
 }
 
@@ -97,6 +87,17 @@ export function WorkoutWeightTrendChart() {
   const lastRealPointIndex = mutableChart
     ? mutableChart.lastRealPointIndex
     : chartModel?.lastRealIndex ?? 0;
+
+  function valueBottomOffset(val: number) {
+    if (!chartModel || chartModel.maxValue <= 0) {
+      return 0;
+    }
+    const ratio = Math.min(
+      1,
+      Math.max(0, (val - chartModel.yAxisOffset) / chartModel.maxValue),
+    );
+    return Math.round(ratio * sizes.workoutWeightTrendPlotHeight) - 6;
+  }
 
   const pointSpacing = useMemo(() => {
     const segments = Math.max(2, (chartModel?.points.length ?? 2) - 1);
@@ -164,6 +165,24 @@ export function WorkoutWeightTrendChart() {
               <Text style={globalStyles.workoutWeightTrendTargetLabel}>
                 Target Weight
               </Text>
+              {mutableChart?.lastDisplayValue ? (
+                <Text
+                  style={[
+                    globalStyles.workoutWeightTrendTargetValue,
+                    { bottom: valueBottomOffset(mutableChart.lastValue) },
+                  ]}
+                >
+                  {mutableChart.lastDisplayValue}
+                </Text>
+              ) : null}
+              <Text
+                style={[
+                  globalStyles.workoutWeightTrendTargetValue,
+                  { bottom: valueBottomOffset(chartModel.baselinePosition) },
+                ]}
+              >
+                {chartModel.baselinePosition}
+              </Text>
               <LineChart
                 data={lineData}
                 width={chartWidth}
@@ -212,10 +231,7 @@ export function WorkoutWeightTrendChart() {
                     80,
                     chartWidth - spacing.workoutWeightTrendEndSpacing,
                   ),
-                  labelText: String(chartModel.baselinePosition),
-                  labelTextStyle: {
-                    ...globalStyles.workoutWeightTrendReferenceLabelText,
-                  },
+                  labelText: "",
                 }}
                 disableScroll
                 disableForeignObject
