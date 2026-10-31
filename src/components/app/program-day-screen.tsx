@@ -1,5 +1,5 @@
-import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useCallback, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
@@ -7,6 +7,7 @@ import { readSearchParam } from "@/components/app/program-day-params";
 import { useAuth } from "@/features/auth/auth-context";
 import { getProgram } from "@/features/workout/program-repository";
 import type { ProgramDay } from "@/features/workout/types";
+import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { globalStyles, sizes, spacing } from "@/styles/global";
 
 export function ProgramDayScreen() {
@@ -60,15 +61,8 @@ export function ProgramDayScreen() {
     }
   }, [programId, user]);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  useFocusEffect(
-    useCallback(() => {
-      void refresh();
-    }, [refresh]),
-  );
+  // Focus covers initial mount; avoid a second mount-only refresh.
+  useRefreshOnFocus(refresh);
 
   const programDaysLabel = programName ? `${programName} Days` : "Days";
 

@@ -1,5 +1,5 @@
-import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { useCallback, useState } from "react";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
@@ -21,6 +21,7 @@ import {
   useProgramDayExercises,
   type DayExerciseListItem,
 } from "@/features/workout/user-program-day-exercises";
+import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 export function ProgramDayExerciseScreen() {
@@ -52,11 +53,7 @@ export function ProgramDayExerciseScreen() {
     fromHistory,
   });
 
-  useFocusEffect(
-    useCallback(() => {
-      void refresh();
-    }, [refresh]),
-  );
+  useRefreshOnFocus(refresh);
 
   function openWorkout(exercise?: DayExerciseListItem) {
     const nextParams = new URLSearchParams({

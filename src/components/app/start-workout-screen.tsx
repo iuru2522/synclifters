@@ -1,5 +1,5 @@
-import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { useCallback, useState } from "react";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
@@ -8,6 +8,7 @@ import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-
 import { WorkoutStartIcon } from "@/components/app/workout-start-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { useUserPrograms } from "@/features/workout/user-programs";
+import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 const PRESET_WORKOUT_BUTTONS = [
@@ -109,11 +110,7 @@ export function StartWorkoutScreen() {
     null,
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      void refresh();
-    }, [refresh]),
-  );
+  useRefreshOnFocus(refresh);
 
   function selectYourProgram(programId: string, programName: string) {
     setSelectedButton({ section: "your", programId });

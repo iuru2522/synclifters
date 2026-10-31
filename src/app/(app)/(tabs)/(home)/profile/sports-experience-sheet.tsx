@@ -1,9 +1,7 @@
 import { ProfileSportsExperienceSheet } from "@/components/app/profile-sports-experience-sheet";
 import { useAuth } from "@/features/auth/auth-context";
-import {
-  updateUserProfile,
-  type UserSportsExperience,
-} from "@/features/users/user-profile";
+import { useSaveProfileField } from "@/features/users/use-save-profile-field";
+import type { UserSportsExperience } from "@/features/users/user-profile";
 
 function resolveInitialExperience(
   value: UserSportsExperience | null | undefined,
@@ -16,21 +14,19 @@ function resolveInitialExperience(
 }
 
 export default function SportsExperienceSheetScreen() {
-  const { user, profile, patchProfile, refreshProfile } = useAuth();
+  const { profile } = useAuth();
+  const { saveField } = useSaveProfileField();
   const initialValue = resolveInitialExperience(profile?.sportsExperience);
 
   return (
     <ProfileSportsExperienceSheet
       initialValue={initialValue}
-      onSave={async (sportsExperience) => {
-        if (!user) {
-          throw new Error("You must be signed in to update your sports experience.");
-        }
-
-        await updateUserProfile(user.uid, { sportsExperience });
-        patchProfile({ sportsExperience });
-        void refreshProfile({ silent: true });
-      }}
+      onSave={(sportsExperience) =>
+        saveField(
+          { sportsExperience },
+          "You must be signed in to update your sports experience.",
+        )
+      }
     />
   );
 }

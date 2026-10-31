@@ -1,5 +1,4 @@
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
@@ -15,6 +14,7 @@ import {
   formatVolumeLabel,
 } from "@/features/workout/session-display";
 import { useExerciseSessionHistory } from "@/features/workout/user-exercise-history";
+import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 const exerciseImage = require("../../../assets/images/exercise.png");
@@ -35,11 +35,7 @@ export function ExerciseHistoryScreen() {
   const imageHeight =
     (windowWidth * sizes.exerciseHistoryImageHeight) / sizes.exerciseHistoryImageWidth;
 
-  useFocusEffect(
-    useCallback(() => {
-      void refresh();
-    }, [refresh]),
-  );
+  useRefreshOnFocus(refresh);
 
   return (
     <View
