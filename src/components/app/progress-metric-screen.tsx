@@ -370,6 +370,17 @@ export function ProgressMetricScreen() {
           </WorkoutGlassCard>
         </View>
 
+        <Pressable
+          style={globalStyles.progressMetricRecordButton}
+          onPress={openRecordSheet}
+          accessibilityRole="button"
+          accessibilityLabel={config.recordLabel}
+        >
+          <Text style={globalStyles.progressMetricRecordButtonText}>
+            {config.recordLabel}
+          </Text>
+        </Pressable>
+
         <View style={globalStyles.progressMetricHistoryBlock}>
           {isLoading ? (
             <Text style={globalStyles.workoutMyPrograms}>Loading history…</Text>
@@ -399,17 +410,6 @@ export function ProgressMetricScreen() {
             );
           })}
         </View>
-
-        <Pressable
-          style={globalStyles.progressMetricRecordButton}
-          onPress={openRecordSheet}
-          accessibilityRole="button"
-          accessibilityLabel={config.recordLabel}
-        >
-          <Text style={globalStyles.progressMetricRecordButtonText}>
-            {config.recordLabel}
-          </Text>
-        </Pressable>
       </ScrollView>
     </View>
   );
