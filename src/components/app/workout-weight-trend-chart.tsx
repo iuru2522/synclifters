@@ -1,5 +1,5 @@
-import { useFocusEffect, useRouter, type Href } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useRouter, type Href } from "expo-router";
+import { useMemo, useState } from "react";
 import {
   Pressable,
   Text,
@@ -17,10 +17,11 @@ import {
   computePastWeekDelta,
 } from "@/features/users/progress-metric-chart";
 import { useUserBodyMetrics } from "@/features/users/user-body-metrics";
+import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
-const WEIGHT_SHEET_HREF = "/workout/weight-sheet?source=workout" as Href;
-const WEIGHT_SCREEN_HREF = "/workout/progress-metric" as Href;
+const WEIGHT_SHEET_HREF = "/weight-sheet?source=workout" as Href;
+const WEIGHT_SCREEN_HREF = "/progress/progress-metric" as Href;
 
 function PointValueLabel({ label }: { label: string }) {
   return (
@@ -81,11 +82,7 @@ export function WorkoutWeightTrendChart() {
   const { entries, isLoading, refresh } = useUserBodyMetrics("weight");
   const [bodyWidth, setBodyWidth] = useState(320);
 
-  useFocusEffect(
-    useCallback(() => {
-      void refresh();
-    }, [refresh]),
-  );
+  useRefreshOnFocus(refresh);
 
   const chartModel = useMemo(
     () => buildProgressMetricChartModel(entries, "weight"),
