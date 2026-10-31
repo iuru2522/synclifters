@@ -50,6 +50,7 @@ export function ExerciseHistoryScreen() {
         <View style={globalStyles.createDayHeaderBack}>
           <AuthBackButton
             title=""
+            style={globalStyles.exerciseHistoryBackButton}
             onPress={() => {
               router.back();
             }}

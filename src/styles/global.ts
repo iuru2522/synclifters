@@ -194,10 +194,10 @@ export const spacing = {
   doExerciseLinkRight: 19,
   exerciseHistoryHeaderToImage: 30,
   exerciseHistoryImageToHistory: 14,
-  exerciseHistoryLabelLeft: 18,
+  exerciseHistoryLabelLeft: 2,
   exerciseHistoryLabelToButtons: 14,
   exerciseHistoryButtonsGap: 10,
-  exerciseHistoryButtonsInset: 35,
+  exerciseHistoryButtonsInset: 22,
   exerciseHistoryButtonDateLeft: 20,
   exerciseHistoryButtonTextGap: 14,
   createDayBurgerRight: 21,
@@ -943,6 +943,9 @@ export const globalStyles = StyleSheet.create({
     fontWeight: "700",
     includeFontPadding: false,
     textTransform: "uppercase",
+  },
+  exerciseHistoryBackButton: {
+    marginLeft: spacing.exerciseHistoryButtonsInset,
   },
   exerciseHistoryImage: {
     marginTop: spacing.exerciseHistoryHeaderToImage,
