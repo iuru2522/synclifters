@@ -64,7 +64,7 @@ function SplashScreenController({ fontsReady }: { fontsReady: boolean }) {
 function RootNavigator() {
   const router = useRouter();
   const gate = useAuthGateInput();
-  const { sessionReady, canAccessApp, canAccessAuth } = getAuthAccess(gate);
+  const { canAccessApp } = getAuthAccess(gate);
   const destination = resolveAuthDestination(gate);
 
   useEffect(() => {
@@ -72,10 +72,6 @@ function RootNavigator() {
       router.replace(destination);
     }
   }, [destination, router]);
-
-  if (!sessionReady) {
-    return null;
-  }
 
   return (
     <Stack
@@ -87,7 +83,8 @@ function RootNavigator() {
       <Stack.Protected guard={canAccessApp}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>
-      <Stack.Protected guard={canAccessAuth}>
+      {/* Stay on auth until a pending replace into the app has landed. */}
+      <Stack.Protected guard={!canAccessApp || destination != null}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
     </Stack>

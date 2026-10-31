@@ -34,7 +34,7 @@ describe("getAuthAccess", () => {
     expect(getAuthAccess(input({ isAuthLoading: true }))).toEqual({
       sessionReady: false,
       canAccessApp: false,
-      canAccessAuth: false,
+      canAccessAuth: true,
     });
   });
 
@@ -51,7 +51,7 @@ describe("getAuthAccess", () => {
     ).toEqual({
       sessionReady: false,
       canAccessApp: false,
-      canAccessAuth: false,
+      canAccessAuth: true,
     });
   });
 
@@ -61,6 +61,12 @@ describe("getAuthAccess", () => {
       canAccessApp: false,
       canAccessAuth: true,
     });
+  });
+
+  it("keeps auth available while the session is still loading", () => {
+    expect(getAuthAccess(input({ isAuthLoading: true })).canAccessAuth).toBe(
+      true,
+    );
   });
 
   it("allows app tabs only when verified and onboarded", () => {
@@ -169,5 +175,33 @@ describe("resolveAuthDestination", () => {
     expect(
       resolveAuthDestination(input({ ...base, pathname: "/workout" })),
     ).toBeNull();
+  });
+
+  it("sends completed users off sign-in/sign-up onto workout after login", () => {
+    const base = {
+      hasUser: true,
+      isEmailVerified: true,
+      profile: completeProfile(),
+    } as const;
+
+    expect(
+      resolveAuthDestination(input({ ...base, pathname: "/sign-in" })),
+    ).toBe("/workout");
+    expect(
+      resolveAuthDestination(input({ ...base, pathname: "/sign-up" })),
+    ).toBe("/workout");
+  });
+
+  it("sends completed users off tabs root `/` onto workout (not history)", () => {
+    expect(
+      resolveAuthDestination(
+        input({
+          hasUser: true,
+          isEmailVerified: true,
+          profile: completeProfile(),
+          pathname: "/",
+        }),
+      ),
+    ).toBe("/workout");
   });
 });

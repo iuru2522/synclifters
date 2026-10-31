@@ -26,7 +26,6 @@ const VERIFY_EMAIL_HREF = "/verify-email" as Href;
 const GENDER_HREF = "/gender" as Href;
 const WORKOUT_HREF = "/workout" as Href;
 
-/** Screens signed-out users may stay on inside the auth stack. */
 const PUBLIC_AUTH_SEGMENTS = new Set([
   "sign-in",
   "sign-up",
@@ -55,10 +54,21 @@ function isPublicAuthPath(pathname: string): boolean {
   return PUBLIC_AUTH_SEGMENTS.has(pathSegment(pathname));
 }
 
-/**
- * True once Firebase auth (and profile, when signed in) has settled enough
- * to decide verify / onboarding / app vs auth.
- */
+function isRootPath(pathname: string): boolean {
+  return pathname === "/" || pathname === "";
+}
+
+/** Auth / onboarding routes that a fully ready user should leave for the app. */
+function isAuthFunnelPath(pathname: string): boolean {
+  return (
+    isRootPath(pathname) ||
+    isPublicAuthPath(pathname) ||
+    isVerifyEmailPath(pathname) ||
+    isOnboardingPathname(pathname) ||
+    startsWithPath(pathname, "/gender")
+  );
+}
+
 export function isAuthSessionReady(
   input: Pick<
     AuthGateInput,
@@ -98,7 +108,7 @@ export function getAuthAccess(
   return {
     sessionReady,
     canAccessApp,
-    canAccessAuth: sessionReady && !canAccessApp,
+    canAccessAuth: !canAccessApp,
   };
 }
 
@@ -135,8 +145,7 @@ export function resolveAuthDestination(input: AuthGateInput): Href | null {
     return GENDER_HREF;
   }
 
-  // Fully ready: leave verify / onboarding for the app tabs.
-  if (isVerifyEmailPath(input.pathname) || isOnboardingPathname(input.pathname)) {
+  if (isAuthFunnelPath(input.pathname)) {
     return WORKOUT_HREF;
   }
 
