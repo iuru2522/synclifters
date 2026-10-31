@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Stack } from "expo-router";
+import { Stack, usePathname, useRouter } from "expo-router";
 import {
   useFonts,
   Montserrat_200ExtraLight,
@@ -16,10 +16,83 @@ import {
 } from "@expo-google-fonts/league-spartan";
 import * as SplashScreen from "expo-splash-screen";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { AuthProvider } from "@/features/auth/auth-context";
+import { AuthProvider, useAuth } from "@/features/auth/auth-context";
+import {
+  getAuthAccess,
+  resolveAuthDestination,
+  type AuthGateInput,
+} from "@/features/auth/resolve-auth-destination";
 import { colors, fonts, globalStyles } from "@/styles/global";
 
 SplashScreen.preventAutoHideAsync();
+
+function useAuthGateInput(): AuthGateInput {
+  const pathname = usePathname();
+  const {
+    user,
+    isAuthLoading,
+    isProfileLoading,
+    isConfigured,
+    isEmailVerified,
+    profile,
+  } = useAuth();
+
+  return {
+    isConfigured,
+    hasUser: Boolean(user),
+    isAuthLoading,
+    isProfileLoading,
+    isEmailVerified,
+    profile,
+    pathname,
+  };
+}
+
+function SplashScreenController({ fontsReady }: { fontsReady: boolean }) {
+  const gate = useAuthGateInput();
+  const { sessionReady } = getAuthAccess(gate);
+
+  useEffect(() => {
+    if (fontsReady && sessionReady) {
+      void SplashScreen.hideAsync();
+    }
+  }, [fontsReady, sessionReady]);
+
+  return null;
+}
+
+function RootNavigator() {
+  const router = useRouter();
+  const gate = useAuthGateInput();
+  const { sessionReady, canAccessApp, canAccessAuth } = getAuthAccess(gate);
+  const destination = resolveAuthDestination(gate);
+
+  useEffect(() => {
+    if (destination) {
+      router.replace(destination);
+    }
+  }, [destination, router]);
+
+  if (!sessionReady) {
+    return null;
+  }
+
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.background },
+      }}
+    >
+      <Stack.Protected guard={canAccessApp}>
+        <Stack.Screen name="(app)" />
+      </Stack.Protected>
+      <Stack.Protected guard={canAccessAuth}>
+        <Stack.Screen name="(auth)" />
+      </Stack.Protected>
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -38,28 +111,13 @@ export default function RootLayout() {
     [fonts.leagueSpartanBold]: LeagueSpartan_700Bold,
   });
 
-  useEffect(() => {
-    if (fontsLoaded || fontError) {
-      void SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
-
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
+  const fontsReady = fontsLoaded || Boolean(fontError);
 
   return (
     <GestureHandlerRootView style={globalStyles.screen}>
       <AuthProvider>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.background },
-          }}
-        >
-          <Stack.Screen name="(app)" />
-          <Stack.Screen name="(auth)" />
-        </Stack>
+        <SplashScreenController fontsReady={fontsReady} />
+        {fontsReady ? <RootNavigator /> : null}
       </AuthProvider>
     </GestureHandlerRootView>
   );
