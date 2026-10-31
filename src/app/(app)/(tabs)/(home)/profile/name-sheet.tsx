@@ -5,10 +5,12 @@ import {
   updateCurrentUserDisplayName,
 } from "@/features/auth/auth-service";
 import { formatProfileFullName } from "@/features/users/profile-display";
+import { useSaveProfileField } from "@/features/users/use-save-profile-field";
 import { updateUserProfile } from "@/features/users/user-profile";
 
 export default function NameSheetScreen() {
-  const { user, profile, patchProfile, refreshProfile } = useAuth();
+  const { profile } = useAuth();
+  const { requireUid, commitLocalPatch } = useSaveProfileField();
   const initialName = formatProfileFullName(profile);
   const initialValue = initialName === "Not set" ? "" : initialName;
 
@@ -23,14 +25,11 @@ export default function NameSheetScreen() {
       emptyErrorTitle="Name required"
       emptyErrorMessage="Please enter your full name."
       onSave={async (trimmedName) => {
-        if (!user) {
-          throw new Error("You must be signed in to update your name.");
-        }
-
+        const uid = requireUid("You must be signed in to update your name.");
         const [firstName = "", ...lastNameParts] = trimmedName.split(/\s+/);
         const lastName = lastNameParts.join(" ");
 
-        await updateUserProfile(user.uid, { firstName, lastName });
+        await updateUserProfile(uid, { firstName, lastName });
 
         try {
           await updateCurrentUserDisplayName(trimmedName);
@@ -42,8 +41,7 @@ export default function NameSheetScreen() {
           throw error;
         }
 
-        patchProfile({ firstName, lastName });
-        void refreshProfile({ silent: true });
+        commitLocalPatch({ firstName, lastName });
       }}
     />
   );

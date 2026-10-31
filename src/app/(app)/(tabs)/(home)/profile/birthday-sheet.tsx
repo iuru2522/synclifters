@@ -5,10 +5,11 @@ import {
   formatProfileBirthday,
   parseBirthdayDate,
 } from "@/features/users/profile-display";
-import { updateUserProfile } from "@/features/users/user-profile";
+import { useSaveProfileField } from "@/features/users/use-save-profile-field";
 
 export default function BirthdaySheetScreen() {
-  const { user, profile, patchProfile, refreshProfile } = useAuth();
+  const { profile } = useAuth();
+  const { saveField } = useSaveProfileField();
   const initialBirthday = formatProfileBirthday(profile);
   const initialDate = parseBirthdayDate(
     initialBirthday === "Not set" ? null : initialBirthday,
@@ -18,14 +19,11 @@ export default function BirthdaySheetScreen() {
     <ProfileBirthdaySheet
       initialDate={initialDate}
       onSave={async (date) => {
-        if (!user) {
-          throw new Error("You must be signed in to update your birthday.");
-        }
-
         const birthday = formatBirthdayForStorage(date);
-        await updateUserProfile(user.uid, { birthday });
-        patchProfile({ birthday });
-        void refreshProfile({ silent: true });
+        await saveField(
+          { birthday },
+          "You must be signed in to update your birthday.",
+        );
       }}
     />
   );

@@ -1,11 +1,11 @@
-import { useFocusEffect, useRouter, type Href } from "expo-router";
-import { useCallback } from "react";
+import { useRouter, type Href } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { useUserSessions } from "@/features/workout/user-sessions";
 import type { WorkoutSession } from "@/features/workout/types";
+import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 function formatHistoryDate(session: WorkoutSession) {
@@ -31,11 +31,7 @@ export function HistoryScreen() {
   const insets = useSafeAreaInsets();
   const { sessions, isLoading, error, refresh } = useUserSessions();
 
-  useFocusEffect(
-    useCallback(() => {
-      void refresh();
-    }, [refresh]),
-  );
+  useRefreshOnFocus(refresh);
 
   function openSession(session: WorkoutSession) {
     const query = new URLSearchParams({

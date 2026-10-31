@@ -1,5 +1,5 @@
-import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { useCallback, useMemo } from "react";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useMemo } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
@@ -7,6 +7,7 @@ import { ProfileActionArrow } from "@/components/app/profile-action-arrow";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { useUserProgressExercises } from "@/features/workout/user-progress-exercises";
+import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { globalStyles, sizes, spacing } from "@/styles/global";
 
 const PROGRESS_METRIC_DETAIL_HREF = "/workout/progress-metric-detail" as Href;
@@ -24,11 +25,7 @@ export function ProgressMuscleScreen() {
     [exercisesForMuscle, muscleGroup],
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      void refresh();
-    }, [refresh]),
-  );
+  useRefreshOnFocus(refresh);
 
   return (
     <View

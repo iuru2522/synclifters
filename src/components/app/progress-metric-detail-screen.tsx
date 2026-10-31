@@ -1,5 +1,4 @@
-import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { useCallback } from "react";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
@@ -16,6 +15,7 @@ import {
   formatVolumeLabel,
 } from "@/features/workout/session-display";
 import { useExerciseSessionHistory } from "@/features/workout/user-exercise-history";
+import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 export function ProgressMetricDetailScreen() {
@@ -32,11 +32,7 @@ export function ProgressMetricDetailScreen() {
   const title = exerciseName ? exerciseName.toUpperCase() : "EXERCISE";
   const { sessions, isLoading, error, refresh } = useExerciseSessionHistory(exerciseId);
 
-  useFocusEffect(
-    useCallback(() => {
-      void refresh();
-    }, [refresh]),
-  );
+  useRefreshOnFocus(refresh);
 
   return (
     <View

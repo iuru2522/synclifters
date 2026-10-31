@@ -1,5 +1,5 @@
-import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useMemo, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -23,6 +23,7 @@ import {
 } from "@/features/users/progress-metric-chart";
 import type { BodyMetricEntry } from "@/features/users/types";
 import { useUserBodyMetrics } from "@/features/users/user-body-metrics";
+import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 type ProgressMetric = "weight" | "height";
@@ -228,11 +229,7 @@ export function ProgressMetricScreen() {
   const [bodyWidth, setBodyWidth] = useState(312);
   const [selectedRange, setSelectedRange] = useState<ChartRangeOption>("1W");
 
-  useFocusEffect(
-    useCallback(() => {
-      void refresh();
-    }, [refresh]),
-  );
+  useRefreshOnFocus(refresh);
 
   const chartModel = useMemo(
     () => buildProgressMetricChartModel(entries, metric),

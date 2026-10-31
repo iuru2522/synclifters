@@ -1,12 +1,16 @@
 import { ProfileFieldSheet } from "@/components/app/profile-field-sheet";
 import { useAuth } from "@/features/auth/auth-context";
-import { AuthServiceError, updateCurrentUserEmail } from "@/features/auth/auth-service";
-import { updateUserProfile } from "@/features/users/user-profile";
+import {
+  AuthServiceError,
+  updateCurrentUserEmail,
+} from "@/features/auth/auth-service";
+import { useSaveProfileField } from "@/features/users/use-save-profile-field";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function EmailSheetScreen() {
-  const { user, profile, patchProfile, refreshProfile } = useAuth();
+  const { profile } = useAuth();
+  const { requireUid, saveField } = useSaveProfileField();
   const initialValue = profile?.email?.trim() ?? "";
 
   return (
@@ -25,9 +29,7 @@ export default function EmailSheetScreen() {
           throw new Error("Enter a valid email address.");
         }
 
-        if (!user) {
-          throw new Error("You must be signed in to update your email.");
-        }
+        requireUid("You must be signed in to update your email.");
 
         const email = trimmedEmail.toLowerCase();
 
@@ -41,9 +43,7 @@ export default function EmailSheetScreen() {
           throw error;
         }
 
-        await updateUserProfile(user.uid, { email });
-        patchProfile({ email });
-        void refreshProfile({ silent: true });
+        await saveField({ email }, "You must be signed in to update your email.");
       }}
     />
   );
