@@ -276,8 +276,8 @@ export function ProgressMetricScreen() {
   function openRecordSheet() {
     const href =
       metric === "height"
-        ? ("/workout/height-sheet?source=progress" as Href)
-        : ("/workout/weight-sheet?source=progress" as Href);
+        ? ("/profile/height-sheet?source=progress" as Href)
+        : ("/profile/weight-sheet?source=progress" as Href);
     router.push(href);
   }
 

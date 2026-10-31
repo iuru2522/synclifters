@@ -12,7 +12,7 @@ import type { ReactNode } from "react";
 
 const WORKOUT_HREF = "/workout" as Href;
 const PROGRAMS_HREF = "/workout/start-workout?showEdit=1" as Href;
-const PROFILE_HREF = "/workout/profile" as Href;
+const PROFILE_HREF = "/profile" as Href;
 const PROGRESS_HREF = "/workout/progress" as Href;
 
 type MenuItemConfig = {

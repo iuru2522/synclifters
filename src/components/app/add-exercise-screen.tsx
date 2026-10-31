@@ -17,7 +17,7 @@ import {
 } from "@/features/workout/rep-type-selection";
 import { globalStyles, sizes, spacing } from "@/styles/global";
 
-const METRICS_SHEET_HREF = "/workout/metrics-sheet" as Href;
+const METRICS_SHEET_HREF = "/profile/metrics-sheet" as Href;
 const REP_TYPE_SHEET_HREF = "/workout/rep-type-sheet" as Href;
 
 export function AddExerciseScreen() {

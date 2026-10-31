@@ -32,16 +32,16 @@ import { colors, globalStyles, spacing } from "@/styles/global";
 
 const PROFILE_ACTION_BUTTON_COUNT = 10;
 const PROFILE_PHOTO_MAX_BYTES = 10 * 1024 * 1024;
-const NAME_SHEET_HREF = "/workout/name-sheet" as Href;
-const EMAIL_SHEET_HREF = "/workout/email-sheet" as Href;
+const NAME_SHEET_HREF = "/profile/name-sheet" as Href;
+const EMAIL_SHEET_HREF = "/profile/email-sheet" as Href;
 const NEW_PASSWORD_HREF = "/new-password" as Href;
-const BIRTHDAY_SHEET_HREF = "/workout/birthday-sheet" as Href;
-const WEIGHT_SHEET_HREF = "/workout/weight-sheet" as Href;
-const HEIGHT_SHEET_HREF = "/workout/height-sheet" as Href;
-const GENDER_SHEET_HREF = "/workout/gender-sheet" as Href;
-const SPORTS_EXPERIENCE_SHEET_HREF = "/workout/sports-experience-sheet" as Href;
-const METRICS_SHEET_HREF = "/workout/metrics-sheet" as Href;
-const WEEK_DAY_SHEET_HREF = "/workout/week-day-sheet" as Href;
+const BIRTHDAY_SHEET_HREF = "/profile/birthday-sheet" as Href;
+const WEIGHT_SHEET_HREF = "/profile/weight-sheet" as Href;
+const HEIGHT_SHEET_HREF = "/profile/height-sheet" as Href;
+const GENDER_SHEET_HREF = "/profile/gender-sheet" as Href;
+const SPORTS_EXPERIENCE_SHEET_HREF = "/profile/sports-experience-sheet" as Href;
+const METRICS_SHEET_HREF = "/profile/metrics-sheet" as Href;
+const WEEK_DAY_SHEET_HREF = "/profile/week-day-sheet" as Href;
 
 const CONNECTORS = [
   { id: "appleHealth", label: "Apple Health" },
@@ -58,7 +58,7 @@ const IMAGE_PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
 
 type ConnectorId = (typeof CONNECTORS)[number]["id"];
 
-export default function ProfileScreen() {
+export function ProfileScreen() {
   const router = useRouter();
   const { user, profile, patchProfile, refreshProfile, signOut, deleteAccount } =
     useAuth();
