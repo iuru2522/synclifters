@@ -434,6 +434,8 @@ export const sizes = {
   exerciseHistoryImageHeight: 180,
   createDayBurgerWidth: 18,
   createDayBurgerHeight: 14,
+  slidersHIconWidth: 16,
+  slidersHIconHeight: 14,
   saveIconWidth: 24,
   saveIconHeight: 24,
   saveIconStroke: 2,
@@ -1057,6 +1059,10 @@ export const globalStyles = StyleSheet.create({
   createDayBurgerIcon: {
     width: sizes.createDayBurgerWidth,
     height: sizes.createDayBurgerHeight,
+  },
+  slidersHIcon: {
+    width: sizes.slidersHIconWidth,
+    height: sizes.slidersHIconHeight,
   },
   saveIcon: {
     width: sizes.saveIconWidth,
@@ -2163,6 +2169,22 @@ export const globalStyles = StyleSheet.create({
     paddingLeft: spacing.profileActionButtonTextLeft,
     paddingRight: spacing.profileActionButtonTextLeft,
     gap: spacing.profileActionButtonTextLeft,
+  },
+  progressExerciseRowButton: {
+    backgroundColor: colors.backArrow,
+  },
+  progressProWaitList: {
+    alignSelf: "center",
+    paddingVertical: spacing.progressSectionLabelToRows,
+  },
+  progressProWaitListText: {
+    ...typography.menuOverlayProLink,
+    color: colors.menuOverlayProLink,
+    fontFamily: fonts.poppinsBold,
+    fontWeight: "700",
+    includeFontPadding: false,
+    textAlign: "center",
+    textTransform: "uppercase",
   },
   progressMuscleScroll: {
     flex: 1,

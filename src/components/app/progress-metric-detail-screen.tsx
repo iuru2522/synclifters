@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
-import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
+import { SlidersHIcon } from "@/components/app/sliders-h-icon";
 import { WorkoutGlassCard } from "@/components/app/workout-glass-card";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
@@ -60,9 +60,9 @@ export function ProgressMetricDetailScreen() {
           onPress={() => {}}
           hitSlop={sizes.backArrowHitSlop}
           accessibilityRole="button"
-          accessibilityLabel="Menu"
+          accessibilityLabel="Filters"
         >
-          <CreateDayBurgerIcon />
+          <SlidersHIcon />
         </Pressable>
       </View>
 
@@ -138,4 +138,4 @@ export function ProgressMetricDetailScreen() {
   );
 }
 
-export const PROGRESS_METRIC_DETAIL_HREF = "/workout/progress-metric-detail" as Href;
+export const PROGRESS_METRIC_DETAIL_HREF = "/progress/progress-metric-detail" as Href;

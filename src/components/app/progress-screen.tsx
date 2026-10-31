@@ -1,15 +1,14 @@
 import { useRouter, type Href } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { ProfileActionArrow } from "@/components/app/profile-action-arrow";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { useUserProgressExercises } from "@/features/workout/user-progress-exercises";
 import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
-import { globalStyles, sizes, spacing } from "@/styles/global";
+import { globalStyles, spacing } from "@/styles/global";
 
-const PROGRESS_MUSCLE_HREF = "/workout/progress-muscle" as Href;
-const PROGRESS_METRIC_HREF = "/workout/progress-metric" as Href;
+const PROGRESS_MUSCLE_HREF = "/progress/progress-muscle" as Href;
+const PROGRESS_METRIC_HREF = "/progress/progress-metric" as Href;
 
 const METRIC_ROWS = [
   { id: "weight", label: "Weight", metric: "weight" },
@@ -19,13 +18,18 @@ const METRIC_ROWS = [
 function ProgressRow({
   label,
   onPress,
+  tone = "default",
 }: {
   label: string;
   onPress?: () => void;
+  tone?: "default" | "exercise";
 }) {
   return (
     <Pressable
-      style={globalStyles.progressRowButton}
+      style={[
+        globalStyles.progressRowButton,
+        tone === "exercise" ? globalStyles.progressExerciseRowButton : null,
+      ]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
@@ -64,15 +68,6 @@ export function ProgressScreen() {
           />
         </View>
         <Text style={globalStyles.createDayHeaderTitle}>PROGRESS</Text>
-        <Pressable
-          style={globalStyles.createDayHeaderMenu}
-          onPress={() => {}}
-          hitSlop={sizes.backArrowHitSlop}
-          accessibilityRole="button"
-          accessibilityLabel="Menu"
-        >
-          <CreateDayBurgerIcon />
-        </Pressable>
       </View>
 
       <ScrollView
@@ -98,6 +93,15 @@ export function ProgressScreen() {
           </View>
         </View>
 
+        <Pressable
+          style={globalStyles.progressProWaitList}
+          onPress={() => {}}
+          accessibilityRole="button"
+          accessibilityLabel="Pro version wait list"
+        >
+          <Text style={globalStyles.progressProWaitListText}>PRO VERSION WAIT LIST</Text>
+        </Pressable>
+
         <View style={globalStyles.progressSection}>
           <Text style={globalStyles.progressSectionLabel}>EXERCIES</Text>
           <View style={globalStyles.progressRowList}>
@@ -112,6 +116,7 @@ export function ProgressScreen() {
               <ProgressRow
                 key={muscleGroup}
                 label={muscleGroup}
+                tone="exercise"
                 onPress={() => {
                   router.push({
                     pathname: PROGRESS_MUSCLE_HREF,
