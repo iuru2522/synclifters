@@ -33,6 +33,7 @@ export type CreateCompletedSessionInput = {
   workingSets: RecordedWorkingSet[];
   dropSets: RecordedDropSet[];
   performedAt?: Date;
+  durationMs?: number | null;
 };
 
 function requireFirestore() {
@@ -149,6 +150,10 @@ export function parseSession(id: string, data: Record<string, unknown>): Workout
       )
     : exercises.map((item) => item.exerciseId);
 
+  const durationRaw = parseNumberOrNull(data.durationMs);
+  const durationMs =
+    durationRaw != null && durationRaw >= 0 ? Math.floor(durationRaw) : null;
+
   return {
     id,
     programId: typeof data.programId === "string" ? data.programId : null,
@@ -156,6 +161,7 @@ export function parseSession(id: string, data: Record<string, unknown>): Workout
     dayId: typeof data.dayId === "string" ? data.dayId : null,
     dayName,
     performedAt: coerceToMillis(data.performedAt),
+    durationMs,
     date: typeof data.date === "string" ? data.date : "",
     status: data.status === "in_progress" ? "in_progress" : "completed",
     exerciseIds,
@@ -271,6 +277,10 @@ export async function createCompletedSession(
     sets,
     totalVolume: totalVolumeForSets(sets),
   };
+  const durationMs =
+    input.durationMs != null && Number.isFinite(input.durationMs) && input.durationMs >= 0
+      ? Math.floor(input.durationMs)
+      : null;
 
   const db = requireFirestore();
   const sessionRef = doc(sessionsCollection(uid));
@@ -285,6 +295,7 @@ export async function createCompletedSession(
     dayId,
     dayName,
     performedAt: serverTimestamp(),
+    ...(durationMs != null ? { durationMs } : {}),
     date: dateKey,
     status: "completed" as const,
     exerciseIds: [exerciseId],
@@ -347,6 +358,7 @@ export async function createCompletedSession(
     dayId,
     dayName,
     performedAt: performedAt.getTime(),
+    durationMs,
     date: dateKey,
     status: "completed",
     exerciseIds: [exerciseId],

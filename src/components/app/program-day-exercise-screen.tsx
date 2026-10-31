@@ -21,6 +21,11 @@ import {
   useProgramDayExercises,
   type DayExerciseListItem,
 } from "@/features/workout/user-program-day-exercises";
+import {
+  clearWorkoutDuration,
+  formatDurationClock,
+  useWorkoutElapsedLabel,
+} from "@/features/workout/workout-duration";
 import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
@@ -38,6 +43,8 @@ export function ProgramDayExerciseScreen() {
     showEdit?: string | string[];
     fromHistory?: string | string[];
     selectDay?: string | string[];
+    performedAt?: string | string[];
+    durationMs?: string | string[];
   }>();
   const dayName = readSearchParam(params.dayName);
   const programId = readSearchParam(params.programId);
@@ -46,6 +53,25 @@ export function ProgramDayExerciseScreen() {
   const showEdit = readSearchParam(params.showEdit) === "1";
   const fromHistory = readSearchParam(params.fromHistory) === "1";
   const selectDay = readSearchParam(params.selectDay) === "1";
+  const performedAtRaw = readSearchParam(params.performedAt);
+  const performedAtMs = performedAtRaw ? Number(performedAtRaw) : NaN;
+  const durationMsRaw = readSearchParam(params.durationMs);
+  const historyDurationMs = durationMsRaw ? Number(durationMsRaw) : NaN;
+  const liveElapsedLabel = useWorkoutElapsedLabel();
+  const durationLabel =
+    fromHistory && Number.isFinite(historyDurationMs)
+      ? formatDurationClock(historyDurationMs)
+      : fromHistory
+        ? formatDurationClock(0)
+        : liveElapsedLabel;
+  const lastWorkoutLabel =
+    fromHistory && Number.isFinite(performedAtMs)
+      ? `Last Workout Was ${new Date(performedAtMs).toLocaleDateString("en-US", {
+          month: "2-digit",
+          day: "2-digit",
+          year: "2-digit",
+        })}`
+      : null;
   const { exercises, isLoading, error, refresh } = useProgramDayExercises({
     programId,
     dayName,
@@ -66,6 +92,8 @@ export function ProgramDayExerciseScreen() {
       ...(exercise?.muscleGroup ? { muscleGroup: exercise.muscleGroup } : {}),
       ...(showEdit ? { showEdit: "1" } : {}),
       ...(fromHistory ? { fromHistory: "1" } : {}),
+      ...(performedAtRaw ? { performedAt: performedAtRaw } : {}),
+      ...(durationMsRaw ? { durationMs: durationMsRaw } : {}),
     });
     const query = nextParams.toString();
     router.push(
@@ -111,6 +139,7 @@ export function ProgramDayExerciseScreen() {
   function finishWorkout() {
     setSaveWorkoutVisible(false);
     clearFinishedWorkoutExercises();
+    clearWorkoutDuration();
     router.dismissTo("/workout" as Href);
   }
 
@@ -213,6 +242,9 @@ export function ProgramDayExerciseScreen() {
             </View>
           </View>
         ))}
+        {lastWorkoutLabel ? (
+          <Text style={globalStyles.programDayLastWorkout}>{lastWorkoutLabel}</Text>
+        ) : null}
       </View>
       {showEdit ? (
         <View style={globalStyles.programDayEditWrap}>
@@ -264,19 +296,21 @@ export function ProgramDayExerciseScreen() {
           ]}
         >
           <ClockIcon />
-          <Text style={globalStyles.programDayExerciseTimerText}>00:00</Text>
+          <Text style={globalStyles.programDayExerciseTimerText}>{durationLabel}</Text>
         </View>
-        <View
-          style={[
-            globalStyles.programDayExerciseTimer,
-            globalStyles.programDayExerciseStopwatchTimer,
-          ]}
-        >
-          <StopwatchIcon />
-          <Text style={globalStyles.programDayExerciseStopwatchTimerText}>
-            00:00
-          </Text>
-        </View>
+        {fromHistory ? null : (
+          <View
+            style={[
+              globalStyles.programDayExerciseTimer,
+              globalStyles.programDayExerciseStopwatchTimer,
+            ]}
+          >
+            <StopwatchIcon />
+            <Text style={globalStyles.programDayExerciseStopwatchTimerText}>
+              00:00
+            </Text>
+          </View>
+        )}
       </View>
     </View>
       <SaveExerciseOverlay

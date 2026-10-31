@@ -25,6 +25,7 @@ import { clearExercisesByDay } from "@/features/workout/day-exercises";
 import { clearFinishedWorkoutExercises } from "@/features/workout/finished-workout-exercises";
 import { clearRecordedDropSets } from "@/features/workout/recorded-drop-sets";
 import { clearRecordedWorkingSets } from "@/features/workout/recorded-working-sets";
+import { clearWorkoutDuration } from "@/features/workout/workout-duration";
 
 export type AuthMode = "signin" | "register";
 
@@ -404,6 +405,7 @@ function clearLocalWorkoutDrafts(): void {
   clearRecordedWorkingSets();
   clearRecordedDropSets();
   clearFinishedWorkoutExercises();
+  clearWorkoutDuration();
 }
 
 export async function signOut(): Promise<void> {

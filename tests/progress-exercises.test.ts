@@ -54,6 +54,7 @@ const session: WorkoutSession = {
   dayId: "day_1",
   dayName: "Day 1",
   performedAt: Date.now(),
+  durationMs: null,
   date: "2026-09-12",
   status: "completed",
   exerciseIds: ["catalog:bench"],

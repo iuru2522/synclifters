@@ -74,6 +74,8 @@ export type WorkoutSession = {
   dayId: string | null;
   dayName: string;
   performedAt: EpochMillis | null;
+  /** Total workout elapsed time at save, in milliseconds. */
+  durationMs: number | null;
   date: string;
   status: SessionStatus;
   exerciseIds: string[];
