@@ -13,7 +13,6 @@ import {
   type lineDataItem,
 } from "react-native-gifted-charts";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { readSearchParam } from "@/components/app/program-day-params";
 import { WorkoutGlassCard } from "@/components/app/workout-glass-card";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
@@ -43,13 +42,16 @@ const METRIC_CONFIG: Record<
   ProgressMetric,
   {
     title: string;
+    recordLabel: string;
   }
 > = {
   weight: {
     title: "WEIGHT",
+    recordLabel: "Record Weight",
   },
   height: {
     title: "HEIGHT",
+    recordLabel: "Record Height",
   },
 };
 
@@ -70,33 +72,19 @@ function formatMetricDate(entry: BodyMetricEntry) {
 }
 
 function formatMetricValue(entry: BodyMetricEntry) {
-  const unit = entry.unit.trim().toUpperCase();
+  const unit = entry.unit.trim().toLowerCase();
   return unit ? `${entry.value} ${unit}` : String(entry.value);
 }
 
-function StartPointBadge({ label }: { label: string }) {
+function PointValueLabel({ label }: { label: string }) {
   return (
-    <View style={globalStyles.progressMetricChartStartBadgeWrap}>
-      <View style={globalStyles.progressMetricChartStartBadgePointer} />
-      <View style={globalStyles.progressMetricChartStartBadgePill}>
-        <Text style={globalStyles.progressMetricChartBadgeText}>{label}</Text>
-      </View>
+    <View style={globalStyles.workoutWeightTrendPointLabelWrap}>
+      <Text style={globalStyles.workoutWeightTrendPointLabel}>{label}</Text>
     </View>
   );
 }
 
-function EndPointBadge({ label }: { label: string }) {
-  return (
-    <View style={globalStyles.progressMetricChartEndBadgeWrap}>
-      <View style={globalStyles.progressMetricChartEndBadgePill}>
-        <Text style={globalStyles.progressMetricChartBadgeText}>{label}</Text>
-      </View>
-      <View style={globalStyles.progressMetricChartEndBadgePointer} />
-    </View>
-  );
-}
-
-function buildMutableChartData(
+function buildCompactChartData(
   chartModel: NonNullable<ReturnType<typeof buildProgressMetricChartModel>>,
 ): { items: lineDataItem[]; lastRealPointIndex: number } {
   "use no memo";
@@ -105,102 +93,27 @@ function buildMutableChartData(
     chartModel.points.find((point) => point.isTrailingProjection) ??
     realPoints[realPoints.length - 1];
 
-  const targetRealCount = Math.max(sizes.progressMetricChartSegments, realPoints.length);
-  const firstPoint = realPoints[0];
-  const lastPoint = realPoints[realPoints.length - 1];
+  const middleIndex =
+    realPoints.length >= 3 ? Math.floor((realPoints.length - 1) / 2) : -1;
 
-  const expandedRealPoints =
-    realPoints.length >= targetRealCount
-      ? realPoints.map((point, index) => ({
-          value: point.value,
-          displayValue: point.displayValue,
-          isFirstRealPoint: index === 0,
-          isLastRealPoint: index === realPoints.length - 1,
-          isInterpolated: false,
-        }))
-      : Array.from({ length: targetRealCount }, (_, index) => {
-          if (index === 0) {
-            return {
-              value: firstPoint.value,
-              displayValue: firstPoint.displayValue,
-              isFirstRealPoint: true,
-              isLastRealPoint: false,
-              isInterpolated: false,
-            };
-          }
-          if (index === targetRealCount - 1) {
-            return {
-              value: lastPoint.value,
-              displayValue: lastPoint.displayValue,
-              isFirstRealPoint: false,
-              isLastRealPoint: true,
-              isInterpolated: false,
-            };
-          }
-          const progress = index / (targetRealCount - 1);
-          const ExactIndex = progress * (realPoints.length - 1);
-          const lowerIndex = Math.floor(ExactIndex);
-          const upperIndex = Math.min(realPoints.length - 1, Math.ceil(ExactIndex));
-          const fraction = ExactIndex - lowerIndex;
-          const interpolatedValue =
-            realPoints[lowerIndex].value +
-            (realPoints[upperIndex].value - realPoints[lowerIndex].value) * fraction;
-          return {
-            value: interpolatedValue,
-            displayValue: "",
-            isFirstRealPoint: false,
-            isLastRealPoint: false,
-            isInterpolated: true,
-          };
-        });
-
-  const items: lineDataItem[] = expandedRealPoints.map((point) => {
-    if (point.isFirstRealPoint) {
-      return {
-        value: point.value,
-        label: "",
-        hideDataPoint: false,
-        dataPointRadius: 0,
-        dataPointColor: "transparent",
-        dataPointLabelWidth: sizes.progressMetricChartLabelWidth,
-        dataPointLabelShiftX: spacing.progressMetricChartStartBadgeShiftX,
-        dataPointLabelShiftY: spacing.progressMetricChartStartBadgeShiftY,
-        dataPointLabelComponent: () => (
-          <StartPointBadge label={point.displayValue} />
-        ),
-      };
-    }
-
-    if (point.isLastRealPoint) {
-      return {
-        value: point.value,
-        label: "",
-        hideDataPoint: false,
-        dataPointRadius: sizes.progressMetricChartDotRadius,
-        dataPointColor: colors.progressChartDot,
-        dataPointLabelWidth: sizes.progressMetricChartLabelWidth,
-        dataPointLabelShiftX: 0,
-        dataPointLabelShiftY: spacing.progressMetricChartEndBadgeShiftY,
-        dataPointLabelComponent: () => (
-          <EndPointBadge label={point.displayValue} />
-        ),
-      };
-    }
-
-    if (point.isInterpolated) {
-      return {
-        value: point.value,
-        label: "",
-        hideDataPoint: true,
-      };
-    }
+  const items: lineDataItem[] = realPoints.map((point, index) => {
+    const showLabel =
+      point.isFirstRealPoint ||
+      point.isLastRealPoint ||
+      index === middleIndex;
 
     return {
       value: point.value,
       label: "",
       hideDataPoint: false,
-      dataPointRadius: 3,
-      dataPointColor: colors.white,
+      dataPointRadius: sizes.workoutWeightTrendDotRadius,
+      dataPointColor: colors.backArrow,
+      dataPointLabelWidth: sizes.workoutWeightTrendPointLabelWidth,
+      dataPointLabelShiftX: 0,
+      dataPointLabelShiftY: spacing.workoutWeightTrendPointLabelShiftY,
+      dataPointLabelComponent: showLabel
+        ? () => <PointValueLabel label={point.displayValue} />
+        : undefined,
     };
   });
 
@@ -212,7 +125,7 @@ function buildMutableChartData(
 
   return {
     items,
-    lastRealPointIndex: expandedRealPoints.length - 1,
+    lastRealPointIndex: realPoints.length - 1,
   };
 }
 
@@ -242,25 +155,22 @@ export function ProgressMetricScreen() {
 
   const chartWidth = Math.max(
     180,
-    bodyWidth - sizes.progressMetricChartYAxisLabelWidth,
+    bodyWidth - sizes.workoutWeightTrendYAxisLabelWidth,
   );
 
-  const mutableChart = chartModel ? buildMutableChartData(chartModel) : null;
+  const mutableChart = chartModel ? buildCompactChartData(chartModel) : null;
   const lineData = mutableChart ? mutableChart.items : [];
   const lastRealPointIndex = mutableChart
     ? mutableChart.lastRealPointIndex
     : chartModel?.lastRealIndex ?? 0;
 
   const pointSpacing = useMemo(() => {
-    const segments = Math.max(
-      sizes.progressMetricChartSegments,
-      (chartModel?.points.length ?? 2) - 1,
-    );
+    const segments = Math.max(2, (chartModel?.points.length ?? 2) - 1);
     const usableWidth =
       chartWidth -
-      spacing.progressMetricChartInitialSpacing -
-      spacing.progressMetricChartEndSpacing;
-    return Math.max(18, usableWidth / segments);
+      spacing.workoutWeightTrendInitialSpacing -
+      spacing.workoutWeightTrendEndSpacing;
+    return Math.max(16, usableWidth / segments);
   }, [chartModel, chartWidth]);
 
   function handleChartBodyLayout(event: LayoutChangeEvent) {
@@ -297,15 +207,6 @@ export function ProgressMetricScreen() {
           />
         </View>
         <Text style={globalStyles.createDayHeaderTitle}>{config.title}</Text>
-        <Pressable
-          style={globalStyles.createDayHeaderMenu}
-          onPress={() => {}}
-          hitSlop={sizes.backArrowHitSlop}
-          accessibilityRole="button"
-          accessibilityLabel="Menu"
-        >
-          <CreateDayBurgerIcon />
-        </Pressable>
       </View>
 
       <ScrollView
@@ -372,50 +273,57 @@ export function ProgressMetricScreen() {
                 style={globalStyles.progressMetricChartBody}
                 onLayout={handleChartBodyLayout}
               >
+                {metric === "weight" ? (
+                  <Text style={globalStyles.workoutWeightTrendTargetLabel}>
+                    Target Weight
+                  </Text>
+                ) : null}
                 <LineChart
                   data={lineData}
                   width={chartWidth}
                   height={sizes.progressMetricChartPlotHeight}
                   spacing={pointSpacing}
-                  initialSpacing={spacing.progressMetricChartInitialSpacing}
-                  endSpacing={spacing.progressMetricChartEndSpacing}
-                  overflowTop={spacing.progressMetricChartOverflowTop}
-                  color={colors.white}
-                  thickness={sizes.progressMetricChartLineThickness}
+                  initialSpacing={spacing.workoutWeightTrendInitialSpacing}
+                  endSpacing={spacing.workoutWeightTrendEndSpacing}
+                  overflowTop={spacing.workoutWeightTrendOverflowTop}
+                  color={colors.backArrow}
+                  thickness={sizes.workoutWeightTrendLineThickness}
                   yAxisSide={yAxisSides.RIGHT}
                   yAxisOffset={chartModel.yAxisOffset}
                   maxValue={chartModel.maxValue}
                   stepValue={chartModel.stepValue}
                   noOfSections={chartModel.noOfSections}
                   showFractionalValues={false}
-                  yAxisLabelWidth={sizes.progressMetricChartYAxisLabelWidth}
+                  yAxisLabelWidth={sizes.workoutWeightTrendYAxisLabelWidth}
                   yAxisThickness={0}
                   xAxisThickness={0}
                   hideRules
-                  yAxisTextStyle={{ ...globalStyles.progressMetricChartAxisText }}
-                  xAxisLabelTextStyle={{ ...globalStyles.progressMetricChartXAxisText }}
+                  yAxisTextStyle={{ ...globalStyles.workoutWeightTrendAxisText }}
+                  xAxisLabelTextStyle={{ ...globalStyles.workoutWeightTrendAxisText }}
                   lineSegments={[
                     {
                       startIndex: lastRealPointIndex,
                       endIndex: lastRealPointIndex + 1,
                       strokeDashArray: [3, 3],
-                      color: colors.progressChartDashedLine,
-                      thickness: sizes.progressMetricChartLineThickness,
+                      color: colors.backArrow,
+                      thickness: sizes.workoutWeightTrendLineThickness,
                     },
                   ]}
                   showReferenceLine1
                   referenceLine1Position={chartModel.baselinePosition}
                   referenceLine1Config={{
                     type: "dashed",
-                    color: colors.progressChartReferenceLine,
+                    color: colors.backArrow,
                     dashWidth: 3,
                     dashGap: 3,
                     thickness: 1,
-                    width: Math.max(80, chartWidth - spacing.progressMetricChartEndSpacing),
+                    width: Math.max(
+                      80,
+                      chartWidth - spacing.workoutWeightTrendEndSpacing,
+                    ),
                     labelText: String(chartModel.baselinePosition),
                     labelTextStyle: {
-                      ...globalStyles.progressMetricChartReferenceLabelText,
-                      left: spacing.progressMetricChartReferenceLabelOffset,
+                      ...globalStyles.workoutWeightTrendReferenceLabelText,
                     },
                   }}
                   disableScroll
@@ -423,19 +331,19 @@ export function ProgressMetricScreen() {
                 />
                 <View
                   style={[
-                    globalStyles.progressMetricChartXAxisRow,
+                    globalStyles.workoutWeightTrendXAxisRow,
                     {
-                      paddingLeft: spacing.progressMetricChartInitialSpacing,
+                      paddingLeft: spacing.workoutWeightTrendInitialSpacing,
                       paddingRight:
-                        sizes.progressMetricChartYAxisLabelWidth +
-                        Math.round(pointSpacing * 0.65),
+                        sizes.workoutWeightTrendYAxisLabelWidth +
+                        Math.round(pointSpacing * 0.35),
                     },
                   ]}
                 >
                   {chartModel.xAxisLabels.map((dateLabel, idx) => (
                     <Text
                       key={`${dateLabel}-${idx}`}
-                      style={globalStyles.progressMetricChartXAxisText}
+                      style={globalStyles.workoutWeightTrendAxisText}
                     >
                       {dateLabel}
                     </Text>
@@ -452,8 +360,18 @@ export function ProgressMetricScreen() {
           </WorkoutGlassCard>
         </View>
 
+        <Pressable
+          style={globalStyles.progressMetricRecordButton}
+          onPress={openRecordSheet}
+          accessibilityRole="button"
+          accessibilityLabel={config.recordLabel}
+        >
+          <Text style={globalStyles.progressMetricRecordButtonText}>
+            {config.recordLabel}
+          </Text>
+        </Pressable>
+
         <View style={globalStyles.progressMetricHistoryBlock}>
-          <View style={globalStyles.progressMetricHistoryDivider} />
           {isLoading ? (
             <Text style={globalStyles.workoutMyPrograms}>Loading history…</Text>
           ) : null}
@@ -466,33 +384,17 @@ export function ProgressMetricScreen() {
             const valueLabel = formatMetricValue(entry);
 
             return (
-              <View key={entry.id}>
-                <View
-                  style={globalStyles.progressMetricHistoryRow}
-                  accessibilityLabel={`${valueLabel}${dateLabel ? `, ${dateLabel}` : ""}`}
-                >
-                  <Text style={globalStyles.progressMetricHistoryDate}>{dateLabel}</Text>
-                  <View style={globalStyles.progressMetricHistoryValueWrap}>
-                    <Text style={globalStyles.progressMetricHistoryValue}>{valueLabel}</Text>
-                  </View>
-                </View>
-                <View style={globalStyles.progressMetricHistoryDivider} />
+              <View
+                key={entry.id}
+                style={globalStyles.progressMetricHistoryRow}
+                accessibilityLabel={`${valueLabel}${dateLabel ? `, ${dateLabel}` : ""}`}
+              >
+                <Text style={globalStyles.progressMetricHistoryDate}>{dateLabel}</Text>
+                <Text style={globalStyles.progressMetricHistoryValue}>{valueLabel}</Text>
               </View>
             );
           })}
-          {entries.length === 0 ? (
-            <View style={globalStyles.progressMetricHistoryDivider} />
-          ) : null}
         </View>
-
-        <Pressable
-          style={globalStyles.progressMetricRecordButton}
-          onPress={openRecordSheet}
-          accessibilityRole="button"
-          accessibilityLabel="Record"
-        >
-          <Text style={globalStyles.progressMetricRecordButtonText}>RECORD</Text>
-        </Pressable>
       </ScrollView>
     </View>
   );
