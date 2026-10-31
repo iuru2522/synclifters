@@ -48,11 +48,11 @@ const METRIC_CONFIG: Record<
 > = {
   weight: {
     title: "WEIGHT",
-    recordLabel: "Record Weight",
+    recordLabel: "RECORD",
   },
   height: {
     title: "HEIGHT",
-    recordLabel: "Record Height",
+    recordLabel: "RECORD",
   },
 };
 
@@ -73,7 +73,7 @@ function formatMetricDate(entry: BodyMetricEntry) {
 }
 
 function formatMetricValue(entry: BodyMetricEntry) {
-  const unit = entry.unit.trim().toLowerCase();
+  const unit = entry.unit.trim().toUpperCase();
   return unit ? `${entry.value} ${unit}` : String(entry.value);
 }
 
@@ -370,6 +370,36 @@ export function ProgressMetricScreen() {
           </WorkoutGlassCard>
         </View>
 
+        <View style={globalStyles.progressMetricHistoryBlock}>
+          {isLoading ? (
+            <Text style={globalStyles.workoutMyPrograms}>Loading history…</Text>
+          ) : null}
+          {error ? <Text style={globalStyles.workoutMyPrograms}>{error}</Text> : null}
+          {!isLoading && !error && entries.length === 0 ? (
+            <Text style={globalStyles.workoutMyPrograms}>No records yet</Text>
+          ) : null}
+          {entries.map((entry, index) => {
+            const dateLabel = formatMetricDate(entry);
+            const valueLabel = formatMetricValue(entry);
+
+            return (
+              <View key={entry.id}>
+                {index === 0 ? (
+                  <View style={globalStyles.progressMetricHistoryDivider} />
+                ) : null}
+                <View
+                  style={globalStyles.progressMetricHistoryRow}
+                  accessibilityLabel={`${valueLabel}${dateLabel ? `, ${dateLabel}` : ""}`}
+                >
+                  <Text style={globalStyles.progressMetricHistoryDate}>{dateLabel}</Text>
+                  <Text style={globalStyles.progressMetricHistoryValue}>{valueLabel}</Text>
+                </View>
+                <View style={globalStyles.progressMetricHistoryDivider} />
+              </View>
+            );
+          })}
+        </View>
+
         <Pressable
           style={globalStyles.progressMetricRecordButton}
           onPress={openRecordSheet}
@@ -380,31 +410,6 @@ export function ProgressMetricScreen() {
             {config.recordLabel}
           </Text>
         </Pressable>
-
-        <View style={globalStyles.progressMetricHistoryBlock}>
-          {isLoading ? (
-            <Text style={globalStyles.workoutMyPrograms}>Loading history…</Text>
-          ) : null}
-          {error ? <Text style={globalStyles.workoutMyPrograms}>{error}</Text> : null}
-          {!isLoading && !error && entries.length === 0 ? (
-            <Text style={globalStyles.workoutMyPrograms}>No records yet</Text>
-          ) : null}
-          {entries.map((entry) => {
-            const dateLabel = formatMetricDate(entry);
-            const valueLabel = formatMetricValue(entry);
-
-            return (
-              <View
-                key={entry.id}
-                style={globalStyles.progressMetricHistoryRow}
-                accessibilityLabel={`${valueLabel}${dateLabel ? `, ${dateLabel}` : ""}`}
-              >
-                <Text style={globalStyles.progressMetricHistoryDate}>{dateLabel}</Text>
-                <Text style={globalStyles.progressMetricHistoryValue}>{valueLabel}</Text>
-              </View>
-            );
-          })}
-        </View>
       </ScrollView>
     </View>
   );
