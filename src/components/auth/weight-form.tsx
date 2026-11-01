@@ -2,11 +2,12 @@ import { useCallback } from "react";
 import { View } from "react-native";
 import { useMeasurementUnit } from "@/features/onboarding/measurement-unit-context";
 import { useOnboarding } from "@/features/onboarding/onboarding-context";
+import type { WeightUnit } from "@/features/onboarding/types";
 import { globalStyles, spacing } from "@/styles/global";
 import { AuthBackButton } from "./auth-back-button";
 import { WeightRulerPicker } from "./weight-ruler-picker";
 import { convertWeight } from "./weight-ruler-units";
-import { WeightUnitToggle, type WeightUnit } from "./weight-unit-toggle";
+import { WeightUnitToggle } from "./weight-unit-toggle";
 
 export function WeightForm() {
   const { unit, setUnit } = useMeasurementUnit();

@@ -8,9 +8,10 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import type { WeightUnit } from "@/features/onboarding/types";
 import { colors, globalStyles, spacing } from "@/styles/global";
 
-export type WeightUnit = "kg" | "lb";
+export type { WeightUnit };
 
 type WeightUnitToggleProps = {
   value: WeightUnit;
