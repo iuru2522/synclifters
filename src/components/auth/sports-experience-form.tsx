@@ -1,9 +1,10 @@
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import { AppButton } from "@/components/app-button";
+import type { SportsExperience } from "@/features/onboarding/types";
 import { colors, globalStyles, spacing } from "@/styles/global";
 import { AuthBackButton } from "./auth-back-button";
 
-export type SportsExperience = "beginner" | "gym-rat" | "beast-mode";
+export type { SportsExperience };
 
 const sportsExperienceOptions: {
   value: SportsExperience;
