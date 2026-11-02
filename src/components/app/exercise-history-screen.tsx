@@ -1,20 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AppButton } from "@/components/app-button";
-import { readSearchParam } from "@/components/app/program-day-params";
+import { ExerciseSessionHistoryList } from "@/components/app/exercise-session-history-list";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { catalogExerciseId } from "@/features/workout/day-exercises";
-import {
-  findSessionExercise,
-  formatSessionDate,
-  formatSessionProgramLabel,
-  formatSetsSummary,
-  formatVolumeLabel,
-} from "@/features/workout/session-display";
+import { readSearchParam } from "@/features/workout/nav-params";
 import { useExerciseSessionHistory } from "@/features/workout/user-exercise-history";
 import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
-import { colors, globalStyles, sizes, spacing } from "@/styles/global";
+import { globalStyles, sizes, spacing } from "@/styles/global";
 
 const exerciseImage = require("../../../assets/images/exercise.png");
 
@@ -74,58 +67,12 @@ export function ExerciseHistoryScreen() {
           resizeMode="cover"
           accessibilityIgnoresInvertColors
         />
-        <Text style={globalStyles.exerciseHistoryLabel}>HISTORY</Text>
-        {isLoading ? null : error ? (
-          <Text style={globalStyles.workoutMyPrograms}>{error}</Text>
-        ) : sessions.length === 0 ? (
-          <Text style={globalStyles.workoutMyPrograms}>No history yet</Text>
-        ) : (
-          <View style={globalStyles.exerciseHistoryButtonsRow}>
-            {sessions.map((session) => {
-              const exercise = findSessionExercise(session, exerciseId);
-              const dateLabel = formatSessionDate(session);
-              const programLabel = formatSessionProgramLabel(session);
-              const setsLabel = exercise ? formatSetsSummary(exercise.sets) : "";
-              const volumeLabel = exercise
-                ? formatVolumeLabel(exercise.totalVolume)
-                : "";
-
-              return (
-                <AppButton
-                  key={session.id}
-                  title=""
-                  onPress={() => {}}
-                  borderColor={colors.backArrow}
-                  borderWidth={sizes.workoutProgramThinBorderWidth}
-                  textColor={colors.inputFill}
-                  pressAccentColor={colors.backArrow}
-                  textStyle={globalStyles.exerciseHistoryButtonSpacer}
-                  leftIcon={
-                    <View style={globalStyles.exerciseHistoryButtonContent}>
-                      <View style={globalStyles.exerciseHistoryButtonRow}>
-                        <Text style={globalStyles.exerciseHistoryButtonDate}>{dateLabel}</Text>
-                        <Text style={globalStyles.exerciseHistoryButtonProgram}>
-                          {programLabel}
-                        </Text>
-                      </View>
-                      <View style={globalStyles.exerciseHistoryButtonRow}>
-                        <Text style={globalStyles.exerciseHistoryButtonDate}>{setsLabel}</Text>
-                        <Text style={globalStyles.exerciseHistoryButtonWeight}>
-                          {volumeLabel}
-                        </Text>
-                      </View>
-                    </View>
-                  }
-                  style={[
-                    globalStyles.workoutCreateProgramThinBorder,
-                    globalStyles.exerciseHistoryButton,
-                  ]}
-                  accessibilityLabel={`${dateLabel}, ${setsLabel}, ${programLabel}, ${volumeLabel}`}
-                />
-              );
-            })}
-          </View>
-        )}
+        <ExerciseSessionHistoryList
+          sessions={sessions}
+          exerciseId={exerciseId}
+          isLoading={isLoading}
+          error={error}
+        />
       </ScrollView>
     </View>
   );

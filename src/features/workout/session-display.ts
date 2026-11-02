@@ -1,12 +1,24 @@
 import type { SessionExercise, SessionSet, WorkoutSession } from "@/features/workout/types";
 
+export function formatShortSessionDate(ms: number): string {
+  return new Date(ms).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export function formatLastWorkoutDate(ms: number): string {
+  return new Date(ms).toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit",
+  });
+}
+
 export function formatSessionDate(session: WorkoutSession): string {
   if (session.performedAt != null) {
-    return new Date(session.performedAt).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    return formatShortSessionDate(session.performedAt);
   }
 
   return session.date;
@@ -47,4 +59,44 @@ export function findSessionExercise(
   return (
     session.exercises.find((exercise) => exercise.exerciseId === trimmed) ?? null
   );
+}
+
+export type SessionDisplaySet = {
+  label: string;
+  weight: string;
+  reps: string;
+};
+
+function formatSetValue(value: number | null): string {
+  return value != null ? String(value) : "-";
+}
+
+export function mapSessionSetsToDisplay(sets: SessionSet[]): {
+  workingSets: SessionDisplaySet[];
+  dropSets: SessionDisplaySet[];
+} {
+  const workingSets: SessionDisplaySet[] = [];
+  const dropSets: SessionDisplaySet[] = [];
+
+  for (const set of sets) {
+    const row = {
+      weight: formatSetValue(set.weight),
+      reps: formatSetValue(set.reps),
+    };
+
+    if (set.kind === "drop") {
+      dropSets.push({
+        ...row,
+        label: `D${dropSets.length + 1}`,
+      });
+      continue;
+    }
+
+    workingSets.push({
+      ...row,
+      label: String(workingSets.length + 1),
+    });
+  }
+
+  return { workingSets, dropSets };
 }

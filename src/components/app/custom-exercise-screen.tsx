@@ -11,11 +11,15 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { ProfileActionArrow } from "@/components/app/profile-action-arrow";
-import { readSearchParam } from "@/components/app/program-day-params";
 import { AppButton } from "@/components/app-button";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { useAuth } from "@/features/auth/auth-context";
 import { formatProfileMetrics } from "@/features/users/profile-display";
+import {
+  addExerciseToDayHref,
+  programDayExerciseHref,
+  readSearchParam,
+} from "@/features/workout/nav-params";
 import {
   formatExerciseNameLabel,
   setSelectedExerciseName,
@@ -178,23 +182,21 @@ export function CustomExerciseScreen() {
       setSelectedExerciseImageUri(null);
 
       if (programId) {
-        const query = new URLSearchParams({
-          programId,
-          dayName,
-          ...(programName ? { programName } : {}),
-        }).toString();
-        router.dismissTo(`/workout/program-day-exercise?${query}` as Href);
+        router.dismissTo(
+          programDayExerciseHref({
+            programId,
+            dayName,
+            programName,
+          }),
+        );
         return;
       }
 
-      const query = new URLSearchParams({
-        ...(programName ? { programName } : {}),
-        ...(dayNames ? { dayNames } : {}),
-      }).toString();
       router.dismissTo(
-        (query
-          ? `/workout/add-exercise-to-day?${query}`
-          : "/workout/add-exercise-to-day") as Href,
+        addExerciseToDayHref({
+          programName,
+          dayNames,
+        }),
       );
     } catch (error) {
       const message =

@@ -1,9 +1,8 @@
-import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
-import { readSearchParam } from "@/components/app/program-day-params";
 import { SaveExerciseOverlay } from "@/components/app/save-exercise-overlay";
 import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
@@ -17,6 +16,13 @@ import {
 import { addExerciseToDay, catalogExerciseId } from "@/features/workout/day-exercises";
 import type { CatalogExercise } from "@/features/workout/exercise-catalog";
 import { catalogExercisesForMuscle } from "@/features/workout/exercise-catalog";
+import {
+  addExerciseToDayHref,
+  customExerciseHref,
+  exerciseHistoryHref,
+  programDayExerciseHref,
+  readSearchParam,
+} from "@/features/workout/nav-params";
 import { addExerciseToProgramDay } from "@/features/workout/program-repository";
 import type { ProgramExercise } from "@/features/workout/types";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
@@ -106,12 +112,13 @@ export function DoExerciseScreen() {
       setIsSaving(true);
       try {
         await addExerciseToProgramDay(user.uid, programId, dayName, programExercise);
-        const query = new URLSearchParams({
-          programId,
-          dayName,
-          ...(programName ? { programName } : {}),
-        }).toString();
-        router.dismissTo(`/workout/program-day-exercise?${query}` as Href);
+        router.dismissTo(
+          programDayExerciseHref({
+            programId,
+            dayName,
+            programName,
+          }),
+        );
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Failed to add exercise.";
@@ -126,14 +133,11 @@ export function DoExerciseScreen() {
       addExerciseToDay(dayName, programExercise);
     }
 
-    const query = new URLSearchParams({
-      ...(programName ? { programName } : {}),
-      ...(dayNames ? { dayNames } : {}),
-    }).toString();
     router.dismissTo(
-      (query
-        ? `/workout/add-exercise-to-day?${query}`
-        : "/workout/add-exercise-to-day") as Href,
+      addExerciseToDayHref({
+        programName,
+        dayNames,
+      }),
     );
   };
 
@@ -199,11 +203,12 @@ export function DoExerciseScreen() {
               </Pressable>
               <Pressable
                 onPress={() => {
-                  const query = new URLSearchParams({
-                    exerciseName: exercise.name,
-                    exerciseId: exercise.id,
-                  }).toString();
-                  router.push(`/workout/exercise-history?${query}` as Href);
+                  router.push(
+                    exerciseHistoryHref({
+                      exerciseName: exercise.name,
+                      exerciseId: exercise.id,
+                    }),
+                  );
                 }}
                 hitSlop={sizes.backArrowHitSlop}
                 accessibilityRole="button"
@@ -224,21 +229,16 @@ export function DoExerciseScreen() {
             setSelectedMuscleGroup(muscle);
           }
 
-          const query = new URLSearchParams({
-            ...(programId ? { programId } : {}),
-            ...(programName ? { programName } : {}),
-            ...(dayName ? { dayName } : {}),
-            ...(dayNames ? { dayNames } : {}),
-            ...(muscleGroup ? { muscleGroup } : {}),
-          }).toString();
-          const href = (
-            query
-              ? `/workout/custom-exercise?${query}`
-              : "/workout/custom-exercise"
-          ) as Href;
-
           setMenuVisible(false);
-          router.push(href);
+          router.push(
+            customExerciseHref({
+              programId,
+              programName,
+              dayName,
+              dayNames,
+              muscleGroup,
+            }),
+          );
         }}
         onCancel={() => {
           setMenuVisible(false);

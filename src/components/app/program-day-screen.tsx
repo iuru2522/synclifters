@@ -1,10 +1,14 @@
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
-import { readSearchParam } from "@/components/app/program-day-params";
 import { useAuth } from "@/features/auth/auth-context";
+import {
+  programDayExerciseHref,
+  readSearchParam,
+  workoutScreenHref,
+} from "@/features/workout/nav-params";
 import { getProgram } from "@/features/workout/program-repository";
 import type { ProgramDay } from "@/features/workout/types";
 import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
@@ -67,18 +71,16 @@ export function ProgramDayScreen() {
   const programDaysLabel = programName ? `${programName} Days` : "Days";
 
   function openDay(day: ProgramDay) {
-    const query = new URLSearchParams({
+    const params = {
       dayName: day.name,
-      ...(programId ? { programId } : {}),
-      ...(programName ? { programName } : {}),
-      ...(showEdit ? { showEdit: "1" } : {}),
-      ...(fromHistory ? { fromHistory: "1" } : {}),
-      ...(selectDay ? { selectDay: "1" } : {}),
-    }).toString();
+      programId,
+      programName,
+      showEdit,
+      fromHistory,
+      selectDay,
+    };
     router.push(
-      (fromHistory
-        ? `/workout/workout-screen?${query}`
-        : `/workout/program-day-exercise?${query}`) as Href,
+      fromHistory ? workoutScreenHref(params) : programDayExerciseHref(params),
     );
   }
 

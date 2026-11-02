@@ -2,15 +2,16 @@ import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
-import {
-  parseDayNames,
-  readSearchParam,
-  serializeDayNames,
-} from "@/components/app/program-day-params";
 import { ProfileActionArrow } from "@/components/app/profile-action-arrow";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { useAuth } from "@/features/auth/auth-context";
 import { formatProfileMetrics } from "@/features/users/profile-display";
+import {
+  exercisePickerHref,
+  parseDayNames,
+  readSearchParam,
+  serializeDayNames,
+} from "@/features/workout/nav-params";
 import {
   formatRepTypeLabel,
   useSelectedRepType,
@@ -79,15 +80,14 @@ export function AddExerciseScreen() {
               style={globalStyles.addExerciseActionButton}
               onPress={() => {
                 if (button.id === "exercise") {
-                  router.push({
-                    pathname: "/workout/exercise",
-                    params: {
-                      ...(programId ? { programId } : {}),
-                      ...(programName ? { programName } : {}),
-                      ...(dayName ? { dayName } : {}),
+                  router.push(
+                    exercisePickerHref({
+                      programId,
+                      programName,
+                      dayName,
                       dayNames: serializeDayNames(dayNames),
-                    },
-                  } as Href);
+                    }),
+                  );
                 } else if (button.id === "metrics") {
                   router.push(METRICS_SHEET_HREF);
                 } else if (button.id === "rep-type") {

@@ -1,15 +1,16 @@
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
-import {
-  readSearchParam,
-  serializeDayNames,
-  parseDayNames,
-} from "@/components/app/program-day-params";
 import { ProfileActionArrow } from "@/components/app/profile-action-arrow";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { MUSCLE_GROUP_OPTIONS } from "@/features/workout/custom-exercise-muscle";
+import {
+  doExerciseHref,
+  parseDayNames,
+  readSearchParam,
+  serializeDayNames,
+} from "@/features/workout/nav-params";
 import { globalStyles, sizes, spacing } from "@/styles/global";
 
 export function ExerciseScreen() {
@@ -62,14 +63,15 @@ export function ExerciseScreen() {
               key={label}
               style={globalStyles.exerciseMuscleGroupButton}
               onPress={() => {
-                const query = new URLSearchParams({
-                  muscleGroup: label,
-                  dayNames: serializeDayNames(dayNames),
-                  ...(programId ? { programId } : {}),
-                  ...(programName ? { programName } : {}),
-                  ...(dayName ? { dayName } : {}),
-                }).toString();
-                router.push(`/workout/do-exercise?${query}` as Href);
+                router.push(
+                  doExerciseHref({
+                    muscleGroup: label,
+                    dayNames: serializeDayNames(dayNames),
+                    programId,
+                    programName,
+                    dayName,
+                  }),
+                );
               }}
               accessibilityRole="button"
               accessibilityLabel={label}

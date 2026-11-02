@@ -1,13 +1,14 @@
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
+import { AuthBackButton } from "@/components/auth/auth-back-button";
 import {
+  createDaySheetHref,
   parseDayNames,
   readSearchParam,
   serializeDayNames,
-} from "@/components/app/program-day-params";
-import { AuthBackButton } from "@/components/auth/auth-back-button";
+} from "@/features/workout/nav-params";
 import { globalStyles, sizes, spacing } from "@/styles/global";
 
 export function CreateDayScreen() {
@@ -55,13 +56,12 @@ export function CreateDayScreen() {
           <Pressable
             style={globalStyles.createDayAccentBar}
             onPress={() => {
-              router.push({
-                pathname: "/workout/create-day-sheet",
-                params: {
-                  ...(programName ? { programName } : {}),
+              router.push(
+                createDaySheetHref({
+                  programName,
                   dayNames: serializeDayNames(dayNames),
-                },
-              } as Href);
+                }),
+              );
             }}
             accessibilityRole="button"
             accessibilityLabel="Create Day"

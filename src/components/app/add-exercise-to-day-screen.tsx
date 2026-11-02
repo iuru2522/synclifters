@@ -1,18 +1,21 @@
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
-import {
-  parseDayNames,
-  readSearchParam,
-  serializeDayNames,
-} from "@/components/app/program-day-params";
 import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { useAuth } from "@/features/auth/auth-context";
 import { useExercisesByDay } from "@/features/workout/day-exercises";
+import {
+  addExerciseHref,
+  createDayHref,
+  parseDayNames,
+  readSearchParam,
+  serializeDayNames,
+  WORKOUT_HOME_HREF,
+} from "@/features/workout/nav-params";
 import { saveUserProgram } from "@/features/workout/user-programs";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
@@ -68,7 +71,7 @@ export function AddExerciseToDayScreen() {
         dayNames,
         exercisesByDay,
       });
-      router.dismissTo("/workout" as Href);
+      router.dismissTo(WORKOUT_HOME_HREF);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to save program.";
@@ -146,12 +149,13 @@ export function AddExerciseToDayScreen() {
                 <Pressable
                   style={globalStyles.addExerciseDayRecordLink}
                   onPress={() => {
-                    const query = new URLSearchParams({
-                      dayName: name,
-                      dayNames: serializeDayNames(dayNames),
-                      ...(programName ? { programName } : {}),
-                    }).toString();
-                    router.push(`/workout/add-exercise?${query}` as Href);
+                    router.push(
+                      addExerciseHref({
+                        dayName: name,
+                        dayNames: serializeDayNames(dayNames),
+                        programName,
+                      }),
+                    );
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={`Add exercise to ${name}`}
@@ -168,11 +172,12 @@ export function AddExerciseToDayScreen() {
         <Pressable
           style={globalStyles.addExerciseAddDayBar}
           onPress={() => {
-            const query = new URLSearchParams({
-              dayNames: serializeDayNames(dayNames),
-              ...(programName ? { programName } : {}),
-            }).toString();
-            router.push(`/workout/create-day?${query}` as Href);
+            router.push(
+              createDayHref({
+                dayNames: serializeDayNames(dayNames),
+                programName,
+              }),
+            );
           }}
           accessibilityRole="button"
           accessibilityLabel="Add Day"

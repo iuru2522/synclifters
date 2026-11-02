@@ -1,29 +1,21 @@
-import { useRouter, type Href } from "expo-router";
+import { useRouter } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
-import { useUserSessions } from "@/features/workout/user-sessions";
+import {
+  programDayExerciseHref,
+  WORKOUT_HOME_HREF,
+} from "@/features/workout/nav-params";
+import { formatSessionDate } from "@/features/workout/session-display";
 import type { WorkoutSession } from "@/features/workout/types";
+import { useUserSessions } from "@/features/workout/user-sessions";
 import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 function formatHistoryDate(session: WorkoutSession) {
-  if (session.performedAt) {
-    return new Date(session.performedAt)
-      .toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-      .toUpperCase();
-  }
-
-  if (session.date) {
-    return session.date;
-  }
-
-  return "";
+  const label = formatSessionDate(session);
+  return label ? label.toUpperCase() : "";
 }
 
 export function HistoryScreen() {
@@ -34,20 +26,17 @@ export function HistoryScreen() {
   useRefreshOnFocus(refresh);
 
   function openSession(session: WorkoutSession) {
-    const query = new URLSearchParams({
-      sessionId: session.id,
-      ...(session.programId ? { programId: session.programId } : {}),
-      programName: session.programName,
-      dayName: session.dayName,
-      fromHistory: "1",
-      ...(session.performedAt != null
-        ? { performedAt: String(session.performedAt) }
-        : {}),
-      ...(session.durationMs != null
-        ? { durationMs: String(session.durationMs) }
-        : {}),
-    }).toString();
-    router.push(`/workout/program-day-exercise?${query}` as Href);
+    router.push(
+      programDayExerciseHref({
+        sessionId: session.id,
+        programId: session.programId,
+        programName: session.programName,
+        dayName: session.dayName,
+        fromHistory: true,
+        performedAt: session.performedAt,
+        durationMs: session.durationMs,
+      }),
+    );
   }
 
   return (
@@ -70,7 +59,7 @@ export function HistoryScreen() {
                 return;
               }
 
-              router.navigate("/workout" as Href);
+              router.navigate(WORKOUT_HOME_HREF);
             }}
           />
         </View>

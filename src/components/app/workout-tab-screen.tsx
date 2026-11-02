@@ -8,10 +8,14 @@ import { WeekCalendar } from "@/components/WeekCalendar/WeekCalendar";
 import { useAuth } from "@/features/auth/auth-context";
 import { formatProfileFullName } from "@/features/users/profile-display";
 import { clearFinishedWorkoutExercises } from "@/features/workout/finished-workout-exercises";
+import {
+  programDayExerciseHref,
+  programDayHref,
+  readSearchParam,
+} from "@/features/workout/nav-params";
 import { useUserPrograms } from "@/features/workout/user-programs";
 import { useUserSessions } from "@/features/workout/user-sessions";
 import { startWorkoutDuration } from "@/features/workout/workout-duration";
-import { readSearchParam } from "@/components/app/program-day-params";
 import { colors, globalStyles, sizes } from "@/styles/global";
 import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -101,12 +105,13 @@ export function WorkoutTabScreen() {
     }
 
     setProgramSelected(true);
-    const query = new URLSearchParams({
-      programId: activeProgram.id,
-      programName: activeProgram.name,
-      selectDay: "1",
-    }).toString();
-    router.push(`/workout/program-day?${query}` as Href);
+    router.push(
+      programDayHref({
+        programId: activeProgram.id,
+        programName: activeProgram.name,
+        selectDay: true,
+      }),
+    );
   }
 
   function openFavoriteDay() {
@@ -115,13 +120,14 @@ export function WorkoutTabScreen() {
     }
 
     setDaySelected(true);
-    const query = new URLSearchParams({
-      programId: activeProgram.id,
-      programName: activeProgram.name,
-      dayName: activeDayName,
-      selectDay: "1",
-    }).toString();
-    router.push(`/workout/program-day-exercise?${query}` as Href);
+    router.push(
+      programDayExerciseHref({
+        programId: activeProgram.id,
+        programName: activeProgram.name,
+        dayName: activeDayName,
+        selectDay: true,
+      }),
+    );
   }
 
   function openStartWorkout() {
@@ -131,12 +137,13 @@ export function WorkoutTabScreen() {
 
     clearFinishedWorkoutExercises();
     startWorkoutDuration();
-    const query = new URLSearchParams({
-      programId: activeProgram.id,
-      programName: activeProgram.name,
-      dayName: activeDayName,
-    }).toString();
-    router.push(`/workout/program-day-exercise?${query}` as Href);
+    router.push(
+      programDayExerciseHref({
+        programId: activeProgram.id,
+        programName: activeProgram.name,
+        dayName: activeDayName,
+      }),
+    );
   }
 
   return (
@@ -285,11 +292,12 @@ export function WorkoutTabScreen() {
               key={program.id}
               title={program.name}
               onPress={() => {
-                const query = new URLSearchParams({
-                  programId: program.id,
-                  programName: program.name,
-                }).toString();
-                router.push(`/workout/program-day?${query}` as Href);
+                router.push(
+                  programDayHref({
+                    programId: program.id,
+                    programName: program.name,
+                  }),
+                );
               }}
               borderColor={colors.backArrow}
               textColor={colors.inputText}

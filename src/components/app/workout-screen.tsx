@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
@@ -7,13 +7,17 @@ import { ChevronDownIcon } from "@/components/app/chevron-down-icon";
 import { ClockIcon } from "@/components/app/clock-icon";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
 import { PlusCircleIcon } from "@/components/app/plus-circle-icon";
-import { readSearchParam } from "@/components/app/program-day-params";
 import { SaveExerciseOverlay } from "@/components/app/save-exercise-overlay";
 import { SaveIcon } from "@/components/app/save-icon";
 import { StopwatchIcon } from "@/components/app/stopwatch-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
 import { useAuth } from "@/features/auth/auth-context";
 import { markWorkoutExerciseFinished } from "@/features/workout/finished-workout-exercises";
+import {
+  programDayExerciseHref,
+  readSearchParam,
+  setScreenHref,
+} from "@/features/workout/nav-params";
 import {
   clearRecordedDropSets,
   useRecordedDropSets,
@@ -22,7 +26,9 @@ import {
   clearRecordedWorkingSets,
   useRecordedWorkingSets,
 } from "@/features/workout/recorded-working-sets";
+import { formatLastWorkoutDate } from "@/features/workout/session-display";
 import { createCompletedSession } from "@/features/workout/session-repository";
+import { useHistoryExerciseSets } from "@/features/workout/user-history-exercise-sets";
 import {
   ensureWorkoutDurationStarted,
   formatDurationClock,
@@ -30,6 +36,7 @@ import {
   useWorkoutElapsedLabel,
 } from "@/features/workout/workout-duration";
 import { workoutExerciseKey } from "@/features/workout/workout-exercise-key";
+import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 export function WorkoutScreen() {
@@ -73,11 +80,7 @@ export function WorkoutScreen() {
         : liveElapsedLabel;
   const lastWorkoutLabel =
     fromHistory && Number.isFinite(performedAtMs)
-      ? `Last Workout Was ${new Date(performedAtMs).toLocaleDateString("en-US", {
-          month: "2-digit",
-          day: "2-digit",
-          year: "2-digit",
-        })}`
+      ? `Last Workout Was ${formatLastWorkoutDate(performedAtMs)}`
       : null;
   const exerciseKey = workoutExerciseKey(exerciseId, exerciseName);
 
@@ -86,55 +89,76 @@ export function WorkoutScreen() {
       ensureWorkoutDurationStarted();
     }
   }, [fromHistory]);
-  const dropSets = useRecordedDropSets(exerciseKey);
-  const workingSets = useRecordedWorkingSets(exerciseKey);
+
+  const historySets = useHistoryExerciseSets({
+    enabled: fromHistory,
+    sessionId,
+    exerciseId,
+  });
+  useRefreshOnFocus(historySets.refresh);
+
+  const liveDropSets = useRecordedDropSets(exerciseKey);
+  const liveWorkingSets = useRecordedWorkingSets(exerciseKey);
+  const workingSets = fromHistory
+    ? historySets.workingSets
+    : liveWorkingSets.map((set) => ({
+        label: set.label,
+        weight: set.weight,
+        reps: set.reps,
+      }));
+  const dropSets = fromHistory
+    ? historySets.dropSets
+    : liveDropSets.map((drop, index) => ({
+        label: `D${index + 1}`,
+        weight: drop.weight,
+        reps: drop.reps,
+      }));
   const recordedSetCount = workingSets.length + dropSets.length;
   const hasSetRows = recordedSetCount > 0;
   const saveDisabled = !hasSetRows;
   const listScrollEnabled = recordedSetCount >= sizes.workoutScrollableSetCount;
 
   function openAddSet() {
-    const query = new URLSearchParams({
-      ...(programId ? { programId } : {}),
-      ...(programName ? { programName } : {}),
-      ...(dayName ? { dayName } : {}),
-      ...(exerciseName ? { exerciseName } : {}),
-      ...(exerciseId ? { exerciseId } : {}),
-      ...(muscleGroup ? { muscleGroup } : {}),
-      ...(showEdit ? { showEdit: "1" } : {}),
-      ...(fromHistory ? { fromHistory: "1" } : {}),
-    }).toString();
+    if (fromHistory) {
+      return;
+    }
+
     router.push(
-      (query ? `/workout/set-screen?${query}` : "/workout/set-screen") as Href,
+      setScreenHref({
+        programId,
+        programName,
+        dayName,
+        exerciseName,
+        exerciseId,
+        muscleGroup,
+        showEdit,
+      }),
     );
   }
 
   function navigateAfterFinish() {
-    const query = new URLSearchParams({
-      ...(programId ? { programId } : {}),
-      ...(programName ? { programName } : {}),
-      ...(dayName ? { dayName } : {}),
-      ...(sessionId ? { sessionId } : {}),
-      ...(showEdit ? { showEdit: "1" } : {}),
-      ...(fromHistory ? { fromHistory: "1" } : {}),
-      ...(performedAtRaw ? { performedAt: performedAtRaw } : {}),
-      ...(durationMsRaw ? { durationMs: durationMsRaw } : {}),
-    }).toString();
     router.replace(
-      (query
-        ? `/workout/program-day-exercise?${query}`
-        : "/workout/program-day-exercise") as Href,
+      programDayExerciseHref({
+        programId,
+        programName,
+        dayName,
+        sessionId,
+        showEdit,
+        fromHistory,
+        performedAt: performedAtRaw,
+        durationMs: durationMsRaw,
+      }),
     );
   }
 
   async function finishWorkout() {
-    if (isSaving) {
+    if (fromHistory || isSaving) {
       return;
     }
 
     setSaveWorkoutVisible(false);
 
-    if (fromHistory || !hasSetRows) {
+    if (!hasSetRows) {
       clearRecordedWorkingSets(exerciseKey);
       clearRecordedDropSets(exerciseKey);
       navigateAfterFinish();
@@ -164,8 +188,8 @@ export function WorkoutScreen() {
         exerciseId,
         exerciseName,
         muscleGroup,
-        workingSets,
-        dropSets,
+        workingSets: liveWorkingSets,
+        dropSets: liveDropSets,
         durationMs: getWorkoutElapsedMs(),
       });
       markWorkoutExerciseFinished(exerciseKey);
@@ -205,31 +229,33 @@ export function WorkoutScreen() {
         <Text
           style={[
             globalStyles.createDayHeaderTitle,
-            globalStyles.createDayHeaderTitleWithSave,
+            fromHistory ? null : globalStyles.createDayHeaderTitleWithSave,
           ]}
           numberOfLines={1}
         >
           WORKOUT
         </Text>
         <View style={[globalStyles.createDayHeaderMenu, globalStyles.createDayHeaderMenuRow]}>
-          <Pressable
-            onPress={() => {
-              setSaveWorkoutVisible(true);
-            }}
-            disabled={saveDisabled}
-            hitSlop={sizes.backArrowHitSlop}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: saveDisabled }}
-            accessibilityLabel="Save"
-          >
-            <SaveIcon
-              color={
-                saveDisabled
-                  ? colors.workoutStartTrainingBar
-                  : colors.backArrow
-              }
-            />
-          </Pressable>
+          {fromHistory ? null : (
+            <Pressable
+              onPress={() => {
+                setSaveWorkoutVisible(true);
+              }}
+              disabled={saveDisabled}
+              hitSlop={sizes.backArrowHitSlop}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: saveDisabled }}
+              accessibilityLabel="Save"
+            >
+              <SaveIcon
+                color={
+                  saveDisabled
+                    ? colors.workoutStartTrainingBar
+                    : colors.backArrow
+                }
+              />
+            </Pressable>
+          )}
           <Pressable
             onPress={() => {}}
             hitSlop={sizes.backArrowHitSlop}
@@ -291,32 +317,43 @@ export function WorkoutScreen() {
           </View>
         </View>
         <View style={globalStyles.workoutSetHeadersLine} />
-        {workingSets.map((set) => (
-          <View key={set.label}>
-            <View style={globalStyles.workoutSetValues}>
-              <View style={globalStyles.workoutSetColSet}>
-                <Text style={globalStyles.workoutSetIndexLabel}>{set.label}</Text>
+        {fromHistory && historySets.isLoading ? (
+          <Text style={globalStyles.workoutMyPrograms}>Loading sets…</Text>
+        ) : null}
+        {fromHistory && historySets.error ? (
+          <Text style={globalStyles.workoutMyPrograms}>{historySets.error}</Text>
+        ) : null}
+        {fromHistory && historySets.isLoading
+          ? null
+          : workingSets.map((set) => (
+              <View key={`set-${set.label}`}>
+                <View style={globalStyles.workoutSetValues}>
+                  <View style={globalStyles.workoutSetColSet}>
+                    <Text style={globalStyles.workoutSetIndexLabel}>{set.label}</Text>
+                  </View>
+                  <View style={globalStyles.workoutSetColWeight}>
+                    <Text style={globalStyles.workoutSetIndexLabel}>{set.weight}</Text>
+                  </View>
+                  <View style={globalStyles.workoutSetColReps}>
+                    <Text style={globalStyles.workoutSetIndexLabel}>{set.reps}</Text>
+                  </View>
+                </View>
+                <View style={globalStyles.workoutSetValuesLine} />
               </View>
-              <View style={globalStyles.workoutSetColWeight}>
-                <Text style={globalStyles.workoutSetIndexLabel}>{set.weight}</Text>
-              </View>
-              <View style={globalStyles.workoutSetColReps}>
-                <Text style={globalStyles.workoutSetIndexLabel}>{set.reps}</Text>
-              </View>
-            </View>
-            <View style={globalStyles.workoutSetValuesLine} />
-          </View>
-        ))}
-        {dropSets.length > 0 ? (
+            ))}
+        {fromHistory && historySets.isLoading
+          ? null
+          : dropSets.length > 0
+            ? (
           <>
             <View style={globalStyles.workoutDropSetGroup}>
               <View
                 style={[globalStyles.workoutSetStatusBar, globalStyles.workoutSetStatusBarDrop]}
               />
-              {dropSets.map((drop, index) => (
-                <View key={`drop-${index}`} style={globalStyles.workoutDropSetRow}>
+              {dropSets.map((drop) => (
+                <View key={`drop-${drop.label}`} style={globalStyles.workoutDropSetRow}>
                   <View style={globalStyles.workoutSetColSet}>
-                    <Text style={globalStyles.workoutSetIndexLabel}>{`D${index + 1}`}</Text>
+                    <Text style={globalStyles.workoutSetIndexLabel}>{drop.label}</Text>
                   </View>
                   <View style={globalStyles.workoutSetColWeight}>
                     <Text style={globalStyles.workoutSetIndexLabel}>{drop.weight}</Text>
@@ -329,19 +366,28 @@ export function WorkoutScreen() {
             </View>
             <View style={globalStyles.workoutSetRowLine} />
           </>
+              )
+            : null}
+        {fromHistory &&
+        !historySets.isLoading &&
+        !historySets.error &&
+        !hasSetRows ? (
+          <Text style={globalStyles.workoutMyPrograms}>No sets recorded</Text>
         ) : null}
         {lastWorkoutLabel ? (
           <Text style={globalStyles.workoutLastWorkout}>{lastWorkoutLabel}</Text>
         ) : null}
-        <View style={globalStyles.programDayExerciseSelectDayWrap}>
-          <AppButton
-            title="ADD SET"
-            onPress={openAddSet}
-            borderColor={colors.backArrow}
-            textColor={colors.inputFill}
-            pressAccentColor={colors.backArrow}
-          />
-        </View>
+        {fromHistory ? null : (
+          <View style={globalStyles.programDayExerciseSelectDayWrap}>
+            <AppButton
+              title="ADD SET"
+              onPress={openAddSet}
+              borderColor={colors.backArrow}
+              textColor={colors.inputFill}
+              pressAccentColor={colors.backArrow}
+            />
+          </View>
+        )}
       </ScrollView>
       <View style={globalStyles.workoutTimers}>
         <View
@@ -366,14 +412,16 @@ export function WorkoutScreen() {
         )}
       </View>
     </View>
-      <SaveExerciseOverlay
-        visible={saveWorkoutVisible}
-        finishTitle="FINISH EXERCISE"
-        onFinish={finishWorkout}
-        onCancel={() => {
-          setSaveWorkoutVisible(false);
-        }}
-      />
+      {fromHistory ? null : (
+        <SaveExerciseOverlay
+          visible={saveWorkoutVisible}
+          finishTitle="FINISH EXERCISE"
+          onFinish={finishWorkout}
+          onCancel={() => {
+            setSaveWorkoutVisible(false);
+          }}
+        />
+      )}
     </View>
   );
 }

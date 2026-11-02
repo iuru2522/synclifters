@@ -8,14 +8,15 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import {
+  addExerciseToDayHref,
   parseDayNames,
   readSearchParam,
   serializeDayNames,
-} from "@/components/app/program-day-params";
+} from "@/features/workout/nav-params";
 import { colors, globalStyles, spacing } from "@/styles/global";
 
 export function CreateDayFieldSheet() {
@@ -67,13 +68,12 @@ export function CreateDayFieldSheet() {
     setSubmitting(true);
 
     try {
-      router.replace({
-        pathname: "/workout/add-exercise-to-day",
-        params: {
+      router.replace(
+        addExerciseToDayHref({
           programName,
           dayNames: serializeDayNames([...existingDayNames, trimmed]),
-        },
-      } as Href);
+        }),
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to save changes.";
       Alert.alert("Save failed", message);
