@@ -60,3 +60,43 @@ export function findSessionExercise(
     session.exercises.find((exercise) => exercise.exerciseId === trimmed) ?? null
   );
 }
+
+export type SessionDisplaySet = {
+  label: string;
+  weight: string;
+  reps: string;
+};
+
+function formatSetValue(value: number | null): string {
+  return value != null ? String(value) : "-";
+}
+
+export function mapSessionSetsToDisplay(sets: SessionSet[]): {
+  workingSets: SessionDisplaySet[];
+  dropSets: SessionDisplaySet[];
+} {
+  const workingSets: SessionDisplaySet[] = [];
+  const dropSets: SessionDisplaySet[] = [];
+
+  for (const set of sets) {
+    const row = {
+      weight: formatSetValue(set.weight),
+      reps: formatSetValue(set.reps),
+    };
+
+    if (set.kind === "drop") {
+      dropSets.push({
+        ...row,
+        label: `D${dropSets.length + 1}`,
+      });
+      continue;
+    }
+
+    workingSets.push({
+      ...row,
+      label: String(workingSets.length + 1),
+    });
+  }
+
+  return { workingSets, dropSets };
+}
