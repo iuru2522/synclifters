@@ -1,12 +1,24 @@
 import type { SessionExercise, SessionSet, WorkoutSession } from "@/features/workout/types";
 
+export function formatShortSessionDate(ms: number): string {
+  return new Date(ms).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export function formatLastWorkoutDate(ms: number): string {
+  return new Date(ms).toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit",
+  });
+}
+
 export function formatSessionDate(session: WorkoutSession): string {
   if (session.performedAt != null) {
-    return new Date(session.performedAt).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    return formatShortSessionDate(session.performedAt);
   }
 
   return session.date;

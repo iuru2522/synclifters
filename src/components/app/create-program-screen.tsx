@@ -1,9 +1,10 @@
-import { useRouter, type Href } from "expo-router";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import { createDayHref } from "@/features/workout/nav-params";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
 export function CreateProgramScreen() {
@@ -34,10 +35,7 @@ export function CreateProgramScreen() {
       return;
     }
 
-    router.push({
-      pathname: "/workout/create-day",
-      params: { programName: programName.trim() },
-    } as Href);
+    router.push(createDayHref({ programName: programName.trim() }));
   }
 
   return (

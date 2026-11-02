@@ -1,12 +1,12 @@
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
-import { readSearchParam } from "@/components/app/program-day-params";
 import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-icon";
 import { WorkoutStartIcon } from "@/components/app/workout-start-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import { programDayHref, readSearchParam } from "@/features/workout/nav-params";
 import { useUserPrograms } from "@/features/workout/user-programs";
 import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
@@ -114,21 +114,25 @@ export function StartWorkoutScreen() {
 
   function selectYourProgram(programId: string, programName: string) {
     setSelectedButton({ section: "your", programId });
-    const query = new URLSearchParams({
-      programId,
-      programName,
-      ...(showEdit ? { showEdit: "1" } : { selectDay: "1" }),
-    }).toString();
-    router.push(`/workout/program-day?${query}` as Href);
+    router.push(
+      programDayHref({
+        programId,
+        programName,
+        showEdit,
+        selectDay: !showEdit,
+      }),
+    );
   }
 
   function selectPreset(index: number, programName: string) {
     setSelectedButton({ section: "preset", index });
-    const query = new URLSearchParams({
-      programName,
-      ...(showEdit ? { showEdit: "1" } : { selectDay: "1" }),
-    }).toString();
-    router.push(`/workout/program-day?${query}` as Href);
+    router.push(
+      programDayHref({
+        programName,
+        showEdit,
+        selectDay: !showEdit,
+      }),
+    );
   }
 
   async function handleToggleFavorite(programId: string) {

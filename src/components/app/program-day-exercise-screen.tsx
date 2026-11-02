@@ -1,14 +1,10 @@
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { ClockIcon } from "@/components/app/clock-icon";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
-import {
-  readSearchParam,
-  serializeDayNames,
-} from "@/components/app/program-day-params";
 import { SaveExerciseOverlay } from "@/components/app/save-exercise-overlay";
 import { SaveIcon } from "@/components/app/save-icon";
 import { StopwatchIcon } from "@/components/app/stopwatch-icon";
@@ -17,6 +13,16 @@ import {
   clearFinishedWorkoutExercises,
   useHasFinishedAnyWorkoutExercise,
 } from "@/features/workout/finished-workout-exercises";
+import {
+  addExerciseHref,
+  exerciseHistoryHref,
+  readSearchParam,
+  serializeDayNames,
+  WORKOUT_HOME_HREF,
+  workoutHomeHref,
+  workoutScreenHref,
+} from "@/features/workout/nav-params";
+import { formatLastWorkoutDate } from "@/features/workout/session-display";
 import {
   useProgramDayExercises,
   type DayExerciseListItem,
@@ -66,11 +72,7 @@ export function ProgramDayExerciseScreen() {
         : liveElapsedLabel;
   const lastWorkoutLabel =
     fromHistory && Number.isFinite(performedAtMs)
-      ? `Last Workout Was ${new Date(performedAtMs).toLocaleDateString("en-US", {
-          month: "2-digit",
-          day: "2-digit",
-          year: "2-digit",
-        })}`
+      ? `Last Workout Was ${formatLastWorkoutDate(performedAtMs)}`
       : null;
   const { exercises, isLoading, error, refresh } = useProgramDayExercises({
     programId,
@@ -82,31 +84,30 @@ export function ProgramDayExerciseScreen() {
   useRefreshOnFocus(refresh);
 
   function openWorkout(exercise?: DayExerciseListItem) {
-    const nextParams = new URLSearchParams({
-      ...(programId ? { programId } : {}),
-      ...(programName ? { programName } : {}),
-      ...(dayName ? { dayName } : {}),
-      ...(sessionId ? { sessionId } : {}),
-      ...(exercise?.name ? { exerciseName: exercise.name } : {}),
-      ...(exercise?.exerciseId ? { exerciseId: exercise.exerciseId } : {}),
-      ...(exercise?.muscleGroup ? { muscleGroup: exercise.muscleGroup } : {}),
-      ...(showEdit ? { showEdit: "1" } : {}),
-      ...(fromHistory ? { fromHistory: "1" } : {}),
-      ...(performedAtRaw ? { performedAt: performedAtRaw } : {}),
-      ...(durationMsRaw ? { durationMs: durationMsRaw } : {}),
-    });
-    const query = nextParams.toString();
     router.push(
-      (query ? `/workout/workout-screen?${query}` : "/workout/workout-screen") as Href,
+      workoutScreenHref({
+        programId,
+        programName,
+        dayName,
+        sessionId,
+        exerciseName: exercise?.name,
+        exerciseId: exercise?.exerciseId,
+        muscleGroup: exercise?.muscleGroup,
+        showEdit,
+        fromHistory,
+        performedAt: performedAtRaw,
+        durationMs: durationMsRaw,
+      }),
     );
   }
 
   function openExerciseHistory(exercise: DayExerciseListItem) {
-    const query = new URLSearchParams({
-      exerciseName: exercise.name,
-      exerciseId: exercise.exerciseId,
-    }).toString();
-    router.push(`/workout/exercise-history?${query}` as Href);
+    router.push(
+      exerciseHistoryHref({
+        exerciseName: exercise.name,
+        exerciseId: exercise.exerciseId,
+      }),
+    );
   }
 
   function openAddExercise() {
@@ -114,13 +115,14 @@ export function ProgramDayExerciseScreen() {
       return;
     }
 
-    const query = new URLSearchParams({
-      dayName,
-      dayNames: serializeDayNames([dayName]),
-      programId,
-      ...(programName ? { programName } : {}),
-    }).toString();
-    router.push(`/workout/add-exercise?${query}` as Href);
+    router.push(
+      addExerciseHref({
+        dayName,
+        dayNames: serializeDayNames([dayName]),
+        programId,
+        programName,
+      }),
+    );
   }
 
   function openSelectDay() {
@@ -128,19 +130,20 @@ export function ProgramDayExerciseScreen() {
       return;
     }
 
-    const query = new URLSearchParams({
-      dayName,
-      ...(programId ? { programId } : {}),
-      ...(programName ? { programName } : {}),
-    }).toString();
-    router.dismissTo(`/workout?${query}` as Href);
+    router.dismissTo(
+      workoutHomeHref({
+        dayName,
+        programId,
+        programName,
+      }),
+    );
   }
 
   function finishWorkout() {
     setSaveWorkoutVisible(false);
     clearFinishedWorkoutExercises();
     clearWorkoutDuration();
-    router.dismissTo("/workout" as Href);
+    router.dismissTo(WORKOUT_HOME_HREF);
   }
 
   return (

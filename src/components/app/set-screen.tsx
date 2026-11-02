@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react";
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { ChevronDownIcon } from "@/components/app/chevron-down-icon";
 import { ClockIcon } from "@/components/app/clock-icon";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
-import { readSearchParam } from "@/components/app/program-day-params";
 import { SetFeelingBar, type SetFeeling } from "@/components/app/set-feeling-bar";
 import { SetNumericInput } from "@/components/app/set-numeric-input";
 import { StopwatchIcon } from "@/components/app/stopwatch-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import {
+  dropSetEntryHref,
+  readSearchParam,
+  workoutScreenHref,
+  type WorkoutNavParams,
+} from "@/features/workout/nav-params";
 import { addRecordedWorkingSet } from "@/features/workout/recorded-working-sets";
 import {
   ensureWorkoutDurationStarted,
@@ -52,25 +57,22 @@ export function SetScreen() {
     }
   }, [fromHistory]);
 
-  function workoutQuery() {
-    return new URLSearchParams({
-      ...(programId ? { programId } : {}),
-      ...(programName ? { programName } : {}),
-      ...(dayName ? { dayName } : {}),
-      ...(exerciseName ? { exerciseName } : {}),
-      ...(exerciseId ? { exerciseId } : {}),
-      ...(muscleGroup ? { muscleGroup } : {}),
-      ...(showEdit ? { showEdit: "1" } : {}),
-      ...(fromHistory ? { fromHistory: "1" } : {}),
-    }).toString();
+  function workoutNavParams(): WorkoutNavParams {
+    return {
+      programId,
+      programName,
+      dayName,
+      exerciseName,
+      exerciseId,
+      muscleGroup,
+      showEdit,
+      fromHistory,
+    };
   }
 
   function recordSet() {
     addRecordedWorkingSet(exerciseKey, { weight, reps, feeling: setFeeling });
-    const query = workoutQuery();
-    router.replace(
-      (query ? `/workout/workout-screen?${query}` : "/workout/workout-screen") as Href,
-    );
+    router.replace(workoutScreenHref(workoutNavParams()));
   }
 
   return (
@@ -149,10 +151,7 @@ export function SetScreen() {
         <Pressable
           style={globalStyles.setScreenDropSetLink}
           onPress={() => {
-            const query = workoutQuery();
-            router.push(
-              (query ? `/workout/drop-set-entry?${query}` : "/workout/drop-set-entry") as Href,
-            );
+            router.push(dropSetEntryHref(workoutNavParams()));
           }}
           hitSlop={sizes.backArrowHitSlop}
           accessibilityRole="button"

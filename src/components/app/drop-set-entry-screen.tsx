@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "@/components/app-button";
 import { ChevronDownIcon } from "@/components/app/chevron-down-icon";
 import { CreateDayBurgerIcon } from "@/components/app/create-day-burger-icon";
-import { readSearchParam } from "@/components/app/program-day-params";
 import { SaveExerciseOverlay } from "@/components/app/save-exercise-overlay";
 import { SetFeelingBar, type SetFeeling } from "@/components/app/set-feeling-bar";
 import { SetNumericInput } from "@/components/app/set-numeric-input";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import { readSearchParam, workoutScreenHref } from "@/features/workout/nav-params";
 import { setRecordedDropSets } from "@/features/workout/recorded-drop-sets";
 import { workoutExerciseKey } from "@/features/workout/workout-exercise-key";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
@@ -57,18 +57,17 @@ export function DropSetEntryScreen() {
       })),
     );
     setSaveExerciseVisible(false);
-    const query = new URLSearchParams({
-      ...(programId ? { programId } : {}),
-      ...(programName ? { programName } : {}),
-      ...(dayName ? { dayName } : {}),
-      ...(exerciseName ? { exerciseName } : {}),
-      ...(exerciseId ? { exerciseId } : {}),
-      ...(muscleGroup ? { muscleGroup } : {}),
-      ...(showEdit ? { showEdit: "1" } : {}),
-      ...(fromHistory ? { fromHistory: "1" } : {}),
-    }).toString();
     router.replace(
-      (query ? `/workout/workout-screen?${query}` : "/workout/workout-screen") as Href,
+      workoutScreenHref({
+        programId,
+        programName,
+        dayName,
+        exerciseName,
+        exerciseId,
+        muscleGroup,
+        showEdit,
+        fromHistory,
+      }),
     );
   }
 

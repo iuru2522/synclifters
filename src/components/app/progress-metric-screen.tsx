@@ -23,6 +23,7 @@ import {
 } from "@/features/users/progress-metric-chart";
 import type { BodyMetricEntry } from "@/features/users/types";
 import { useUserBodyMetrics } from "@/features/users/user-body-metrics";
+import { formatShortSessionDate } from "@/features/workout/session-display";
 import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { colors, globalStyles, sizes, spacing } from "@/styles/global";
 
@@ -65,11 +66,7 @@ function formatMetricDate(entry: BodyMetricEntry) {
     return "";
   }
 
-  return new Date(entry.recordedAt).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatShortSessionDate(entry.recordedAt);
 }
 
 function formatMetricValue(entry: BodyMetricEntry) {

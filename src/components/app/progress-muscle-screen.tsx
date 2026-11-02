@@ -1,15 +1,16 @@
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { readSearchParam } from "@/components/app/program-day-params";
 import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-icon";
 import { AuthBackButton } from "@/components/auth/auth-back-button";
+import {
+  progressMetricDetailHref,
+  readSearchParam,
+} from "@/features/workout/nav-params";
 import { useUserProgressExercises } from "@/features/workout/user-progress-exercises";
 import { useRefreshOnFocus } from "@/hooks/use-refresh-on-focus";
 import { colors, globalStyles, spacing } from "@/styles/global";
-
-const PROGRESS_METRIC_DETAIL_HREF = "/progress/progress-metric-detail" as Href;
 
 export function ProgressMuscleScreen() {
   const router = useRouter();
@@ -67,13 +68,12 @@ export function ProgressMuscleScreen() {
               <Pressable
                 style={globalStyles.doExerciseSelectTarget}
                 onPress={() => {
-                  router.push({
-                    pathname: PROGRESS_METRIC_DETAIL_HREF,
-                    params: {
+                  router.push(
+                    progressMetricDetailHref({
                       exerciseId: exercise.exerciseId,
                       exerciseName: exercise.name,
-                    },
-                  } as Href);
+                    }),
+                  );
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={exercise.name}
