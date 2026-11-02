@@ -1,13 +1,8 @@
-import type { Gender } from "@/components/auth/gender-form";
-import type { SportsExperience } from "@/components/auth/sports-experience-form";
-import type { WeightUnit } from "@/components/auth/weight-unit-toggle";
 import { useAuth } from "@/features/auth/auth-context";
 import {
   createUserProfile,
   getUserProfile,
   updateUserProfile,
-  type UserGender,
-  type UserSportsExperience,
 } from "@/features/users/user-profile";
 import { sizes } from "@/styles/global";
 import {
@@ -23,6 +18,7 @@ import {
   type SetStateAction,
 } from "react";
 import { useMeasurementUnit } from "./measurement-unit-context";
+import type { Gender, SportsExperience } from "./types";
 
 type OnboardingContextValue = {
   gender: Gender | null;
@@ -129,10 +125,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       }
 
       await updateUserProfile(user.uid, {
-        gender: nextGender as UserGender | null,
+        gender: nextGender,
       });
       setGender(nextGender);
-      patchProfile({ gender: nextGender as UserGender | null });
+      patchProfile({ gender: nextGender });
       void refreshProfile({ silent: true });
     },
     [ensureProfile, patchProfile, refreshProfile, user],
@@ -145,13 +141,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       throw new Error("You must be signed in to continue onboarding.");
     }
 
-    const weightUnit = unit as WeightUnit;
-
     await updateUserProfile(user.uid, {
       weight,
-      weightUnit,
+      weightUnit: unit,
     });
-    patchProfile({ weight, weightUnit });
+    patchProfile({ weight, weightUnit: unit });
     void refreshProfile({ silent: true });
   }, [ensureProfile, patchProfile, refreshProfile, unit, user, weight]);
 
@@ -187,13 +181,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         throw new Error("You must be signed in to continue onboarding.");
       }
 
-      const sportsExperience = experience as UserSportsExperience;
-
       await updateUserProfile(user.uid, {
-        sportsExperience,
+        sportsExperience: experience,
         onboardingComplete: true,
       });
-      patchProfile({ sportsExperience, onboardingComplete: true });
+      patchProfile({ sportsExperience: experience, onboardingComplete: true });
       void refreshProfile({ silent: true });
     },
     [ensureProfile, patchProfile, refreshProfile, user],

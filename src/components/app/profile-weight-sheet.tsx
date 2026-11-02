@@ -8,7 +8,7 @@ import {
   getWeightRulerConfig,
   roundToWeightStep,
 } from "@/components/auth/weight-ruler-units";
-import type { WeightUnit } from "@/components/auth/weight-unit-toggle";
+import type { WeightUnit } from "@/features/onboarding/types";
 import { colors, globalStyles, sizes } from "@/styles/global";
 
 function buildWeightOptions(unit: WeightUnit) {

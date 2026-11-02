@@ -1,5 +1,5 @@
+import type { WeightUnit } from "@/features/onboarding/types";
 import { sizes } from "@/styles/global";
-import type { WeightUnit } from "./weight-unit-toggle";
 
 export const CM_PER_IN = 2.54;
 

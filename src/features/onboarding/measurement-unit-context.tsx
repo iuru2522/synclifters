@@ -5,7 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { WeightUnit } from "@/components/auth/weight-unit-toggle";
+import type { WeightUnit } from "./types";
 
 type MeasurementUnitContextValue = {
   unit: WeightUnit;

@@ -16,6 +16,7 @@ import Animated, {
   useSharedValue,
   type SharedValue,
 } from "react-native-reanimated";
+import type { WeightUnit } from "@/features/onboarding/types";
 import { colors, globalStyles, sizes, spacing, typography } from "@/styles/global";
 import { AuthReadoutArrow } from "./auth-readout-arrow";
 import {
@@ -24,7 +25,6 @@ import {
   weightToIndex,
   type WeightRulerConfig,
 } from "./weight-ruler-units";
-import type { WeightUnit } from "./weight-unit-toggle";
 
 type WeightRulerPickerProps = {
   value: number;
