@@ -9589,7 +9589,7 @@ snapshots:
       metro: 0.84.6
       metro-config: 0.84.6
       metro-core: 0.84.6
-      semver: 7.8.6
+      semver: 7.8.5
     optionalDependencies:
       '@react-native-community/cli': 21.0.0(typescript@6.0.3)
       '@react-native/metro-config': 0.86.0(@babel/core@7.29.13)
