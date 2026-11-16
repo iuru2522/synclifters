@@ -4,7 +4,7 @@ import { WorkoutExternalLinkIcon } from "@/components/app/workout-external-link-
 import { WorkoutGlassCard } from "@/components/app/workout-glass-card";
 import { WorkoutStartIcon } from "@/components/app/workout-start-icon";
 import { WorkoutWeightTrendChart } from "@/components/app/workout-weight-trend-chart";
-import { WeekCalendar } from "@/components/WeekCalendar/WeekCalendar";
+import { WeekCalendar } from "@/components/app/WeekCalendar/WeekCalendar";
 import { useAuth } from "@/features/auth/auth-context";
 import { formatProfileFullName } from "@/features/users/profile-display";
 import { clearFinishedWorkoutExercises } from "@/features/workout/finished-workout-exercises";
