@@ -21,8 +21,8 @@ importers:
         specifier: ^0.4.1
         version: 0.4.1
       '@legendapp/list':
-        specifier: ^3.7.1
-        version: 3.7.1(react-dom@19.2.3(react@19.2.3))(react-native@0.86.0(@babel/core@7.29.13)(@react-native-community/cli@21.0.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.13))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)
+        specifier: ^3.7.2
+        version: 3.7.2(react-dom@19.2.3(react@19.2.3))(react-native@0.86.0(@babel/core@7.29.13)(@react-native-community/cli@21.0.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.13))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)
       '@marceloterreiro/flash-calendar':
         specifier: ^2.0.0
         version: 2.0.0(@shopify/flash-list@2.3.3(@babel/runtime@7.29.13)(react-native@0.86.0(@babel/core@7.29.13)(@react-native-community/cli@21.0.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.13))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3))(react-native@0.86.0(@babel/core@7.29.13)(@react-native-community/cli@21.0.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.13))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)
@@ -1457,8 +1457,8 @@ packages:
   '@jsdevtools/ono@7.1.3':
     resolution: {integrity: sha512-4JQNk+3mVzK3xh2rqd6RB4J46qUR19azEHBneZyTZM+c456qOrbbM/5xcR8huNCCcbVt7+UmizG6GuUvPvKUYg==}
 
-  '@legendapp/list@3.7.1':
-    resolution: {integrity: sha512-zgIy84yG2JP93+kib61rZBTcYGZ6fULrkCQz/MF7WrjVJeJQa/rR4z+rXfM5oveirO5mYkro4IDGytARIjJe9w==}
+  '@legendapp/list@3.7.2':
+    resolution: {integrity: sha512-StFy5qjOHHuxHKjenwLq500S/z+zuF43hj8iqXhX9EMtzeOagPfsnMRWphvBG4CYBvMTX6VzgLjN5BzzwY1jDA==}
     peerDependencies:
       react: '*'
       react-dom: '*'
@@ -8872,7 +8872,7 @@ snapshots:
 
   '@jsdevtools/ono@7.1.3': {}
 
-  '@legendapp/list@3.7.1(react-dom@19.2.3(react@19.2.3))(react-native@0.86.0(@babel/core@7.29.13)(@react-native-community/cli@21.0.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.13))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)':
+  '@legendapp/list@3.7.2(react-dom@19.2.3(react@19.2.3))(react-native@0.86.0(@babel/core@7.29.13)(@react-native-community/cli@21.0.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.13))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)':
     dependencies:
       react: 19.2.3
       use-sync-external-store: 1.7.0(react@19.2.3)
