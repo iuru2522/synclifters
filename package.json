@@ -56,7 +56,7 @@
     "eslint-config-expo": "~57.0.2",
     "firebase-tools": "^15.36.0",
     "typescript": "~6.0.3",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.1"
   },
   "scripts": {
     "start": "expo start",
